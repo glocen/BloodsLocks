@@ -1,4 +1,4 @@
-# Team notes
+﻿# Team notes
 
 Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGPT) and the owner, glocen. Newest entry first. Keep entries short: what changed, where it lives, and what's next or open.
 
@@ -12,6 +12,11 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Gameplay state lives in short-coded attributes (`EntityState.Attr`; 1024 bytes per instance) and is written only inside `RunService:BindToSimulation`.
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
+
+## 2026-10-29: Claude: HUD left-end polish
+
+- The top-left gauges now grow out of an engraved medallion (crest now, Virtue in matches). The diamond end caps and the white fill-edge sliver are removed, and the damage chip is a soft pale red.
+- Animations can't be published from MCP: the owner publishes them; Claude authors them in RBX_ANIMSAVES.R6.
 
 ## 2026-10-29: Claude: stamina green + posture bar
 
@@ -52,7 +57,7 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - bottom-left: Arsenal (SMG `rounds / mag` + segments; skill emblems with ring gauges, the big one first, small second, a name ribbon);
   - bottom-centre: the stagger gauge.
 - **New kit pieces:** Gauge, RingMeter, Text, Panel, Button, Ornament.
-- Skill icons are data (`Icon` in skill definitions). The ring texture is ours (`tools/vfx_textures.py` → `ring`).
+- Skill icons are data (`Icon` in skill definitions). The ring texture is ours (`tools/vfx_textures.py` â†’ `ring`).
 - Old `Components.Bar` / `SkillSlot` removed.
 - **Scope rule (owner):** HUD only for systems we already have, plus Shinigami. The other Duskbloods elements come with their systems.
 
@@ -60,7 +65,7 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 
 - **Figma is dropped** (owner). UI is designed and built in Studio only, with **no external UI library**.
 - **Theme v2 "Vigil gothic"** (`Client.UI.Theme`):
-  - Palette + semantic Colors, Fonts (Accanthis display + Garamond body), TextSize, Space, Radius, Stroke, Motion, Layers, ReferenceResolution 1920×1080, Hud sizes.
+  - Palette + semantic Colors, Fonts (Accanthis display + Garamond body), TextSize, Space, Radius, Stroke, Motion, Layers, ReferenceResolution 1920Ã—1080, Hud sizes.
   - The v1 flat keys stay as aliases until the components are ported.
 - **`Client.UI.Core`:**
   - `Layers`: one ScreenGui per layer + a UIScale fit.
@@ -79,10 +84,10 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 
 ## 2026-10-29: Claude: owner direction update
 
-- **Budget:** 0 € until revenue. Everything is custom and free; ask before anything that might cost.
+- **Budget:** 0 â‚¬ until revenue. Everything is custom and free; ask before anything that might cost.
 - **Roles:** Claude does engineering (systems, infrastructure, UI code). ChatGPT likely takes 3D world building in Blender (Blender MCP added by the owner).
 - **Companions are renamed Shinigami** (they work like Duskbloods' Kin). The plan is updated throughout.
-- **Order:** 9a UI research + kit → 10 match launch to the Victorian place → 10a Shinigami (tested in the hub yard) → match rules.
+- **Order:** 9a UI research + kit â†’ 10 match launch to the Victorian place â†’ 10a Shinigami (tested in the hub yard) â†’ match rules.
 - **Hub graybox:** the owner judged it not good enough. World art goes to Blender (likely ChatGPT's job); no Studio AI meshes.
 - **GitHub:** the owner made a repo; it will become the shared home for these notes once the link and git access are sorted.
 
@@ -90,7 +95,7 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 
 - **Design:** engineering-plan.md 11a (v2, critiqued). The owner approved it as a prototype.
 - **Graybox:**
-  - Lives in `workspace.Vigil` at (0, 0, −1000) and is built by `ServerStorage.WorldTools.VigilGraybox.Build()`. Change the layout numbers there and rebuild; don't hand-edit `workspace.Vigil`.
+  - Lives in `workspace.Vigil` at (0, 0, âˆ’1000) and is built by `ServerStorage.WorldTools.VigilGraybox.Build()`. Change the layout numbers there and rebuild; don't hand-edit `workspace.Vigil`.
   - The spawn and both dummy spots now live in the hub; the old positions are in the plan.
 - **Next:**
   - The owner walks it.
@@ -118,7 +123,7 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 
 ## 2026-10-29: Claude: strong and charged attacks
 
-- **What:** Strong attacks on R (Guard + R is still Howl). Tap does Strong1 → Strong2; hold for the charge stance, release for the Charged blow.
+- **What:** Strong attacks on R (Guard + R is still Howl). Tap does Strong1 â†’ Strong2; hold for the charge stance, release for the Charged blow.
 - **Where:**
   - `Definitions.Weapons.Saber` (`Strong`, `Saber.Strong1/2`, `Saber.StrongCharge`, `Saber.Charged`).
   - New generic action fields: `Button`, `Charge`, `Hold`, `Hit.GuardDrain`. They are documented at the top of Saber, validated in `Registry`, run in `ActionSim`, and guard drain is applied in `CombatSim`.
