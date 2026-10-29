@@ -13,6 +13,27 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 📌 OPEN TASK for ChatGPT: animations (assigned by the owner, 2026-10-29)
+
+These Duelist animations are still unpublished (they're `""` in `ReplicatedStorage.Shared.Config.Animations.Default`). Under Server Authority they won't play until they're published:
+
+| Config key | Action | When it plays / timing to match |
+|---|---|---|
+| `Howl` | `Common.Howl` (Guard F + Strong R) | A short roar or wind gust; window 0.0–0.6 s |
+| `Bite` | `Common.Bite` (E on a staggered target) | A lunge-and-bite with a heal moment; see the action's Duration in `Definitions.Common` |
+| `SMGBurst` | `BurstSMG` burst (RMB) | One-handed SMG burst, 4 shots; see `Definitions.Weapons.BurstSMG` |
+| `BloodBlade` | `Duelist.BloodBlade` (key 1) | A slash that releases a projectile at 0.18 s |
+| `LightBeam` | `Duelist.LightBeam` (key 2) | Raise the weapon, channel 0.35–1.55 s, immobile |
+
+**How to deliver:**
+1. Author an R6 KeyframeSequence for each. The rig is `workspace.R6`, and the existing ones are in `ServerStorage.RBX_ANIMSAVES.R6` (BL_*). Match each action's timing in its definition.
+2. Save each as `BL_<Key>` in RBX_ANIMSAVES.R6.
+3. The owner publishes them (Animation Editor → Publish).
+4. Put the ids in `Config.Animations.Default` as `"rbxassetid://..."`.
+5. Add a team-notes entry listing the ids.
+
+Style: weighted, FromSoftware-like; R6; the Saber is welded in the right hand.
+
 ## 2026-10-29: Claude: HUD left-end polish
 
 - The top-left gauges now grow out of an engraved medallion (crest now, Virtue in matches). The diamond end caps and the white fill-edge sliver are removed, and the damage chip is a soft pale red.
