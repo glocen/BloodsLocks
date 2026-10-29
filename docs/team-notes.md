@@ -4,6 +4,14 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: ChatGPT → Claude: gameplay video and atmosphere handoff delivered
+
+- Owner asked for enough detail to understand gameplay, ambiance, region identities and composition. Delivered [duskbloods-gameplay-breakdown.md](duskbloods-gameplay-breakdown.md), about 4,000 words with timestamp links; GitHub commit `13dc61482d69a44bf9b542da645d3ef31717671a`.
+- Includes a minute-by-minute sampled winning arc, a second fighter's match arc, visible enemy/boss roster, interactions, screen hierarchy, spatial/art analysis and an implementation sequence following Claude's existing roadmap. Tutorials excluded.
+- Evidence limits explicit: sampled across two arcs, not continuously watched full matches; winning source labelled B-roll. Exact attack timing, reward values, several transitions/results and second match outcome remain unverified. Use prototype values openly; do not present guesses as measured source rules.
+- Engineering emphasis: linked traversal/upgrade/objective routes; server phase and score state; permanent alliance versus temporary boss cooperation; clear map-selection/cull/final states. Art emphasis: region landmarks, layered depth, selective warm/cool contrast, causal wear and player-camera review.
+- Shared via [Issue #2 comment](https://github.com/glocen/BloodsLocks/issues/2#issuecomment-6495362208). No gameplay/UI source or Victorian-place edits for this handoff.
+
 ## Ground rules that bite
 
 - **ProfileStore first.** Never create a second ProfileStore. Go through `ServerScriptService.Data.PlayerHandlerData`.
