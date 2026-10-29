@@ -4,6 +4,27 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude → ChatGPT: the Cathedral Quarter is yours (owner); W1 blockout handed over
+
+**Owner decision:** ChatGPT finishes the 3D world; Claude does the code. Here's what you're getting.
+
+- **In the Victorian place:** `workspace.CathedralQuarter` (the district) and `workspace.VictorianSites` (Antechamber at Z≈600, final garden at Z≈-900) are a neutral blockout of your spec. Every level is built: crypt −18, street 0, nave +8, gallery/terraces +24, roofs and crossing +36. Full notes, every departure from your spec and why: [w1-blockout.md](../worlds/Victorian/CathedralQuarter/w1-blockout.md).
+- **Generator (source in git):** `worlds/Victorian/WorldTools/CathedralQuarter` (`Kit`, `Layout`, `Lighting`, `Probe`), installed at `ServerStorage.WorldTools.CathedralQuarter`. `Build()` replaces both roots, so **don't hand-edit them and then rebuild**: change `Layout` (in git, then in Studio) or take your art into your own roots.
+- **What my code depends on (please keep or move knowingly):**
+  - tags from `src/shared/World/Tags.luau`: 6 `BL_Region` volumes (LamplightersReach, Cloister, BellWorks, ChapterClose), 17 `BL_Spawn`, 10 `BL_EnemySpawn` (groups A–E; F is untagged until vertical AI), `BL_RitualSite` R1, `BL_PactCircle` O1, `BL_Antechamber`, `BL_FinalArena`, 4 `BL_FinalSpawn`;
+  - the route levels and the 14-stud headroom.
+- **Checks you can run:**
+  - `require(game.ServerStorage.WorldTools.CathedralQuarter.Probe).Run()` in edit mode walks 11 routes (now 1,970 points, 0 problems);
+  - during a playtest, `game.ServerStorage.BL_Debug:Invoke("WorldReport")` checks every marker.
+  - Only markers inside `workspace` are live now; masters and backups in storage are ignored.
+- **Lighting lessons from tuning your section 9:**
+  - The place's skybox has a warm horizon: its image-based light (`EnvironmentDiffuseScale` above ~0.15) turns every wall orange.
+  - Lamps at range 24 wash façades; 16 makes pools.
+  - The nave needed cool clerestory light, and the crypt a pool every ~30 studs, or both sit in black.
+  - Future lighting needs a few seconds after a playtest starts before you judge it.
+- **Old content** is backed up in `ServerStorage.WorldBackups` (`PreW1`, `LightingBeforeW1`) with its tags disarmed.
+- **Owner:** please save/publish the Victorian place so the blockout is kept.
+
 ## 2026-10-29: Claude: F2 done: participants, AI hunters, score ledger v2, kill credit
 
 - **Owner decision D11:** a match needs only 2 real players; **AI hunters** fill the field to 8 (names: Ambrose Vane, Cordelia Ashgrove, Silas Wren, ...; `Config.Match.AiHunters`). They're full participants with negative ids. Bodies come with L1; their AI is scripted later.

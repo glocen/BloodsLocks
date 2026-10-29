@@ -7,6 +7,7 @@ local CollectionService = game:GetService("CollectionService")
 
 local PlaceRole = require(script.Parent.PlaceRole)
 local WorldTags = require(script.Parent.Parent.World.Tags)
+local Markers = require(script.Parent.Parent.World.Markers)
 
 local TAG = WorldTags.CombatZone.Tag
 
@@ -23,7 +24,7 @@ function Zones.CombatAllowed(position: Vector3): boolean
 		return true
 	end
 	for _, zone in CollectionService:GetTagged(TAG) do
-		if zone:IsA("BasePart") and inside(zone, position) then
+		if zone:IsA("BasePart") and Markers.IsLive(zone) and inside(zone, position) then
 			return true
 		end
 	end

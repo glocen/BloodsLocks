@@ -24,6 +24,7 @@ local Parts = require(Shared.Util.Parts)
 local Signal = require(Shared.Util.Signal)
 local Log = require(Shared.Util.Log)
 local WorldTags = require(Shared.World.Tags)
+local Markers = require(Shared.World.Markers)
 local DebugService = require(script.Parent.DebugService)
 local EntityService = require(script.Parent.EntityService)
 local EnemyBrain = require(script.EnemyBrain)
@@ -273,10 +274,7 @@ end
 
 function NpcService.Start()
 	CombatSim.Damaged:Connect(onDamaged)
-	CollectionService:GetInstanceAddedSignal(SPAWN_TAG):Connect(addSpawn)
-	for _, spawn in CollectionService:GetTagged(SPAWN_TAG) do
-		addSpawn(spawn)
-	end
+	Markers.Each(SPAWN_TAG, addSpawn)
 
 	local thinkEvery = 1 / Config.BrainRate
 	local sinceThink, sinceRefill = 0, 0

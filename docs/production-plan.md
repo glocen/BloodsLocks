@@ -1,7 +1,9 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1 and F2 done; next slice: W1.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2 and W1 (blockout) done; next slice: L1.**
 
+> **World ownership (owner, 2026-10-29):** after W1, ChatGPT owns the 3D world (W2 art proof of concept, W3, the final garden's art, all Victorian world art). Claude does the code and keeps the world contract, `WorldService`, the route probe and the lighting rig's code working for ChatGPT.
+>
 > **D11 (owner, 2026-10-29):** 2 real players minimum; AI hunters fill the field to 8. They are real participants from F2 on; their bodies arrive with L1 and their movement and judgement in a later AI slice.
 
 This is the working order for Claude's sessions. [engineering-plan.md](engineering-plan.md) stays the source of truth for locked rules and specs. ChatGPT's [whole-game brief](duskbloods-gameplay-breakdown.md) is the behaviour spec each slice implements, and the [UI quality standard](ui-quality-standard.md) is the bar every screen passes.

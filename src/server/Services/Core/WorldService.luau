@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local WorldTags = require(Shared.World.Tags)
+local Markers = require(Shared.World.Markers)
 local PlaceRole = require(Shared.Util.PlaceRole)
 local Raycast = require(Shared.Util.Raycast)
 local Log = require(Shared.Util.Log)
@@ -55,7 +56,7 @@ end
 local function markerExclusions(): { Instance }
 	local list: { Instance } = {}
 	for _, spec in WorldTags do
-		for _, instance in CollectionService:GetTagged(spec.Tag) do
+		for _, instance in Markers.All(spec.Tag) do
 			table.insert(list, instance)
 		end
 	end
@@ -88,7 +89,11 @@ function WorldService.Check(): Report
 	local report: Report = { Counts = {}, Problems = {}, Missing = {} }
 	local exclude = markerExclusions()
 	for key, spec in WorldTags do
-		local tagged = CollectionService:GetTagged(spec.Tag)
+		local tagged = Markers.All(spec.Tag)
+		local stored = #CollectionService:GetTagged(spec.Tag) - #tagged
+		if stored > 0 then
+			table.insert(report.Problems, `{stored} {spec.Tag} instance(s) outside workspace (masters/backups keep their tags; they're ignored)`)
+		end
 		report.Counts[spec.Tag] = #tagged
 		if spec.RequiredIn and table.find(spec.RequiredIn, PlaceRole.Current) and #tagged == 0 then
 			table.insert(report.Missing, `{spec.Tag}{if spec.Since then ` (needed from {spec.Since})` else ""}`)

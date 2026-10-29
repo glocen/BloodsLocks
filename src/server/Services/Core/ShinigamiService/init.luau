@@ -25,6 +25,7 @@ local Parts = require(Shared.Util.Parts)
 local Net = require(Shared.Net)
 local Log = require(Shared.Util.Log)
 local WorldTags = require(Shared.World.Tags)
+local Markers = require(Shared.World.Markers)
 local DebugService = require(script.Parent.DebugService)
 local ShinigamiBrain = require(script.ShinigamiBrain)
 
@@ -241,10 +242,7 @@ function ShinigamiService.Start()
 	folder = Instance.new("Folder")
 	folder.Name = "Shinigami"
 	folder.Parent = workspace
-	for _, circle in CollectionService:GetTagged(CIRCLE_TAG) do
-		addPrompt(circle)
-	end
-	CollectionService:GetInstanceAddedSignal(CIRCLE_TAG):Connect(addPrompt)
+	Markers.Each(CIRCLE_TAG, addPrompt)
 	Net.Server.On("ShinigamiToggle", function(player: Player)
 		ShinigamiService.Toggle(player)
 	end)
