@@ -87,7 +87,7 @@ The amount you can earn rises as phases progress. Six kinds, **ranked by value**
 ## 6. Combat and movement (their exact rules)
 
 - **Move / sprint;** a sprinting attack exists.
-- **Jump; hold for a high jump; up to 3 air jumps.** ⚠ The manual says 3; we built 4, from earlier press. **Owner's call.**
+- **Jump; hold for a high jump; up to 3 air jumps.** Matches ours: `MaxJumps = 4` is the ground jump plus 3 air jumps. The owner confirmed "3 like Duskbloods" on 2026-10-29.
 - **Air dodge.** Attacks, guards and dodges all work **in the air**.
 - **Climbing:** grab ivy and other grips.
 - **Lock-on:** you always face the target while moving.
@@ -132,6 +132,6 @@ The **Wheel of Blood** opens the hub menu:
 
 ## 9. Owner decisions flagged by this manual
 
-1. **Air jumps:** the manual's **3** versus our current **4**.
+1. ~~Air jumps~~: settled. 3 air jumps (plus the ground jump), as already built.
 2. **Stamina:** does attacking (and sprinting in combat) drain it, as in the manual, or keep ours free?
 3. Add the **guard counter** and **howl deflects projectiles** to the Duelist kit?
