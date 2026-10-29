@@ -13,6 +13,21 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: UI foundations (Step 9a, part 1)
+
+- **Figma is dropped** (owner). UI is designed and built in Studio only, with **no external UI library**.
+- **Theme v2 "Vigil gothic"** (`Client.UI.Theme`):
+  - Palette + semantic Colors, Fonts (Accanthis display + Garamond body), TextSize, Space, Radius, Stroke, Motion, Layers, ReferenceResolution 1920×1080, Hud sizes.
+  - The v1 flat keys stay as aliases until the components are ported.
+- **`Client.UI.Core`:**
+  - `Layers`: one ScreenGui per layer + a UIScale fit.
+  - `Motion`: the only place tweens are made; interruptible.
+  - `State`: value + Observe + Computed.
+  - `Create`: declarative builder, State bindings, events, Scope cleanup.
+- **Verified in play:** layer and scale, computed state, bindings, tween interrupt, scope cleanup. The HUD still runs, with 0 errors.
+- **Repo:** a clone in Claude's scratch folder, with one commit ready (docs + rules + tools). The push waits on the owner signing git in to GitHub once.
+- **Next:** the kit (Panel, Button, Bar...) and the HUD restyle; then the Blood Table match menu.
+
 ## 2026-10-29: Claude: UI research (Step 9a)
 
 - [docs/ui-research.md](ui-research.md): Roblox UI engineering rules, free Figma options, the "Vigil gothic" style draft, the architecture proposal (Fusion + layered ScreenGuis + MenuController), and the screen order.
