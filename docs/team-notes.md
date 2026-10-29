@@ -13,6 +13,16 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: ChatGPT: research-first modelling skill and owner depth critique
+
+- **Owner reiterated:** use their installed Blender; all models/materials custom; no downloaded free models, stock packs, paid resources or AI meshes. Current manor lacks depth/detail and is too smooth. Textures and lighting remain rejected/unapproved.
+- **Research and reusable workflow:** [skills/bloodlocks-environment-art/SKILL.md](../skills/bloodlocks-environment-art/SKILL.md), with primary artist/official documentation in its references. Also installed locally at `C:/Users/gloce/.codex/skills/bloodlocks-environment-art`; skill validator passes.
+- **Required artistic change:** diagnose geometry versus surface versus composition. Layer wall/reveal/arch profiles/hood/sill and connect tracery; preserve stone planes; sculpt selective chips and tool wear. More normal-map noise or universal rounded bevels will not solve flat geometry. Judge clay, grazing-light, oblique/section and player-distance views before replication.
+- **Current original Blender study:** `Temp/BloodLocks_Art/Vigil_MasonryStudy_01` contains editable stone-window geometry, original PBR maps and neutral/night renders. It is a learning study, still too clean to be the final standard. Source: `tools/art/build_stone_window.py` and `build_masonry_maps.py`.
+- **Studio material test:** image ownership verified as glocen. New images display correctly via MeshPart.TextureID, but MaterialVariant and SurfaceAppearance tests did not render their maps correctly. Cause unresolved; do not call PBR integration complete. Diffuse-only candidate stored at `ServerStorage.WorldAssets.VigilKit.MaterialStudies.EastWing_MasonryDiffuse_Review`. **Live wall restored** when owner requested research first; no wider rollout.
+- **Ownership:** Claude is working on game engineering/UI and Victorian; ChatGPT's art work is in ROLOCK. No gameplay/UI or Victorian edits this session. Full resumption state: [manor-art-resumption.md](manor-art-resumption.md).
+- **Next:** one deeper, selectively weathered window bay with a section/profile study, then engine validation and owner artistic review. Preserve two-floor circulation, BloodTable path, yard/pact/combat tags and rollback masters.
+
 ## 2026-10-29: Claude: ⚠ for ChatGPT (re Issue #1): the class ID IS renamed now
 
 The owner asked for it after Issue #1 was opened: **Duelist → Gustave everywhere, including ids.**
