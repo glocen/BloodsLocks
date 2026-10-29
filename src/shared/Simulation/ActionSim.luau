@@ -3,7 +3,7 @@
 --   melee chains (light on Attack, strong on Strong; buffering, chaining, lunge, tracking then commit), charging
 --   (hold Strong into a charge stance, release for a charged blow), guard (hold) with perfect-guard timing,
 --   howl (strong while guarding), bite, the burst gun (ammo, auto-reload, aim), class skills (charges that
---   recharge, unlocked by level; all unlocked in the castle), an input buffer near the end of every action, and
+--   recharge, unlocked by level; all unlocked in the Manor), an input buffer near the end of every action, and
 --   hitstun/stagger lockout.
 -- Hit detection and damage are server-only (CombatService + CombatSim); this module only drives the actor.
 
@@ -15,6 +15,7 @@ local EntityState = require(script.Parent.EntityState)
 local Stamina = require(script.Parent.Stamina)
 local Input = require(script.Parent.Input)
 local Zones = require(Shared.Util.Zones)
+local PlaceRole = require(Shared.Util.PlaceRole)
 
 local A = EntityState.Attr
 
@@ -38,8 +39,8 @@ export type Result = {
 
 local IDLE: Result = { Stunned = false, Acting = false, Guarding = false, CanDodge = true }
 
--- Read once, outside the simulation: the castle is a training ground, so every skill is unlocked there.
-local ALL_SKILLS_UNLOCKED = workspace:GetAttribute("PlaceRole") == "Castle"
+-- The Manor is a training ground, so every skill is unlocked there.
+local ALL_SKILLS_UNLOCKED = PlaceRole.IsManor
 
 local ActionSim = {}
 
@@ -199,7 +200,7 @@ function ActionSim.Step(character: Model, look: Vector3, ctx: Context): Result
 
 	local free = not ctx.Busy and not ctx.Charging
 
-	-- Outside a combat zone (the castle beyond its training yard) nothing combat-related starts.
+	-- Outside a combat zone (the Manor beyond its training yard) nothing combat-related starts.
 	if not action and not Zones.ModelInCombat(character) then
 		EntityState.Set(character, A.GuardStart, -1)
 		EntityState.Set(character, A.Queued, "")

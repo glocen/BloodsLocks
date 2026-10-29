@@ -12,9 +12,10 @@ local Shared = ReplicatedStorage.Shared
 local Parts = require(Shared.Util.Parts)
 local EntityState = require(Shared.Simulation.EntityState)
 local CombatSim = require(Shared.Simulation.CombatSim)
+local PlaceRole = require(Shared.Util.PlaceRole)
 
 local A = EntityState.Attr
-local ALL_UNLOCKED = workspace:GetAttribute("PlaceRole") == "Castle" -- training ground: everything unlocked
+local ALL_UNLOCKED = PlaceRole.IsManor -- training ground: everything unlocked
 local num = EntityState.Number
 
 local COMBAT_MEMORY = 6 -- seconds a fight counts as ongoing after the last exchange

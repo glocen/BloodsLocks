@@ -17,6 +17,7 @@ local EntityState = require(script.Parent.EntityState)
 local Stamina = require(script.Parent.Stamina)
 local ActionSim = require(script.Parent.ActionSim)
 local Zones = require(Shared.Util.Zones)
+local PlaceRole = require(Shared.Util.PlaceRole)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -45,8 +46,8 @@ function CombatSim.Side(model: Model): number?
 	return if type(owner) == "number" then owner else nil
 end
 
--- Allegiance: nobody hits themselves or their own side (a player and their Shinigami). In the castle combat only
--- happens inside the training yard (Zones); there, players' sides fight each other when PvPInCastle is on.
+-- Allegiance: nobody hits themselves or their own side (a player and their Shinigami). In the Manor combat only
+-- happens inside the training yard (Zones); there, players' sides fight each other when PvPInManor is on.
 function CombatSim.CanDamage(attacker: Model, target: Model): boolean
 	if attacker == target then
 		return false
@@ -56,10 +57,9 @@ function CombatSim.CanDamage(attacker: Model, target: Model): boolean
 		return false
 	end
 	if not Zones.ModelInCombat(target) or not Zones.ModelInCombat(attacker) then
-		return false -- the castle outside its training yard is a safe zone
+		return false -- the Manor outside its training yard is a safe zone
 	end
-	local castle = workspace:GetAttribute("PlaceRole") == "Castle"
-	return not (a and b and castle and not Config.PvPInCastle)
+	return not (a and b and PlaceRole.IsManor and not Config.PvPInManor)
 end
 
 -- Cancels what the model was doing and puts it into hitstun, or into a stagger.

@@ -1,5 +1,5 @@
 --!strict
--- TrainingService: training dummies in the castle. Each dummy is an entity (same combat pipeline as players),
+-- TrainingService: training dummies in the Manor. Each dummy is an entity (same combat pipeline as players),
 -- regenerates to full a few seconds after the last hit and revives right after "dying". Dummies stand on the
 -- BaseParts in Workspace.TrainingDummies; a spot with the attribute Aggressive = true gets a dummy that swings
 -- at players in reach (see DummyBrain).

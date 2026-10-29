@@ -1,12 +1,13 @@
 --!strict
--- Zones: where combat is allowed. In a match place everywhere is a combat zone. In the castle hub only the
+-- Zones: where combat is allowed. In a match place everywhere is a combat zone. In the Manor hub only the
 -- training yard is: parts tagged BL_CombatZone (invisible boxes) mark it, and outside them nobody can attack, use
 -- skills or be hurt, and the combat HUD hides. Static geometry, so the check is the same on client and server.
 
 local CollectionService = game:GetService("CollectionService")
 
+local PlaceRole = require(script.Parent.PlaceRole)
+
 local TAG = "BL_CombatZone"
-local IS_CASTLE = workspace:GetAttribute("PlaceRole") == "Castle"
 
 local Zones = {}
 
@@ -17,7 +18,7 @@ local function inside(part: BasePart, position: Vector3): boolean
 end
 
 function Zones.CombatAllowed(position: Vector3): boolean
-	if not IS_CASTLE then
+	if not PlaceRole.IsManor then
 		return true
 	end
 	for _, zone in CollectionService:GetTagged(TAG) do

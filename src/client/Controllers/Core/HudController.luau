@@ -70,7 +70,7 @@ function HudController.Start()
 
 	RunService.RenderStepped:Connect(function(dt)
 		local character = player.Character
-		-- the combat HUD only exists where combat does (everywhere in matches; the training yard in the castle)
+		-- the combat HUD only exists where combat does (everywhere in matches; the training yard in the Manor)
 		local ready = character ~= nil and character:GetAttribute(A.HPMax) ~= nil and Zones.ModelInCombat(character)
 		for _, frame in sections do
 			if frame ~= shinigami.Frame then

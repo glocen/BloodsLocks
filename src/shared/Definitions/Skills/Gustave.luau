@@ -1,6 +1,6 @@
 --!strict
 -- Gustave skills. A skill is an action with charges: using one spends a charge, and charges come back one at a
--- time every Recharge seconds. UnlockLevel gates it by in-match level (everything is unlocked in the castle).
+-- time every Recharge seconds. UnlockLevel gates it by in-match level (everything is unlocked in the Manor).
 --   Projectile: a server-simulated projectile spawned At seconds in, along the aim.
 --   Beam: a channeled ray that hits every Interval seconds between From and To, along the aim.
 

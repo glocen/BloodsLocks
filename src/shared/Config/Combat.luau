@@ -28,6 +28,6 @@ return {
 
 	ActionWalkSpeed = 3, -- default move speed while attacking (actions can override)
 	InputBuffer = 0.25, -- a bite/shot/attack pressed this close to the end of an action fires when it ends
-	PvPInCastle = true, -- players can spar inside the castle's training yard (the rest of the castle is a safe zone)
+	PvPInManor = true, -- players can spar inside the Manor's training yard (the rest of the Manor is a safe zone)
 	ShowHitboxes = true, -- Studio only: MuchachoHitbox visualizer
 }

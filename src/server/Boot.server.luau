@@ -6,10 +6,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Loader = require(Shared.Util.Loader)
-local GameConfig = require(Shared.Config.Game)
+local PlaceRole = require(Shared.Util.PlaceRole)
 
 Net.Server.Setup()
 
-local role = workspace:GetAttribute("PlaceRole") or GameConfig.DefaultPlaceRole
+local role = PlaceRole.Current
 local services = script.Parent:WaitForChild("Services")
 Loader.Boot(`Server/{role}`, { services:FindFirstChild("Core"), services:FindFirstChild(role) })

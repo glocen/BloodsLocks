@@ -7,7 +7,7 @@
 --   Death: it's dismissed and can't be resummoned for ResummonCooldown seconds.
 --   Regen: it recovers Regen (fraction of max HP per second) while dismissed or out of combat.
 --   Level: it levels with its master (never below the level it reached); its special Skill unlocks at
---     Skill.UnlockLevel (everything is unlocked in the castle, like player skills).
+--     Skill.UnlockLevel (everything is unlocked in the Manor, like player skills).
 -- The HUD reads Player attributes: shId, shLv, shHp (0..1), shOut (summoned), shCd (time() the cooldown ends).
 
 local CollectionService = game:GetService("CollectionService")
