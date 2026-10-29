@@ -96,7 +96,7 @@ One server state machine, `MatchService` (Match role only), with every duration 
 
 ### In-match leveling
 
-- Levels 1–15 come from cumulative earned Virtue (curve in `Config.Progression`).
+- **Superseded 2026-10-29 (built):** levels 1–20 come from XP earned by kills, separate from the score (`Config.Progression`, `ProgressionService`). The score's player-facing name is `Config.Score.DisplayName` ("Renown"). The old "levels 1–15 from Virtue" rule is retired.
 - Each level gives +4% max HP, +3 max stamina and +2% damage. *(tune)*
 - Unlocks: second skill at level 5, class ultimate at level 12.
 
@@ -128,7 +128,28 @@ Biting a staggered fodder enemy converts it into a temporary minion (its allegia
 - Formula *(tune)*: 15 participation + placement (1st 60, 2nd 40, 3rd 30, others 15) + `floor(virtueEarned / 50)` + 2 per player kill, capped at 150.
 - Saved as `Bloodgems` in the profile and spent on class skins in the castle shop.
 
+### Owner decisions, 2026-10-29 (confirmed with docs/production-plan.md section 6)
+
+All of these are data (`Definitions/Rules`, `Config`), so a later change is cheap.
+
+| # | Decision |
+|---|---|
+| D1 | Culls stay ours: none after phase 1, culls after phases 2 and 3 (8 → 8 → 6 → 3). The Duskbloods footage culls after phases 1 and 2; we chose not to follow it. |
+| D2 | Final: every finalist gets an HP bonus scaled by their Renown (cap +30%). At the 4:00 cap, sudden death: one life each and a slow blood drain until one remains. If the last two die at once, the higher Renown wins, then whoever reached it first. |
+| D3 | Heal uses refill to 2 on death if below. Using the stake at full HP is refused without spending a use. |
+| D4 | Player kills give Renown only inside ritual sites (replaces "Player kill 30" anywhere). The 2-Bloodgem kill bonus counts everywhere. |
+| D5 | A new Shinigami pact starts 3 levels below its master (minimum 1) and gains a level each time the master does. |
+| D6 | Attacks and sprint stay stamina-free. The guard counter and the howl deflecting projectiles will be added (later kit work). |
+| D7 | The score keeps the name "Renown". |
+| D8 | The Cathedral Quarter is split into four regions for the proof of concept: Lamplighters' Reach (south), Cloister (west), Bell Works (east), Chapter Close (north). |
+| D9 | A player who leaves early keeps the participation reward (15) only; culled players get the full formula. |
+| D10 | The first loop is built on the Cathedral Quarter alone; more districts join through its sockets after M5. |
+| A-1 | Approved: `ProfileTemplate.MatchAwards` and `PlayerHandlerData.SettleMatch` (additions only; DataInit untouched). |
+| A-2 | Approved: MemoryStore, reserved servers, PathfindingService and image uploads (free; Roblox quotas only). |
+
 ## 3b. Game roadmap: from framework to the full Duskbloods loop (2026-10-29)
+
+> **2026-10-29:** the working order from here is [production-plan.md](production-plan.md) (milestones M1–M7), built on ChatGPT's [whole-game brief](duskbloods-gameplay-breakdown.md). Steps 1 and 2 below are done.
 
 Owner, 2026-10-29: "we're far from v1; work on the actual game; big inspiration from Duskbloods, creative freedom." Research: duskbloods-reference.md ("PvE and the minute-to-minute match"). ChatGPT is asked for a timestamped video breakdown to refine this.
 
@@ -530,8 +551,8 @@ Also fixed: the saber template's `WeldConstraint`s didn't hold under Server Auth
 - The hub was renamed Castle → Manor at the same time (`Services/Manor`, `Util.PlaceRole`). The Manor boots 10 + 7 modules with 0 errors.
 - Next: the owner's framework issue list (fix pass → tag `framework-v1`), then MatchService per the match flow v1. |
 | 10a | **Shinigami** (pulled forward from Step 12, owner 2026-10-29): pact circles, roles (melee/ranged/support), levelling, recall and cooldown, as in Duskbloods. Built and tested first at the hub yard's circle | Pact, follow, fight, recall and death cooldown verified against dummies | **Core done 2026-10-29** (melee "Kurogane"). Verified: pact at the yard circle (G), summon/dismiss (T), follows its master, engages enemies in a fight with its master (or with itself), alternates two slashes (40/50), death means dismissed plus a 30 s cooldown with resummon refused, regen while dismissed (2%/s), it never hurts its own master (allegiance via `own` attribute), no leftover models. **To do:** ranged and support types, levelling with its master (Step 11), a real model (Blender), animations. |
-| 11 | Match rules: phases, Virtue, culling, respawn, final arena, leveling, flasks | A full match loop with 2–3 players | — |
-| 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | **Pulled forward 2026-10-29** (owner: "work on the actual game"). Order and NPC system v1 design: section 3b. Next: NPC system v1. |
+| 11 | Match rules: phases, Virtue, culling, respawn, final arena, leveling, flasks | A full match loop with 2–3 players | **Started.** In-match XP, levels (cap 20) and the Renown ledger done 2026-10-29 (commit 66119ed, self-test 44/44). The rest follows production-plan.md M1–M5. Session 0 (2026-10-29): ChatGPT's 5680db7 pulled, both places match `src/` (136 scripts), self-test 44/44 in Manor and Victorian, owner decisions recorded in section 3. **Next: F1** (rules as data, world contract and checker, logic tests). |
+| 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | **NPC system v1 done 2026-10-29** (Wretch, Butcher, spawn markers, credit, refill; commit 8459443). Vertical navigation, bosses and minions: production-plan.md N1, B2–B3, X1. |
 | 13 | Rewards + skin purchases | Bloodgems granted once per match; purchases persist | — |
 | 14 | Victorian world map | Streaming, regions, spawn areas | — |
 | 15 | Class 2 | Added with zero core edits | — |

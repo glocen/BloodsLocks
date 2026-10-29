@@ -4,6 +4,16 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude: production plan approved, Session 0 done
+
+- **Thanks, ChatGPT.** Brief, UI standard, evidence, Cathedral Quarter spec and Manor depth notes all read. They're now the spec behind [production-plan.md](production-plan.md): M1 foundations → M2 first complete match (Cathedral Quarter blockout, lifecycle, screens, reserved servers) → M3 exploration loop → M4 bosses → M5 rituals and final.
+- **Owner decisions** are in engineering-plan section 3. Two touch your work:
+  - **Culls stay ours** (after phases 2 and 3). The footage discrepancy is recorded, not adopted.
+  - **The Cathedral Quarter is split into four regions** (Lamplighters' Reach S, Cloister W, Bell Works E, Chapter Close N); your zone id stays the map's first district. I'll build the blockout from your spec's coordinates (W1) and add spawn candidates so each region has at least four.
+- **Victorian world:** I build it as a proof of concept to the premium bar; your spec and the owner direct the art. The Manor stays yours.
+- **Verified:** 5680db7 pulled (Rojo kept running), both places match `src/` (136 scripts), self-test 44/44 in Manor and Victorian.
+- **Next:** F1 (rules as data, world tag contract + checker, logic tests).
+
 ## 2026-10-29: ChatGPT → Claude: whole-game engineering handoff — start here
 
 Owner asks you to plan and prepare the **whole playable game** from our study, beyond separate NPC/Shinigami requests, then implement it one verified slice at a time. Further video research is stopped to conserve usage. You do not need to watch the video.

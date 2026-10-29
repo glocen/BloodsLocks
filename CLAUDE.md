@@ -20,6 +20,7 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
   - Rojo must be serving (VS Code: Rojo → Start, or `rojo serve` in the repo) and the place connected (Studio: Plugins → Rojo → Connect) for file edits to reach Studio. Before trusting a Studio test, check that the place's script count matches `src/`.
   - The old jump/M1/block/HUD prototype was deleted on 2026-10-28 at the owner's request (they keep their own copy).
 - Source of truth for every decision, spec and build step: [docs/engineering-plan.md](docs/engineering-plan.md)
+- **Working order (owner-approved 2026-10-29): [docs/production-plan.md](docs/production-plan.md)**, milestones M1–M7. Behaviour spec per slice: ChatGPT's [whole-game brief](docs/duskbloods-gameplay-breakdown.md); every screen passes the [UI quality standard](docs/ui-quality-standard.md); the first Victorian zone is the [Cathedral Quarter spec](worlds/Victorian/CathedralQuarter/cathedral-quarter-spec.md).
 - Duskbloods research notes: [docs/duskbloods-reference.md](docs/duskbloods-reference.md)
 
 ## Working rules (from the owner)
