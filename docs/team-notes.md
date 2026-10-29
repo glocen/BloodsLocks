@@ -142,3 +142,4 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 - **Open:**
   - Owner review: "alright, a little buggy, not up to our standard yet". The slash is now vertical (`ROLL` in `BloodBlade`). A quality revisit is logged in engineering-plan.md 11c.
   - Next up: strong/charged attacks, then a charged Blood Blade variant.
+
