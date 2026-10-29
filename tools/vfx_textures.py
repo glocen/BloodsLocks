@@ -147,6 +147,50 @@ def ring(x, y, n=256, inner=0.80, outer=0.96):
     return (1, 1, 1, a)
 
 
+def medallion(x, y, n=512):
+    """An engraved metal bezel for HUD skill medallions: bevelled outer band with tick marks, an inner lip, and a
+    lit top-left / shadowed bottom-right. Light grey on transparent so code tints it (bronze, gold, blood)."""
+    u = (x + 0.5) / n * 2 - 1
+    v = (y + 0.5) / n * 2 - 1
+    r = math.hypot(u, v)
+    ang = math.atan2(v, u)
+    aa = 2.0 / n
+    band = smoothstep(0.78 - aa, 0.78 + aa, r) * (1 - smoothstep(0.985 - aa, 0.985 + aa, r))
+    if band <= 0:
+        return (0, 0, 0, 0)
+    t = clamp((r - 0.78) / 0.205)  # 0 inner edge .. 1 outer edge
+    # bevel profile: bright ridge near the outer third, darker groove in the middle, bright inner lip
+    profile = 0.55 + 0.35 * gauss(t - 0.72, 0.12) + 0.3 * gauss(t - 0.06, 0.05) - 0.25 * gauss(t - 0.38, 0.09)
+    # light from the top-left
+    light = 0.78 + 0.22 * (-(u + v) / max(r, 1e-3) / math.sqrt(2))
+    # engraved ticks in the groove, every 10 degrees, longer every 30
+    deg = (math.degrees(ang) + 360) % 360
+    k = deg % 10
+    tick_w = 0.6
+    tick = (1 - smoothstep(tick_w * 0.5, tick_w, min(k, 10 - k)))
+    long_tick = (deg % 30 < 1.2 or deg % 30 > 28.8)
+    tick_mask = tick * gauss(t - 0.38, 0.06 if not long_tick else 0.11)
+    shade = clamp(profile * light - 0.35 * tick_mask)
+    s = shade
+    return (s, s, s, band)
+
+
+def bullet(x, y, n=64):
+    """A pistol cartridge icon (white), pointing up."""
+    u = (x + 0.5) / n
+    v = (y + 0.5) / n
+    cx, w = 0.5, 0.17
+    aa = 1.5 / n
+    body = (1 - smoothstep(w - aa, w + aa, abs(u - cx))) * smoothstep(0.30 - aa, 0.30 + aa, v) * (1 - smoothstep(0.92 - aa, 0.92 + aa, v))
+    # ogive tip
+    tip_v = 0.08
+    tw = w * math.sqrt(clamp((v - tip_v) / (0.34 - tip_v))) if v > tip_v else 0
+    tip = (1 - smoothstep(tw - aa, tw + aa, abs(u - cx))) * (1 if v <= 0.34 else 0)
+    groove = 1 - 0.75 * gauss(v - 0.80, 0.012)
+    a = clamp(max(body * groove, tip))
+    return (1, 1, 1, a)
+
+
 def preview(path, width, height, pixels, background=(0.12, 0.08, 0.12)):
     """The texture composited over a dark background, for judging white/alpha art by eye."""
     def over(x, y):
@@ -224,6 +268,8 @@ def main():
         ("glint", 256, 256, glint),
         ("soft_glow", 128, 128, soft_glow),
         ("ring", 256, 256, ring),
+        ("medallion", 512, 512, medallion),
+        ("bullet", 64, 64, bullet),
     ]
     for name, w, h, pixels in textures:
         write_png(os.path.join(out, name + ".png"), w, h, pixels)

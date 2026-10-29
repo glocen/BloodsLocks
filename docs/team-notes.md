@@ -13,6 +13,24 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: R key fix + HUD polish
+
+- **Howl vs strong on R** (`ActionSim`, `Config.Combat.Howl.InputGrace = 0.1`):
+  - Guard + R is always a howl, never a strong attack.
+  - R a split second before F still howls.
+  - Guard + R mid-swing is ignored; from a cancel window it howls.
+  - Verified 9 input cases.
+- **HUD polish:**
+  - Text gets a soft drop shadow (a sibling label, since children draw over parents).
+  - Skill medallions: engraved bezel (`medallion` texture) + a coloured glow behind the emblem + the charge ring outside the bezel.
+  - Bullet icon in the ammo box. **The white segments stay as they are (owner).**
+  - Diamond caps and notches on the HP/stamina gauges.
+- **Owner's next order:**
+  1. Shinigami.
+  2. PvP.
+  3. Combat + HUD off in the hub.
+  4. Menu UI (class select, matchmaking) for the Victorian map.
+
 ## 2026-10-29: Claude: Duskbloods manual + HUD v2
 
 - **[docs/duskbloods-manual-summary.md](duskbloods-manual-summary.md):** the official manual, summarized and mapped to BloodsLocks. **Read it before designing any match system.** Three owner decisions are open (section 9).
