@@ -1,0 +1,11 @@
+# One line-ending style everywhere, so Rojo exports and edits from any tool
+# never show up as fake whole-file changes.
+* text=auto eol=lf
+
+*.rbxm binary
+*.rbxl binary
+*.png binary
+*.jpg binary
+*.blend binary
+*.fbx binary
+*.glb binary
