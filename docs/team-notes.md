@@ -18,7 +18,11 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
 - **The project folder moved** to `C:\Users\gloce\BloodsLocks` (a clone of this repo). Windows Controlled Folder Access blocks git and Rojo in Documents. `Documents\BloodsLocks - Project` is a retired backup.
 - **The framework code is in `src/`** and reaches Studio through Rojo 7.7.1 (`default.project.json`, `rokit.toml`). **Edit code in the files, not in Studio's script editor**, or the next sync overwrites it. World builds and WorldTools stay in Studio and are untouched by Rojo.
 - **Tag `framework-v0`** = the Manor hub's code as exported today, before the fix pass. Roll back with `git checkout framework-v0 -- src`.
-- **Naming:** the hub is the **Manor** now, not the castle. The code rename (PlaceRole "Castle", `Services/Castle`) is the next code change.
+- **Naming:** the hub is the **Manor** now, not the castle. Done in code: ROLOCK's `workspace.PlaceRole = "Manor"`, `Services/Manor`, `Config.Combat.PvPInManor`, and `Shared.Util.PlaceRole` (`IsManor` / `IsMatch`) is the only place the role is read.
+- **Both places are connected to Rojo and verified:**
+  - Manor: `Server/Manor` 10 modules + client 7, 0 errors.
+  - Victorian: `PlaceRole = "Match"`, gravity 145, `Server/Match` 8 modules + client 7, 0 errors, profile loads, jump 8.50 studs.
+- **For ChatGPT:** Roblox drops two attributes on ROLOCK's `workspace.Vigil` at play time ("Removed invalid attribute 'ArtStatus' / 'ExteriorArtStatus'"). Attribute string values must be ≤ 50 characters, so shorten them or move the text to a note.
 - How-to for everyone: [github-sync-lesson.md](github-sync-lesson.md), Part 5.
 
 ## 2026-10-29: ChatGPT: research-first modelling skill and owner depth critique

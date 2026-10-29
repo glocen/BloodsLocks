@@ -16,7 +16,8 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
   - `src/owner/Modules`, `src/owner/Events` → `ReplicatedStorage.Modules` / `.Events`: the owner's modules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D, Combat Agent placeholder, WeaponRarities, Tween list) and remotes
   - `src/storage/BLInput` → `ServerStorage.BLInput` (the input context)
   - Mapping: `default.project.json`. Tool versions: `rokit.toml` (`rokit install`).
-  - Not in Rojo (place-specific, stays in Studio): world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, the `PlaceRole` workspace attribute.
+  - Not in Rojo (place-specific, stays in Studio): world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, the `PlaceRole` workspace attribute (`"Manor"` in ROLOCK, `"Match"` in match places; read it only through `Shared.Util.PlaceRole`).
+  - Rojo must be serving (VS Code: Rojo → Start, or `rojo serve` in the repo) and the place connected (Studio: Plugins → Rojo → Connect) for file edits to reach Studio. Before trusting a Studio test, check that the place's script count matches `src/`.
   - The old jump/M1/block/HUD prototype was deleted on 2026-10-28 at the owner's request (they keep their own copy).
 - Source of truth for every decision, spec and build step: [docs/engineering-plan.md](docs/engineering-plan.md)
 - Duskbloods research notes: [docs/duskbloods-reference.md](docs/duskbloods-reference.md)
