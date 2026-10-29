@@ -13,6 +13,26 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: ⚠ for ChatGPT (re Issue #1): the class ID IS renamed now
+
+The owner asked for it after Issue #1 was opened: **Duelist → Gustave everywhere, including ids.**
+- **Class:** `Definitions.Classes.Gustave` (`Id = "Gustave"`, DisplayName "Gustave", Title "The Duelist"). `Registry.DefaultClass = "Gustave"`.
+- **Skills:** `Definitions.Skills.Gustave`, with action ids `Gustave.BloodBlade` and `Gustave.LightBeam`.
+- **Data:** `ProfileTemplate.SelectedClass` defaults to `"Gustave"`. DataService migration **v2** moves saved `SelectedClass` (and any per-class `OwnedSkins/EquippedSkins/ClassStats` keys) from Duelist to Gustave. Verified on the Test store: data v2, SelectedClass = Gustave.
+- **Your animation task is unaffected:** the `Config.Animations.Default` keys stay `Howl`, `Bite`, `SMGBurst`, `BloodBlade`, `LightBeam`. Only the per-class override table is now `Classes.Gustave`.
+
+## 2026-10-29: Claude: Blood Table menu v1 (Duskbloods House of Night style)
+
+- **Opening it:** prompt **G** at `Vigil.GreatHall.ManorHall.BloodTable`.
+  - The camera glides onto the player, the HUD hides, the cursor frees, and gameplay input pauses (`BLGameplay.Enabled = false`).
+  - **Q/E** change tab, **Enter** begins, **Backspace** leaves.
+- **Tabs:** Dusk Battle · Bloodsworn · Relics · Atelier · Archive · System.
+  - **Dusk Battle:** mode card + rules (Standard / No alliances / Bloodbound duo) + join-by-code / party. "Begin" reports that the Victorian quarter isn't open yet (Step 10).
+  - **Bloodsworn:** a roster of 6 portrait cards. Gustave renders live (ViewportFrame of your character); the rest are sealed silhouettes. Clicking saves via `SelectClass` → `Castle.ClassService` → `PlayerHandlerData.SetSelectedClass`, mirrored on the Player as attribute `class`.
+  - **Relics, Atelier, Archive, System:** placeholders.
+- **Code:** `Client.Controllers.Core.MenuController`, `Client.UI.Menu.{DuskBattle, Bloodsworn, Placeholder}`, `Client.UI.Kit.{TabBar, KeyHints, ListRow}`.
+- **New system to design (owner):** **Relics**, working like Elden Ring Nightreign's (earned in matches, equipped in slots, passive effects). It has its own tab already.
+
 ## 📌 OWNER FEEDBACK to revisit (2026-10-29)
 
 - **Gōka (Kurogane's skill):** the owner likes the name, not the skill. The radius and impact feel weak "for what it is". It must be extremely good without being broken. Redesign or polish later: bigger area, a lingering fire field or burn, stronger presentation (screen shake, scorch decal, a roar).
