@@ -10,6 +10,7 @@ local A = {
 	Level = "lv",
 	Xp = "xp", -- progress inside the current level
 	Score = "sc", -- Renown total
+	HpBonus = "hpB", -- extra max HP as a fraction (the final's bonus from Renown; Spawn applies it)
 	-- the Shinigami pact (ShinigamiService), read by the HUD card
 	ShinigamiId = "shId",
 	ShinigamiLevel = "shLv",

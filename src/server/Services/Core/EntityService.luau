@@ -3,9 +3,10 @@
 -- and turns 0 HP into a real death, since Humanoid.Health isn't simulation state. MakeEntity builds a non-player
 -- entity from a rig template (training dummies, the self-test's dummy, enemies).
 -- PlayerDied fires once per death with the credit: damage on a character is tallied by the attacker's side
--- (CombatSim.Side: a player's UserId, the master of a Shinigami or minion, a bot participant's negative id), and the
+-- (CombatSim.Side: a player's UserId, the master of a Shinigami or minion, an AI hunter's negative id), and the
 -- killer is the side that landed the killing blow. Enemies (the hostile side) and the victim's own side never get
 -- credit. The tally starts over with each new character.
+-- Watch(model) gives any other body the same bookkeeping (AI hunters): BodyDied fires once when it reaches 0 HP.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -24,8 +25,20 @@ local EntityService = {}
 
 -- Fires (player, killerSide: number?, sharesBySide) once when a player's character reaches 0 HP.
 EntityService.PlayerDied = Signal.new() :: Signal.Signal<Player, number?, { [number]: number }>
+-- Fires (model, killerSide: number?, sharesBySide) once when a watched body (Watch) reaches 0 HP.
+EntityService.BodyDied = Signal.new() :: Signal.Signal<Model, number?, { [number]: number }>
 
 local tallies: { [Model]: Tally } = {}
+local bodies: { [Model]: boolean } = {} -- watched non-player bodies: true once their death has fired
+
+-- Tallies credit for `model` and reports its death once (BodyDied). For bodies that aren't player characters.
+function EntityService.Watch(model: Model)
+	tallies[model] = { Shares = {}, Killer = nil }
+	bodies[model] = false
+	model.Destroying:Connect(function()
+		tallies[model], bodies[model] = nil, nil
+	end)
+end
 
 local function watch(player: Player)
 	local function tag(character: Model)
@@ -105,6 +118,13 @@ function EntityService.Start()
 				humanoid.Health = 0 -- only once: the next check sees a dead Humanoid
 				local tally = tallies[character] or { Shares = {}, Killer = nil }
 				EntityService.PlayerDied:Fire(player, tally.Killer, tally.Shares)
+			end
+		end
+		for model, fired in bodies do
+			if not fired and EntityState.Number(model, EntityState.Attr.HP, 1) <= 0 then
+				bodies[model] = true
+				local tally = tallies[model]
+				EntityService.BodyDied:Fire(model, tally.Killer, tally.Shares)
 			end
 		end
 	end)

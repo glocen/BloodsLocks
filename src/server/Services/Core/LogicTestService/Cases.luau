@@ -10,6 +10,7 @@ local Registry = require(Shared.Definitions.Registry)
 local Culling = require(Shared.Match.Culling)
 local Rewards = require(Shared.Match.Rewards)
 local Ledger = require(Shared.Match.Ledger)
+local Regions = require(Shared.Match.Regions)
 local WorldTags = require(Shared.World.Tags)
 
 local standard = Registry.Rule("Standard")
@@ -106,6 +107,43 @@ return {
 			t.Equal("by source", Ledger.BySource(a).Objective, 10)
 			t.Equal("higher total first, then reach order, then id",
 				table.concat(Ledger.Rank({ [5] = a, [-2] = b, [3] = c }, { 3, -2, 5, 9, -4 }), " "), "5 -2 3 -4 9")
+		end,
+	},
+	{
+		Name = "Regions",
+		Run = function(t)
+			local regions = { "A", "B", "C", "D" }
+			t.Equal("capacity for 8 over 4 regions: ceil(8/4)+1", Regions.Capacity(8, 4), 3)
+			local ids = { 1, 2, 3, 4, 5, 6, 7, 8 }
+			local everyoneA = {}
+			for _, id in ids do
+				everyoneA[id] = "A"
+			end
+			local result = Regions.Allocate(ids, everyoneA, regions, Random.new(1))
+			local inA, moved = 0, 0
+			for _, id in ids do
+				if result[id].Region == "A" then
+					inA += 1
+				end
+				if result[id].Moved then
+					moved += 1
+				end
+			end
+			t.Equal("a full region takes only its capacity", inA, 3)
+			t.Equal("the overflow is moved, and told so", moved, 5)
+			t.Equal("first come, first served", result[1].Region, "A")
+			local none = Regions.Allocate(ids, {}, regions, Random.new(2))
+			local placed, notMoved = 0, true
+			for _, id in ids do
+				if table.find(regions, none[id].Region) then
+					placed += 1
+				end
+				notMoved = notMoved and not none[id].Moved
+			end
+			t.Equal("no choice still gets a valid region", placed, 8)
+			t.Check("and isn't reported as moved", notMoved)
+			local bad = Regions.Allocate({ 1 }, { [1] = "Nowhere" }, regions, Random.new(3))
+			t.Check("an unknown region falls back to a valid one", table.find(regions, bad[1].Region) ~= nil and not bad[1].Moved)
 		end,
 	},
 	{

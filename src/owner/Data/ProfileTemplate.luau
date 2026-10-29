@@ -16,4 +16,5 @@ return {
 	Stats = {Matches = 0, Wins = 0, Finals = 0, PlayerKills = 0, Deaths = 0, VirtueEarned = 0},
 	ClassStats = {}, --[classId] = {Matches = 0, Wins = 0}
 	Settings = {MouseSensitivity = 1, Keybinds = {}},
+	MatchAwards = {}, --{ {Id = matchId, Amount = bloodgems}, ... } newest last; a match pays a player once (PlayerHandlerData.SettleMatch)
 }

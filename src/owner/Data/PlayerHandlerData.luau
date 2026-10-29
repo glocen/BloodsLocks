@@ -226,6 +226,39 @@ function PlayerHandlerData.RemoveBloodgems(plr: Player, amount: number): boolean
 	return true
 end
 
+--match rewards: pays a match's Bloodgems once per match id (a repeated or replayed settlement pays nothing)
+local MAX_MATCH_AWARDS = 20 --recent match ids kept so a retry can't pay twice
+
+function PlayerHandlerData.SettleMatch(plr: Player, matchId: string, amount: number, stats: {[string]: number}?): boolean --false if already paid
+	local profile = PlayerHandlerData.Profiles[plr]
+	if not profile then
+		return false
+	end
+	local awards = profile.Data.MatchAwards
+	for _, award in ipairs(awards) do
+		if award.Id == matchId then
+			return false
+		end
+	end
+	if not IsValidAmount(amount) then
+		warn("SettleMatch: invalid amount", amount, "for", plr.Name)
+		return false
+	end
+
+	table.insert(awards, {Id = matchId, Amount = amount})
+	while #awards > MAX_MATCH_AWARDS do --oldest first
+		table.remove(awards, 1)
+	end
+	profile.Data.Bloodgems += amount
+	for stat, value in pairs(stats or {}) do
+		if typeof(profile.Data.Stats[stat]) == "number" and typeof(value) == "number" then
+			profile.Data.Stats[stat] += value
+		end
+	end
+	rss.Events.NotificationClientDataRE:FireClient(plr, "BloodgemsEVENT", profile.Data.Bloodgems)
+	return true
+end
+
 --class (callers check classId against the class list first)
 function PlayerHandlerData.SetSelectedClass(plr: Player, classId: string)
 	local profile = PlayerHandlerData.Profiles[plr]

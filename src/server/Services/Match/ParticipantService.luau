@@ -5,8 +5,10 @@
 -- ReplicatedStorage.MatchState.Participants (Shared.Match.MatchState) for every screen.
 --   Players join on arrival. AI hunters fill the empty seats up to Config.Match.Lobby.MaxPlayers (owner decision D11);
 --   MatchService calls FillWithAi when the countdown ends. They have no body or judgement yet.
---   Deaths: EntityService.PlayerDied counts the victim's death and the killer's kill (a Shinigami's kill is its
---   master's) and logs where it happened. Player kills pay Renown only inside ritual sites (D4), from R1.
+--   Deaths: EntityService.PlayerDied (players) and BodyDied (AI hunter bodies, which carry their id as OwnerId) count
+--   the victim's death and the killer's kill (a Shinigami's kill is its master's), log it, then fire Died for
+--   MatchService. Player kills pay Renown only inside ritual sites (D4), from R1.
+--   Joining: open until MatchService closes it when the match begins (later arrivals aren't entrants).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,6 +19,8 @@ local Registry = require(Shared.Definitions.Registry)
 local MatchState = require(Shared.Match.MatchState)
 local PlayerState = require(Shared.Simulation.PlayerState)
 local Log = require(Shared.Util.Log)
+local Signal = require(Shared.Util.Signal)
+local EntityState = require(Shared.Simulation.EntityState)
 local Core = script.Parent.Parent.Core
 local DebugService = require(Core.DebugService)
 local EntityService = require(Core.EntityService)
@@ -38,6 +42,7 @@ export type Participant = {
 	Kills: number,
 	Deaths: number,
 	Placement: number,
+	RevivalAt: number,
 	JoinedAt: number,
 	LeftAt: number?,
 }
@@ -46,6 +51,12 @@ export type Kill = { Killer: number?, Victim: number, At: number, InRitual: bool
 
 local ParticipantService = {}
 
+ParticipantService.Priority = 50 -- its Init makes ReplicatedStorage.MatchState, which MatchService uses
+
+-- Fires (victimId, killerId?) after a death is recorded.
+ParticipantService.Died = Signal.new() :: Signal.Signal<number, number?>
+
+local open = true
 local records: { [number]: Participant } = {}
 local joinOrder: { number } = {}
 local kills: { Kill } = {}
@@ -86,6 +97,7 @@ local function add(id: number, name: string, ai: boolean, class: string): Partic
 		Kills = 0,
 		Deaths = 0,
 		Placement = 0,
+		RevivalAt = 0,
 		JoinedAt = time(),
 		LeftAt = nil,
 	}
@@ -104,6 +116,9 @@ local function join(player: Player)
 	if record then -- back in the same match server: the record is theirs again (L1 decides who may return)
 		record.Left, record.LeftAt = false, nil
 		publish(record)
+		return
+	end
+	if not open then
 		return
 	end
 	add(player.UserId, player.DisplayName, false, classOf(player))
@@ -132,9 +147,9 @@ local function leave(player: Player)
 	end
 end
 
-local function onPlayerDied(player: Player, killer: number?, _shares: { [number]: number })
-	local victim = records[player.UserId]
-	if not victim then
+local function recordDeath(victimId: number, killer: number?)
+	local victim = records[victimId]
+	if not victim or not victim.Alive then
 		return
 	end
 	victim.Deaths += 1
@@ -147,6 +162,12 @@ local function onPlayerDied(player: Player, killer: number?, _shares: { [number]
 	end
 	-- InRitual comes with ritual sites (R1); until then no kill happens inside one, so none pays Renown (D4)
 	table.insert(kills, { Killer = if credited then killer else nil, Victim = victim.Id, At = time(), InRitual = false })
+	ParticipantService.Died:Fire(victimId, if credited then killer else nil)
+end
+
+-- Joins close when the match begins (MatchService); later arrivals aren't entrants.
+function ParticipantService.Close()
+	open = false
 end
 
 -- Adds one AI hunter. Returns its id, or nil when every seat is taken or the names ran out.
@@ -243,7 +264,15 @@ function ParticipantService.Start()
 		join(player)
 	end
 	Players.PlayerRemoving:Connect(leave)
-	EntityService.PlayerDied:Connect(onPlayerDied)
+	EntityService.PlayerDied:Connect(function(player: Player, killer: number?)
+		recordDeath(player.UserId, killer)
+	end)
+	EntityService.BodyDied:Connect(function(model: Model, killer: number?)
+		local owner = model:GetAttribute(EntityState.Attr.OwnerId)
+		if type(owner) == "number" and owner < 0 then
+			recordDeath(owner, killer)
+		end
+	end)
 	ScoreService.Changed:Connect(function(id: number)
 		local record = records[id]
 		if record then

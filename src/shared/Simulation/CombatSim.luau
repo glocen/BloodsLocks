@@ -37,15 +37,32 @@ local CombatSim = {}
 CombatSim.Damaged = Signal.new() :: Signal.Signal<Model, Model, number, number>
 
 local queue: { HitRequest } = {}
+local losses: { { Target: Model, Amount: number } } = {}
 
-local function loseHp(target: Model, attacker: Model, amount: number)
+-- Server: the match's say over who can be hurt right now (MatchService: no damage to entrants between phases,
+-- spawn protection). Nil = everyone can be hurt.
+local guard: ((target: Model, now: number) -> boolean)? = nil
+
+local function loseHp(target: Model, attacker: Model?, amount: number)
 	local left = math.max(0, num(target, A.HP, 0) - amount)
 	target:SetAttribute(A.HP, left)
-	CombatSim.Damaged:Fire(target, attacker, amount, left)
+	if attacker then
+		CombatSim.Damaged:Fire(target, attacker, amount, left)
+	end
 end
 
 function CombatSim.Queue(request: HitRequest)
 	table.insert(queue, request)
+end
+
+-- Server: HP lost to no one (sudden death's drain), applied inside the next simulation step like any hit.
+function CombatSim.QueueLoss(target: Model, amount: number)
+	table.insert(losses, { Target = target, Amount = amount })
+end
+
+-- Server: `protected(target, now)` returning true makes `target` take no damage (MatchService sets it).
+function CombatSim.SetGuard(protected: ((target: Model, now: number) -> boolean)?)
+	guard = protected
 end
 
 -- The UserId a model fights for: its player, or the owner of a companion. nil for neutral NPCs.
@@ -134,7 +151,7 @@ end
 local function apply(request: HitRequest, now: number)
 	local target, attacker, hit = request.Target, request.Attacker, request.Hit
 	local hp = num(target, A.HP, 0)
-	if hp <= 0 or not target.Parent or not CombatSim.CanDamage(attacker, target) then
+	if hp <= 0 or not target.Parent or not CombatSim.CanDamage(attacker, target) or (guard and guard(target, now)) then
 		return
 	end
 	local fx = EntityState.Fx(target)
@@ -197,6 +214,15 @@ end
 -- Server only, called at the start of each simulation step. Hits from attackers that were already dead (or gone)
 -- when the step began are dropped; attackers alive at the start all land, so two hits in the same step trade.
 function CombatSim.ServerStep(now: number)
+	if #losses > 0 then
+		local pending = losses
+		losses = {}
+		for _, loss in pending do
+			if loss.Target.Parent and num(loss.Target, A.HP, 0) > 0 then
+				loseHp(loss.Target, nil, loss.Amount)
+			end
+		end
+	end
 	if #queue == 0 then
 		return
 	end

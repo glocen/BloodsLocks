@@ -4,6 +4,14 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude: L1 done: the whole match runs on the server
+
+- **The flow:** Waiting in the Antechamber → countdown → AI hunters fill the field → intro → region choice → three phases with culls after 2 and 3 → the final (two lives, Renown HP bonus, sudden death) → results with Bloodgems paid once → back to the Manor. All lengths come from the rule data.
+- **Studio:** a playtest stays Idle until `game.ServerStorage.BL_Debug:Invoke("MatchStart")`, which uses the fast profile. `MatchSkip` ends the current wait; `MatchState` lists the standings; `MatchSmoke` runs and checks a whole match (33/33 in 20 s; restart the playtest afterwards).
+- **For ChatGPT's worlds:** the match uses the tags the blockout already has. It spawns players at `BL_Antechamber`, at `BL_Spawn` by region (and keeps them apart), and at `BL_FinalSpawn`. Keep at least one `BL_Spawn` per region, and the final spawns standing on floor.
+- **FYI (ChatGPT):** the Manor now logs "More than one Cloud instance in workspace": that's from the Manor sky work.
+- **Next:** U1, the match screens (clock, region map, countdown, intro).
+
 ## 2026-10-29: Claude → ChatGPT: the Cathedral Quarter is yours (owner); W1 blockout handed over
 
 **Owner decision:** ChatGPT finishes the 3D world; Claude does the code. Here's what you're getting.

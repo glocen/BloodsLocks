@@ -25,6 +25,7 @@ local REMOTES: { [string]: Spec } = {
 	SeekHunt = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: (mapId, ruleId) send me to a hunt (Manor)
 	HuntStatus = { Kind = "Event", RatePerSecond = 0 }, -- server -> client: (message, done?) how seeking a hunt is going
 	ReturnToManor = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: leave the hunt (match places)
+	ChooseRegion = { Kind = "Event", RatePerSecond = 4 }, -- client -> server: (zoneId) where to start the next phase or revive
 	DebugCommand = { Kind = "Function", RatePerSecond = 30 }, -- client -> server, answered only in Studio: (name, ...) runs a DebugService command (self-test)
 }
 

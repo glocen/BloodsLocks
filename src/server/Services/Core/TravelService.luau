@@ -49,6 +49,13 @@ local function send(player: Player, placeId: number, data: { [string]: any }, ar
 	end
 end
 
+-- Sends players back to the Manor (match places: after the results, or a culled player choosing to leave).
+function TravelService.ReturnToManor(players: { Player })
+	for _, player in players do
+		task.spawn(send, player, GameConfig.Places.Manor, {}, "Returning to the Manor…")
+	end
+end
+
 function TravelService.Start()
 	TeleportService.TeleportInitFailed:Connect(function(player: Player, result: Enum.TeleportResult, message: string)
 		travelling[player] = nil
@@ -75,7 +82,7 @@ function TravelService.Start()
 		end)
 	else
 		Net.Server.On("ReturnToManor", function(player: Player)
-			send(player, GameConfig.Places.Manor, {}, "Returning to the Manor…")
+			TravelService.ReturnToManor({ player })
 		end)
 	end
 end

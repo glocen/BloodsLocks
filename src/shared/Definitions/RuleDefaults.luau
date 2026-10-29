@@ -28,6 +28,7 @@ return {
 		TopUpHealUses = 2, -- D3: heal uses refill to this on death if below
 	},
 
+	FinalSetup = 3, -- finalists are moved to the arena; the rule change is shown before combat
 	Final = {
 		Lives = 2,
 		TimeCap = 240,

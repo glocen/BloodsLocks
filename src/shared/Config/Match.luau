@@ -23,13 +23,20 @@ return {
 		},
 	},
 
+	-- Studio: the match only starts on BL_Debug "MatchStart" (so a plain playtest keeps the self-test environment);
+	-- live match servers start in Waiting at once.
+	StudioAutoStart = false,
+	SpawnHeight = 3, -- studs a body's root stands above a spawn marker (markers sit on the floor)
+
 	-- Studio only: these lengths replace the rule's, so a whole match runs in a few minutes (with bot entrants, solo).
 	StudioFast = {
+		MinPlayers = 1, -- a solo playtest can run a whole match (AI hunters fill the rest)
 		Countdown = 8,
 		Intro = 3,
 		RegionChoice = { First = 8, Later = 6 },
 		Phases = { 60, 45, 45 },
 		PhaseResolve = 4,
+		FinalSetup = 2,
 		FinalTimeCap = 60,
 		Results = 6,
 	},

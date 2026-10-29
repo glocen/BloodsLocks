@@ -1,6 +1,6 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2 and W1 (blockout) done; next slice: L1.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2, W1 (blockout) and L1 done; next slice: U1.**
 
 > **World ownership (owner, 2026-10-29):** after W1, ChatGPT owns the 3D world (W2 art proof of concept, W3, the final garden's art, all Victorian world art). Claude does the code and keeps the world contract, `WorldService`, the route probe and the lighting rig's code working for ChatGPT.
 >
