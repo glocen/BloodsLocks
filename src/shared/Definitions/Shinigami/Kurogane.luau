@@ -1,7 +1,8 @@
 --!strict
 -- Kurogane ("black steel"): a melee Shinigami. A spectral swordsman bound by pact; follows its master and joins any
 -- fight they're in. Tuning is a starting point. Shape of a Shinigami definition:
---   Role, BaseHealth, WalkSpeed, Reach (studs to start an attack), AttackInterval (seconds between attacks),
+--   Role, Weapon (the weapon model it holds, a Definitions.Weapons id; optional), BaseHealth, WalkSpeed,
+--   Reach (studs to start an attack), AttackInterval (seconds between attacks),
 --   AggroRange (how far from the master it will chase), FollowDistance, ResummonCooldown (after dying),
 --   Regen (fraction of max HP per second while dismissed or out of combat), Attacks (action ids, used in turn),
 --   Skill (its special move: Action, UnlockLevel, Cooldown, MinRange/MaxRange to the target, Telegraph seconds),
@@ -11,6 +12,7 @@ return {
 	Id = "Kurogane",
 	DisplayName = "Kurogane",
 	Role = "Melee",
+	Weapon = "Saber", -- until it has a blade of its own
 	BaseHealth = 600,
 	WalkSpeed = 22,
 	Reach = 7,

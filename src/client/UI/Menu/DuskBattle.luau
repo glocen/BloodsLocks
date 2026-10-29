@@ -59,8 +59,8 @@ function DuskBattle.new(parent: Instance): Screen
 	local sky = Instance.new("UIGradient")
 	sky.Rotation = 90
 	sky.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 30, 46)),
-		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(46, 18, 34)),
+		ColorSequenceKeypoint.new(0, Theme.ModeCard.Top),
+		ColorSequenceKeypoint.new(0.55, Theme.ModeCard.Middle),
 		ColorSequenceKeypoint.new(1, Theme.Palette.Ink),
 	})
 	sky.Parent = card

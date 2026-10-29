@@ -103,11 +103,12 @@ local function build(player: Player, def: any, pact: Pact): Model?
 	model:SetAttribute(A.HP, math.max(1, math.floor(max * pact.Hp)))
 	model:SetAttribute(A.OwnerId, player.UserId)
 	model:SetAttribute(A.Level, pact.Level)
-	model:SetAttribute(A.ClassId, Registry.DefaultClass) -- carries the class's saber
 	model:PivotTo(ownerRoot.CFrame * CFrame.new(4, 0, 3))
 	-- (no SetNetworkOwner: it throws under Server Authority; server-created NPCs are server-simulated already)
 	model.Parent = folder
-	Equipment.AttachMelee(model)
+	if def.Weapon then
+		Equipment.AttachMelee(model, def.Weapon)
+	end
 	CollectionService:AddTag(model, EntityState.Tag)
 	return model
 end
@@ -190,11 +191,11 @@ end
 
 function ShinigamiService.Init()
 	DebugService.Register("ShinigamiPact", function(name: any, id: any)
-		local player = Players:FindFirstChild(tostring(name)) :: Player?
+		local player = DebugService.ResolvePlayer(name)
 		return player ~= nil and ShinigamiService.MakePact(player, tostring(id))
 	end)
 	DebugService.Register("ShinigamiLevel", function(name: any, level: any)
-		local player = Players:FindFirstChild(tostring(name)) :: Player?
+		local player = DebugService.ResolvePlayer(name)
 		local pact = player and pacts[player]
 		if not pact then
 			return false
@@ -206,7 +207,7 @@ function ShinigamiService.Init()
 		return pact.Level
 	end)
 	DebugService.Register("ShinigamiToggle", function(name: any)
-		local player = Players:FindFirstChild(tostring(name)) :: Player?
+		local player = DebugService.ResolvePlayer(name)
 		return player ~= nil and ShinigamiService.Toggle(player)
 	end)
 end

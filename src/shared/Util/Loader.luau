@@ -3,6 +3,8 @@
 --   1. Require every ModuleScript in the given folders (sub-folders included, modules nested inside
 --      other modules excluded), then call Init() on each. Init only sets up the module's own state.
 --   2. Call Start() on each in its own thread. Modules may use each other from Start on.
+-- The boot summary counts errors from require and Init. Start runs afterwards (and may yield), so each Start
+-- failure is logged on its own line with a running count.
 -- Order is deterministic: lower Priority first (default 100), then by full path.
 -- Module names must be unique, because other code refers to modules by name.
 
@@ -82,24 +84,26 @@ function Loader.Boot(label: string, folders: { Instance? }): ({ [string]: Module
 		end
 	end
 
+	local names = table.create(#entries)
+	for i, entry in entries do
+		names[i] = entry.Name
+	end
+	local list = if #names > 0 then ` ({table.concat(names, ", ")})` else ""
+	Log.Info(label, `booted {#entries} modules{list} with {errors} errors in require/Init`)
+
+	local startErrors = 0
 	for _, entry in entries do
 		local start = entry.Module.Start
 		if start then
 			task.spawn(function()
 				local ok, err = xpcall(start, debug.traceback, entry.Module)
 				if not ok then
-					Log.Error(label, `{entry.Name}.Start failed: {err}`)
+					startErrors += 1
+					Log.Error(label, `{entry.Name}.Start failed ({startErrors} Start failure(s) so far): {err}`)
 				end
 			end)
 		end
 	end
-
-	local names = table.create(#entries)
-	for i, entry in entries do
-		names[i] = entry.Name
-	end
-	local list = if #names > 0 then ` ({table.concat(names, ", ")})` else ""
-	Log.Info(label, `booted {#entries} modules{list} with {errors} errors`)
 	return byName, errors
 end
 

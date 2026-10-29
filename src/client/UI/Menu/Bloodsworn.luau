@@ -38,8 +38,8 @@ local function portrait(card: GuiObject, source: Model?, silhouette: boolean): V
 	viewport.Position = UDim2.fromOffset(0, 46)
 	viewport.Size = UDim2.new(1, 0, 0, CARD_H - 150)
 	viewport.BackgroundTransparency = 1
-	viewport.Ambient = Color3.fromRGB(150, 130, 140)
-	viewport.LightColor = Color3.fromRGB(255, 220, 190)
+	viewport.Ambient = Theme.Portrait.Ambient
+	viewport.LightColor = Theme.Portrait.Light
 	viewport.LightDirection = Vector3.new(-1, -1, -1)
 	viewport.Parent = card
 	local wasArchivable = source.Archivable
@@ -50,15 +50,15 @@ local function portrait(card: GuiObject, source: Model?, silhouette: boolean): V
 		if d:IsA("BaseScript") or d:IsA("Highlight") then
 			d:Destroy()
 		elseif silhouette and d:IsA("BasePart") then
-			d.Color = Color3.fromRGB(8, 6, 10)
+			d.Color = Theme.Portrait.Silhouette
 			d.Material = Enum.Material.SmoothPlastic
 		elseif silhouette and (d:IsA("Decal") or d:IsA("Shirt") or d:IsA("Pants")) then
 			d:Destroy()
 		end
 	end
 	if silhouette then
-		viewport.Ambient = Color3.fromRGB(30, 22, 30)
-		viewport.LightColor = Color3.fromRGB(120, 40, 50)
+		viewport.Ambient = Theme.Portrait.SealedAmbient
+		viewport.LightColor = Theme.Portrait.SealedLight
 		viewport.ImageTransparency = 0.15
 	end
 	clone.Parent = viewport
@@ -107,7 +107,7 @@ function Bloodsworn.new(parent: Instance): Screen
 		card.Parent = roster
 		local shade = Instance.new("UIGradient")
 		shade.Rotation = 90
-		shade.Color = ColorSequence.new(Color3.fromRGB(70, 34, 44), Theme.Palette.Ink)
+		shade.Color = ColorSequence.new(Theme.Portrait.CardShade, Theme.Palette.Ink)
 		shade.Parent = card
 		local stroke = Instance.new("UIStroke")
 		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border

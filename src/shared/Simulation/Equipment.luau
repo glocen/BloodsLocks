@@ -10,10 +10,11 @@ local WEAPON_NAME = "BL_Weapon"
 
 local Equipment = {}
 
--- Server only: welds the class's melee weapon to the right arm, replacing the weapon it held before (class change).
-function Equipment.AttachMelee(character: Model)
+-- Server only: welds a melee weapon to the right arm, replacing the weapon it held before (class change).
+-- `weaponId` defaults to the character's class's melee weapon; NPCs (Shinigami) pass their own.
+function Equipment.AttachMelee(character: Model, weaponId: string?)
 	local class = Registry.Class(character:GetAttribute(EntityState.Attr.ClassId))
-	local weapon = Registry.Weapon(class.Melee)
+	local weapon = Registry.Weapon(weaponId or class.Melee)
 	local assets = Shared:FindFirstChild("Assets")
 	local template = assets and assets.Weapons:FindFirstChild(weapon.Model)
 	local arm = character:FindFirstChild("Right Arm") :: BasePart?

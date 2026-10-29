@@ -3,11 +3,13 @@
 -- racing outward on an expanding ring, rising embers and smoke, and a hot light that fades. Delay matches the hit.
 
 local Kit = require(script.Parent.Kit)
+local Theme = require(script.Parent.Parent.UI.Theme)
 
 local T = Kit.Textures
-local FIRE = Color3.fromRGB(255, 120, 40)
-local FIRE_DEEP = Color3.fromRGB(190, 40, 20)
-local FIRE_CORE = Color3.fromRGB(255, 220, 150)
+local P = Theme.Vfx
+local FIRE = P.Fire
+local FIRE_DEEP = P.FireDeep
+local FIRE_CORE = P.FireCore
 
 local RADIUS = 10
 local DELAY = 0.22 -- when the blade hits the ground (the action's Hit.From)
@@ -55,7 +57,7 @@ function FireNova.Play(model: Model)
 				Lifetime = NumberRange.new(0.6, 1.2), Speed = NumberRange.new(10, 26), SpreadAngle = Vector2.new(80, 80),
 				EmissionDirection = Enum.NormalId.Top, Acceleration = Vector3.new(0, 6, 0), Drag = 2, LightEmission = 1 },
 			{ Count = 10, Texture = T.Smoke, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-				Color = Kit.Colors(Color3.fromRGB(70, 40, 35), Color3.fromRGB(25, 18, 18)), Size = Kit.Seq(4, 9),
+				Color = Kit.Colors(P.Smoke, P.SmokeDark), Size = Kit.Seq(4, 9),
 				Transparency = Kit.Seq({ { 0, 0.5 }, { 1, 1 } }), Lifetime = NumberRange.new(0.9, 1.4), Speed = NumberRange.new(4, 10),
 				SpreadAngle = Vector2.new(70, 70), EmissionDirection = Enum.NormalId.Top, Rotation = NumberRange.new(0, 360), Drag = 2, ZOffset = -1 },
 		})

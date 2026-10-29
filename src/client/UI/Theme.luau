@@ -134,7 +134,31 @@ return {
 		RadianceDeep = Color3.fromRGB(230, 90, 10),
 		Radiance = Color3.fromRGB(255, 160, 50),
 		RadianceCore = Color3.fromRGB(255, 232, 180),
+		Fire = Color3.fromRGB(255, 120, 40),
+		FireDeep = Color3.fromRGB(190, 40, 20),
+		FireCore = Color3.fromRGB(255, 220, 150),
+		Smoke = Color3.fromRGB(70, 40, 35),
+		SmokeDark = Color3.fromRGB(25, 18, 18),
 	},
+
+	-- Class portraits (Blood Table, Bloodsworn tab): ViewportFrame lighting and card shading.
+	Portrait = {
+		Ambient = Color3.fromRGB(150, 130, 140),
+		Light = Color3.fromRGB(255, 220, 190),
+		SealedAmbient = Color3.fromRGB(30, 22, 30),
+		SealedLight = Color3.fromRGB(120, 40, 50),
+		Silhouette = Color3.fromRGB(8, 6, 10),
+		CardShade = Color3.fromRGB(70, 34, 44),
+	},
+
+	-- The Dusk Battle mode card's backdrop gradient.
+	ModeCard = {
+		Top = Color3.fromRGB(120, 30, 46),
+		Middle = Color3.fromRGB(46, 18, 34),
+	},
+
+	-- Panels: the vertical shade over the body (multiplies the fill colour).
+	PanelShade = Color3.fromRGB(150, 140, 155),
 
 	-- v1 aliases (port components to the structured tokens above, then remove these).
 	Font = Font.new(BODY, Enum.FontWeight.Regular),

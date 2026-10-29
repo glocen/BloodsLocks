@@ -70,8 +70,25 @@ end
 
 -- Yields until the player's data is ready. Returns nil if they leave first.
 function DataService.Wait(player: Player): any
-	while profiles[player] == nil and player.Parent == Players do
-		task.wait()
+	if profiles[player] == nil and player.Parent == Players then
+		local thread = coroutine.running()
+		local ready, left
+		local function wake()
+			ready:Disconnect()
+			left:Disconnect()
+			task.spawn(thread)
+		end
+		ready = DataService.ProfileReady:Connect(function(who: Player)
+			if who == player then
+				wake()
+			end
+		end)
+		left = player.AncestryChanged:Connect(function()
+			if player.Parent ~= Players then
+				wake()
+			end
+		end)
+		coroutine.yield()
 	end
 	return DataService.Get(player)
 end

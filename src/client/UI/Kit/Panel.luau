@@ -27,7 +27,7 @@ function Panel.new(parent: Instance, options: Options): Frame
 	panel.BorderSizePixel = 0
 	local shade = Instance.new("UIGradient")
 	shade.Rotation = 90
-	shade.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 140, 155))
+	shade.Color = ColorSequence.new(Color3.new(1, 1, 1), Theme.PanelShade)
 	shade.Parent = panel
 	Ornament.Frame(panel)
 	if options.Title then

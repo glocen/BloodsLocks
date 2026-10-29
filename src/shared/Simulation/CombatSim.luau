@@ -180,15 +180,25 @@ local function apply(request: HitRequest, now: number)
 	damage(request, now, hit.Damage)
 end
 
--- Server only, called at the start of each simulation step.
+-- Server only, called at the start of each simulation step. Hits from attackers that were already dead (or gone)
+-- when the step began are dropped; attackers alive at the start all land, so two hits in the same step trade.
 function CombatSim.ServerStep(now: number)
 	if #queue == 0 then
 		return
 	end
 	local pending = queue
 	queue = {}
+	local aliveAtStart: { [Model]: boolean } = {}
 	for _, request in pending do
-		apply(request, now)
+		local attacker = request.Attacker
+		if aliveAtStart[attacker] == nil then
+			aliveAtStart[attacker] = attacker.Parent ~= nil and num(attacker, A.HP, 0) > 0
+		end
+	end
+	for _, request in pending do
+		if aliveAtStart[request.Attacker] then
+			apply(request, now)
+		end
 	end
 end
 

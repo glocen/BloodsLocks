@@ -57,6 +57,7 @@ for _, module in Definitions.Shinigami:GetChildren() do
 	end
 	assert(def.BaseHealth and def.Reach and def.AttackInterval and def.ResummonCooldown, `shinigami {def.Id}: missing tuning`)
 	assert(not def.Skill or (actions[def.Skill.Action] and def.Skill.UnlockLevel and def.Skill.Cooldown), `shinigami {def.Id}: skill invalid`)
+	assert(not def.Weapon or weapons[def.Weapon], `shinigami {def.Id}: weapon {def.Weapon} doesn't exist`)
 	shinigami[def.Id] = def
 end
 for id, class in classes do

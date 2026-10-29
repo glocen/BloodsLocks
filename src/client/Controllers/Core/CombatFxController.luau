@@ -31,7 +31,7 @@ local A = EntityState.Attr
 local num = EntityState.Number
 
 local HEAVY_HIT = 80
-local HEAL_COLOR = Color3.fromRGB(120, 210, 120)
+local HEAL_COLOR = Theme.Colors.Heal
 
 local CombatFxController = {}
 
