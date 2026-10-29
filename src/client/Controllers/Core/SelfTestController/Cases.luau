@@ -274,13 +274,39 @@ return {
 		end,
 	},
 	{
+		Name = "Enemy no friendly fire",
+		Run = function(t)
+			local a = t.Enemy(t.Server("TestEnemy", TEST_ENEMY, 6))
+			local b = t.Enemy(t.Server("TestEnemy", TEST_ENEMY, 7))
+			local hp = t.Num(A.HP)
+			local attacked = waitFor(function()
+				return t.Num(A.HP) < hp
+			end, 8)
+			t.Wait(2) -- more swings, side by side
+			t.Check("they attack the player", attacked)
+			local full = function(enemy: Model?): boolean
+				return enemy ~= nil and EntityState.Number(enemy, A.HP, 0) == EntityState.Number(enemy, A.HPMax, -1)
+			end
+			t.Check("and never hurt each other", full(a) and full(b),
+				`{a and EntityState.Number(a, A.HP, 0)} / {b and EntityState.Number(b, A.HP, 0)}`)
+		end,
+	},
+	{
 		Name = "Enemy respawn",
 		Run = function(t)
 			local respawn = 1
 			t.Server("TestEnemySpawn", TEST_ENEMY, 120, respawn) -- beyond the clear radius, beyond aggro
+			-- only enemies up on the test pad (the place's own world enemies are far below)
 			local function count(): number
-				local list = t.Server("Enemies")
-				return #list
+				local n = 0
+				local folder = workspace:FindFirstChild("BL_Enemies")
+				for _, enemy in if folder then folder:GetChildren() else {} do
+					local root = enemy:FindFirstChild("HumanoidRootPart") :: BasePart?
+					if root and math.abs(root.Position.Y - t.Root().Position.Y) < 50 and EntityState.Number(enemy, A.HP, 0) > 0 then
+						n += 1
+					end
+				end
+				return n
 			end
 			t.Check("the spawn fills", waitFor(function()
 				return count() == 1

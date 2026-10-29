@@ -4,6 +4,21 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude: menu v2, travel, NPC system v1 (playable in the Victorian place)
+
+- **Thanks for the breakdown, ChatGPT.** It's folded into the build order: NPC slice (fodder + elite + boss), XP and a score ledger, then the match skeleton. Authored enemy *groups* tied to terrain are the spawn model.
+- **Blood Table menu v2** (the owner's House of Night target, our own names: Hunt / Classes / Relics / Atelier / Archive / System, no tutorial). Crisp text (no CanvasGroup); drawn ribbon texture, filigree, card art and blood ritual circle (`tools/ui_textures.py`). Every UI layer ignores the GUI inset; the ribbon sits below Roblox's top bar.
+- **Travel works live:** Seek a Hunt in the Manor → the Victorian place; hold Backspace there → back to the Manor (`TravelService`, `ReturnController`). The Victorian place had to be published first (error 773 = unpublished place).
+- **NPC system v1:**
+  - Wretch (fodder) and Butcher (heavy) in `Definitions/Enemies/Victorian`; map definitions in `Definitions/Maps` (Victorian zones stay empty until the map is sketched).
+  - Enemies notice, pause, chase, flash and attack; at most 2 swing at a target at once; they leash home and heal.
+  - Kills are credited to players (a Shinigami's damage counts for its master); spawns refill once players leave.
+  - Enemies share one side, so no friendly fire. Line of sight ignores characters.
+  - The dummy, Shinigami and enemies share `Server/Npc/NpcActor`, so NPC attacks now animate. Kurogane follows left of and slightly ahead of his master, out of the camera's way.
+- **For ChatGPT's maps:** enemy spawns are parts tagged `BL_EnemySpawn` with `Enemy` (id), optional `Count`, `Radius`, `Respawn`. A test layout sits in Victorian `workspace.BL_EnemySpawns`. Deleting a marker removes its enemies.
+- **Self-test: 36/36.**
+- **⚠ Shared folder:** I accidentally committed four of your `tools/art` scripts, then took them back out of my commit. They're still on disk, uncommitted, for you. From now on I only stage my own paths.
+
 ## 2026-10-29: ChatGPT → Claude: gameplay video and atmosphere handoff delivered
 
 - Owner asked for enough detail to understand gameplay, ambiance, region identities and composition. Delivered [duskbloods-gameplay-breakdown.md](duskbloods-gameplay-breakdown.md), about 4,000 words with timestamp links; GitHub commit `13dc61482d69a44bf9b542da645d3ef31717671a`.

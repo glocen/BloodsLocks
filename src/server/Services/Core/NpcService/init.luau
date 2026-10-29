@@ -69,7 +69,7 @@ local function playerOf(model: Model): Player?
 		return player
 	end
 	local owner = model:GetAttribute(A.OwnerId)
-	return if type(owner) == "number" then Players:GetPlayerByUserId(owner) else nil
+	return if type(owner) == "number" and owner ~= EntityState.HostileSide then Players:GetPlayerByUserId(owner) else nil
 end
 
 local function nearestPlayerDistance(position: Vector3): number
@@ -125,6 +125,7 @@ function NpcService.SpawnAt(enemyId: string, cframe: CFrame, slot: Slot?): Model
 	local model = EntityService.MakeEntity(template, def.DisplayName, cframe, def.BaseHealth, folder, def.Tint, def.Scale)
 	local humanoid = Parts.Humanoid(model) :: Humanoid
 	humanoid.WalkSpeed = def.WalkSpeed
+	model:SetAttribute(A.OwnerId, EntityState.HostileSide) -- one side: enemies never hurt each other
 	enemies[model] = {
 		Model = model,
 		Def = def,
@@ -225,6 +226,18 @@ local function addSpawn(spawn: Instance)
 		table.insert(slots, slot)
 		fillSlot(slot)
 	end
+	-- removing a spawn marker removes its enemies and its slots
+	spawn.Destroying:Connect(function()
+		for i = #slots, 1, -1 do
+			local slot = slots[i]
+			if slot.Spawn == spawn then
+				if slot.Enemy then
+					NpcService.Despawn(slot.Enemy)
+				end
+				table.remove(slots, i)
+			end
+		end
+	end)
 end
 
 local function refill(now: number)

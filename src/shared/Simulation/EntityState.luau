@@ -9,6 +9,8 @@ local Registry = require(script.Parent.Parent.Definitions.Registry)
 local EntityState = {}
 
 EntityState.Tag = "BL_Entity" -- CollectionService tag on every combat entity
+-- The side (OwnerId) every hostile NPC fights for, so enemies never hurt each other. 0 is never a player's UserId.
+EntityState.HostileSide = 0
 EntityState.InputContextName = "BLGameplay"
 
 local A = {

@@ -82,9 +82,26 @@ local function attackersOn(target: Model): number
 	return count
 end
 
+local SIGHT_PASSES = 4 -- characters a sight line may pass through before giving up
+
+-- Line of sight blocked by world geometry only: other characters (enemies, players, Shinigami) never blind it.
 local function canSee(model: Model, from: Vector3, target: Model, to: Vector3): boolean
-	local hit = workspace:Raycast(from, to - from, Raycast.Exclude({ model, target }, true))
-	return hit == nil
+	local ignore: { Instance } = { model, target }
+	for _ = 1, SIGHT_PASSES do
+		local hit = workspace:Raycast(from, to - from, Raycast.Exclude(ignore, true))
+		if not hit then
+			return true
+		end
+		local character = hit.Instance:FindFirstAncestorOfClass("Model")
+		while character and not CollectionService:HasTag(character, EntityState.Tag) do
+			character = character:FindFirstAncestorOfClass("Model")
+		end
+		if not character then
+			return false -- a wall
+		end
+		table.insert(ignore, character)
+	end
+	return true
 end
 
 local function alive(target: Model?): boolean
@@ -93,7 +110,8 @@ end
 
 -- Players and their Shinigami (anything that fights for a player) that this enemy may hit.
 local function isPrey(model: Model, candidate: Model): boolean
-	return CombatSim.Side(candidate) ~= nil and CombatSim.CanDamage(model, candidate)
+	local side = CombatSim.Side(candidate)
+	return side ~= nil and side ~= EntityState.HostileSide and CombatSim.CanDamage(model, candidate)
 end
 
 local function pickTarget(self: Brain, root: BasePart, now: number): Model?
