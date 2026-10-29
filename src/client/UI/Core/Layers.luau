@@ -46,7 +46,7 @@ local function watchViewport()
 	bind()
 end
 
--- The ScreenGui for a layer. Interactive layers stay inside the core-UI safe area; Transition covers everything.
+-- The ScreenGui for a layer. Every layer ignores the GUI inset and covers the whole screen.
 function Layers.Get(name: LayerName): ScreenGui
 	local existing = guis[name]
 	if existing then
@@ -59,12 +59,9 @@ function Layers.Get(name: LayerName): ScreenGui
 	gui.DisplayOrder = order
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	if name == "Transition" then
-		gui.IgnoreGuiInset = true
-		gui.ScreenInsets = Enum.ScreenInsets.None
-	else
-		gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
-	end
+	-- every layer covers the whole screen, top bar included (owner, 2026-10-29); layouts keep their own margins
+	gui.IgnoreGuiInset = true
+	gui.ScreenInsets = Enum.ScreenInsets.None
 	local uiScale = Instance.new("UIScale")
 	uiScale.Parent = gui
 	table.insert(scales, uiScale)

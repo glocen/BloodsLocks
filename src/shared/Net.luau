@@ -22,6 +22,9 @@ local REMOTES: { [string]: Spec } = {
 	ProjectileEnd = { Kind = "Event", RatePerSecond = 0 }, -- server -> clients: (id, position)
 	ShinigamiToggle = { Kind = "Event", RatePerSecond = 2 }, -- client -> server: summon / dismiss your Shinigami
 	SelectClass = { Kind = "Event", RatePerSecond = 2 }, -- client -> server: (classId) pick your Bloodsworn at the Blood Table
+	SeekHunt = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: (mapId, ruleId) send me to a hunt (Manor)
+	HuntStatus = { Kind = "Event", RatePerSecond = 0 }, -- server -> client: (message, done?) how seeking a hunt is going
+	ReturnToManor = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: leave the hunt (match places)
 	DebugCommand = { Kind = "Function", RatePerSecond = 30 }, -- client -> server, answered only in Studio: (name, ...) runs a DebugService command (self-test)
 }
 

@@ -1,8 +1,10 @@
 --!strict
--- KeyHints: the bottom-right prompt row ("[Esc] Back   [Enter] Begin"). Set(list) replaces the hints.
+-- KeyHints: the bottom-right prompt row ("(Enter) Seek a Hunt   (Q E) Change tab"). Each key is a hairline glyph,
+-- round for one character and a pill for words, then its action in serif. Set(list) replaces the hints.
 
 local Theme = require(script.Parent.Parent.Theme)
-local Text = require(script.Parent.Text)
+
+local M = Theme.Menu
 
 local KeyHints = {}
 
@@ -15,17 +17,51 @@ function KeyHints.new(parent: Instance): Hints
 	local frame = Instance.new("Frame")
 	frame.Name = "KeyHints"
 	frame.AnchorPoint = Vector2.new(1, 1)
-	frame.Position = UDim2.new(1, -40, 1, -30)
-	frame.Size = UDim2.fromOffset(700, 28)
+	frame.Position = UDim2.new(1, -M.Margin, 1, -40)
+	frame.Size = UDim2.fromOffset(1100, M.HintGlyph)
 	frame.BackgroundTransparency = 1
 	frame.Parent = parent
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, 22)
+	layout.Padding = UDim.new(0, 30)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = frame
 	return (setmetatable({ Frame = frame }, Class) :: any) :: Hints
+end
+
+-- A key glyph: a hairline circle for one character, a pill for a word. Also used inside buttons.
+function KeyHints.Glyph(parent: Instance, key: string, order: number?): TextLabel
+	local single = #key == 1
+	local box = Instance.new("TextLabel")
+	box.Name = "Key" .. (order or 1)
+	box.LayoutOrder = order or 1
+	box.AutomaticSize = if single then Enum.AutomaticSize.None else Enum.AutomaticSize.X
+	box.Size = UDim2.fromOffset(M.HintGlyph, M.HintGlyph)
+	box.BackgroundColor3 = Theme.Palette.Ink
+	box.BackgroundTransparency = 0.35
+	box.BorderSizePixel = 0
+	box.FontFace = Theme.Fonts.Body
+	box.TextSize = M.HintTextSize - 3
+	box.TextColor3 = Theme.Colors.Text
+	box.Text = key
+	box.Parent = parent
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = box
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = Theme.Colors.Text
+	stroke.Transparency = 0.3
+	stroke.Thickness = Theme.Stroke.Hairline
+	stroke.Parent = box
+	if not single then
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 12), UDim.new(0, 12)
+		pad.Parent = box
+	end
+	return box
 end
 
 function Class.Set(self: any, list: { { string } })
@@ -38,39 +74,31 @@ function Class.Set(self: any, list: { { string } })
 		local row = Instance.new("Frame")
 		row.BackgroundTransparency = 1
 		row.AutomaticSize = Enum.AutomaticSize.X
-		row.Size = UDim2.fromOffset(0, 28)
+		row.Size = UDim2.fromOffset(0, M.HintGlyph)
 		row.LayoutOrder = order
 		row.Parent = self.Frame
 		local inner = Instance.new("UIListLayout")
 		inner.FillDirection = Enum.FillDirection.Horizontal
 		inner.VerticalAlignment = Enum.VerticalAlignment.Center
-		inner.Padding = UDim.new(0, 8)
+		inner.SortOrder = Enum.SortOrder.LayoutOrder
+		inner.Padding = UDim.new(0, 10)
 		inner.Parent = row
-		local key = Instance.new("TextLabel")
-		key.AutomaticSize = Enum.AutomaticSize.X
-		key.Size = UDim2.fromOffset(24, 22)
-		key.BackgroundColor3 = Theme.Palette.Bone
-		key.BackgroundTransparency = 0.1
-		key.BorderSizePixel = 0
-		key.FontFace = Theme.Fonts.BodyBold
-		key.TextSize = 14
-		key.TextColor3 = Theme.Palette.Ink
-		key.Text = pair[1]
-		key.Parent = row
-		local pad = Instance.new("UIPadding")
-		pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 6), UDim.new(0, 6)
-		pad.Parent = key
-		local round = Instance.new("UICorner")
-		round.CornerRadius = UDim.new(0, 3)
-		round.Parent = key
+		for i, key in string.split(pair[1], " ") do
+			KeyHints.Glyph(row, key, i)
+		end
+		-- a plain label: Text.new's shadow is a sibling, which a list layout would place as its own item
 		local label = Instance.new("TextLabel")
+		label.Name = "Action"
 		label.AutomaticSize = Enum.AutomaticSize.X
-		label.Size = UDim2.fromOffset(0, 22)
+		label.Size = UDim2.fromOffset(0, M.HintGlyph)
 		label.BackgroundTransparency = 1
 		label.FontFace = Theme.Fonts.Body
-		label.TextSize = 17
+		label.TextSize = M.HintTextSize
 		label.TextColor3 = Theme.Colors.Text
+		label.TextStrokeColor3 = Theme.Colors.Background
+		label.TextStrokeTransparency = 0.6
 		label.Text = pair[2]
+		label.LayoutOrder = 10
 		label.Parent = row
 	end
 end

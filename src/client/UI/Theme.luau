@@ -113,6 +113,34 @@ return {
 		Medallion = "rbxassetid://130555865843448", -- engraved bezel (light grey, tint it)
 		Bullet = "rbxassetid://103235686741303", -- cartridge icon
 		SoftGlow = "rbxassetid://75560931237584", -- round soft glow
+		-- tools/ui_textures.py
+		HuntCard = "rbxassetid://115279579388284", -- the Hunt tab's mode card: Victorian skyline at blood dusk
+		RitualCircle = "rbxassetid://115419381323676", -- the blood circle under the character in the Blood Table menu
+		Ribbon = "rbxassetid://134502622812389", -- brushed paint grain (grey; tinted), tiles 512x64
+		TabFlourish = "rbxassetid://136447657638231", -- gold filigree for the active tab, 9-slice (72 px ends, 512x48)
+	},
+
+	-- The Blood Table menu (sizes at the reference resolution; text never under 20 so it stays crisp when scaled).
+	Menu = {
+		Margin = 64, -- from the screen edges
+		Top = 72, -- the ribbon's top: clears Roblox's own top-bar buttons (every layer ignores the GUI inset)
+		TabHeight = 58,
+		TabTextSize = 26,
+		HintTextSize = 22,
+		HintGlyph = 32, -- key glyph height
+		CardWidth = 460,
+		CardHeight = 248,
+		ButtonHeight = 58,
+		ButtonTextSize = 24,
+		RowTextSize = 21,
+		StageLight = Color3.fromRGB(255, 196, 150), -- warm key light on the character while the menu is open
+		CircleGlow = Color3.fromRGB(150, 20, 34),
+		-- the tab ribbon: brushed wine-brown paint, the active tab a muted mauve plate under a gold filigree
+		RibbonTint = Color3.fromRGB(88, 42, 44),
+		RibbonShade = Color3.fromRGB(150, 140, 145), -- multiplies the bottom of the band (darker toward it)
+		RibbonActive = Color3.fromRGB(104, 70, 72),
+		TabText = Color3.fromRGB(236, 226, 214),
+		Panel = Color3.fromRGB(46, 20, 24), -- buttons and rows under the card
 	},
 
 	Hud = {
@@ -149,12 +177,6 @@ return {
 		SealedLight = Color3.fromRGB(120, 40, 50),
 		Silhouette = Color3.fromRGB(8, 6, 10),
 		CardShade = Color3.fromRGB(70, 34, 44),
-	},
-
-	-- The Dusk Battle mode card's backdrop gradient.
-	ModeCard = {
-		Top = Color3.fromRGB(120, 30, 46),
-		Middle = Color3.fromRGB(46, 18, 34),
 	},
 
 	-- Panels: the vertical shade over the body (multiplies the fill colour).

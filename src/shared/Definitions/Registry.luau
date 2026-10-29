@@ -124,6 +124,11 @@ function Registry.Enemy(id: string?): any
 	return if id then enemies[id] else nil
 end
 
+-- A map definition by id, or nil.
+function Registry.Map(id: string?): any
+	return if id then maps[id] else nil
+end
+
 -- The map definition of a place (by PlaceId), or nil (the Manor has none).
 function Registry.MapForPlace(placeId: number): any
 	for _, map in maps do

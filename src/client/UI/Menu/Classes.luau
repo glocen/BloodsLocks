@@ -1,5 +1,5 @@
 --!strict
--- Bloodsworn (Blood Table tab 2): class selection, Duskbloods-style: a row of tall portrait cards with name plates.
+-- Classes (Blood Table tab 2): class selection, Duskbloods-style: a row of tall portrait cards with name plates.
 -- Playable classes show a live render of your character; the rest are sealed until they arrive. Picking one saves
 -- it (SelectClass → ClassService → the owner's ProfileStore).
 
@@ -20,8 +20,8 @@ local PLAYABLE = { "Gustave" }
 
 export type Screen = { Frame: Frame, Begin: (self: Screen) -> (), Hints: { { string } } }
 
-local Bloodsworn = {}
-Bloodsworn.__index = Bloodsworn
+local Classes = {}
+Classes.__index = Classes
 
 -- A figure rendered in a viewport on the card: your own character for playable classes, a black silhouette for
 -- sealed ones.
@@ -74,10 +74,10 @@ local function portrait(card: GuiObject, source: Model?, silhouette: boolean): V
 	return viewport
 end
 
-function Bloodsworn.new(parent: Instance): Screen
+function Classes.new(parent: Instance): Screen
 	-- full-screen: the world dims behind the roster
 	local frame = Instance.new("Frame")
-	frame.Name = "Bloodsworn"
+	frame.Name = "Classes"
 	frame.Size = UDim2.fromScale(1, 1)
 	frame.BackgroundColor3 = Theme.Palette.Ink
 	frame.BackgroundTransparency = 0.25
@@ -90,7 +90,7 @@ function Bloodsworn.new(parent: Instance): Screen
 	roster.Size = UDim2.fromOffset(SLOTS * CARD_W + (SLOTS - 1) * GAP, CARD_H)
 	roster.BackgroundTransparency = 1
 	roster.Parent = frame
-	local self = setmetatable({ Frame = frame, _cards = {} }, Bloodsworn)
+	local self = setmetatable({ Frame = frame, _cards = {} }, Classes)
 
 	for slot = 1, SLOTS do
 		local classId = PLAYABLE[slot]
@@ -166,7 +166,7 @@ function Bloodsworn.new(parent: Instance): Screen
 	return (self :: any) :: Screen
 end
 
-function Bloodsworn._refresh(self: any)
+function Classes._refresh(self: any)
 	local current = Players.LocalPlayer:GetAttribute(PlayerState.Attr.Class) or Registry.DefaultClass
 	for _, card in self._cards do
 		local picked = card.Id ~= nil and card.Id == current
@@ -175,10 +175,10 @@ function Bloodsworn._refresh(self: any)
 	end
 end
 
-function Bloodsworn.Begin(_self: any) end
+function Classes.Begin(_self: any) end
 
 -- Called when the tab is shown: renders playable portraits from your current character.
-function Bloodsworn.Shown(self: any)
+function Classes.Shown(self: any)
 	for _, card in self._cards do
 		if card.Id then
 			portrait(card.Card, Players.LocalPlayer.Character, false)
@@ -186,4 +186,4 @@ function Bloodsworn.Shown(self: any)
 	end
 end
 
-return Bloodsworn
+return Classes
