@@ -42,11 +42,9 @@ local function Initialize(plr: Player, profile: typeof(plrDS:StartSessionAsync()
 	PlayerInventoryFLD.Name = "PlayerInventory"
 
 	PlayerHandlerData.LoadWeapon(plr)
-	
-	local cha = plr.Character or plr.CharacterAdded:Wait()
-	local hum:Humanoid = cha:FindFirstChild("Humanoid")
-hum.MaxHealth = profile.Data.Health
-hum.Health = hum.MaxHealth
+
+	--(2026-10-29: the Humanoid's health is no longer set from profile.Data.Health. Combat HP comes from the class
+	--and lives in the character's "hp" attribute; the Humanoid only dies when that reaches 0. See EntityService.)
 	--synch player data to client
 	RE:FireClient(plr, "HealthEVENT", profile.Data.Health)
 	RE:FireClient(plr, "EnergyEVENT", profile.Data.Energy)

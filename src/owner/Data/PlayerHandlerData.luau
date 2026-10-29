@@ -80,9 +80,10 @@ function PlayerHandlerData.AddWeapon(plr: Player, WeaponName: string)
 		return -- weapon already exists
 	end
 
-	local weapon = ss.WeaponsFLD:FindFirstChild(WeaponName)
+	local weaponsFLD = ss:FindFirstChild("WeaponsFLD") --doesn't exist yet: BloodsLocks weapons are welded models (Equipment), not Tools
+	local weapon = weaponsFLD and weaponsFLD:FindFirstChild(WeaponName)
 	if not weapon then
-		print("error")
+		warn("AddWeapon: no weapon named", WeaponName, "in ServerStorage.WeaponsFLD")
 		return
 	end
 

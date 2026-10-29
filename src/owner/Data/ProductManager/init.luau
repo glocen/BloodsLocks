@@ -60,7 +60,7 @@ local function CheckPurchaseIdAsync(profile,purchaseID,GrantProductFunction) : E
 		
 		local function IsPurchaseSaved()
 			local savedCache = profile.LastSavedData.PurchaseIdCache
-			return if savedCache ~= nil then table.find(savedCache,purchaseIdCache) ~= nil else false
+			return if savedCache ~= nil then table.find(savedCache,purchaseID) ~= nil else false --look for this purchase's id in the saved cache
 		end
 		
 			--initial purchaseId saved check (need to do this since it work Async it need to be saved to the DS first)
@@ -119,7 +119,7 @@ local function ProcessReceipt(receiptinfo) --this callback can run as many as it
 		if profile ~= nil then
 			--sanity check (on productId)
 			if productsfunctions[receiptinfo.ProductId] == nil then
-				warn("No Product function for: ", productId, "	| Player: ",plr.Name, plr.UserId)
+				warn("No Product function for: ", receiptinfo.ProductId, "	| Player: ",plr.Name, plr.UserId)
 				return Enum.ProductPurchaseDecision.NotProcessedYet
 			end
 		--grant product & result
