@@ -1,6 +1,7 @@
 --!strict
 -- Gustave kit animation sources. Body-space authoring converted through the actual R6 joint bases.
 -- Action timings remain in Definitions; markers also support later SFX authoring.
+-- Torso/head lean uses the opposite pitch sign from a hanging arm: positive X raises an arm forward but tilts an upright torso backward.
 local rig=workspace.R6
 local save=game.ServerStorage.RBX_ANIMSAVES.R6
 local bases={}
@@ -72,7 +73,7 @@ local staging=Instance.new("Folder")
 for key,frames in clips do
  assert(not save:FindFirstChild("BL_"..key),"Existing authored clip: "..key)
  local seq=Instance.new("KeyframeSequence");seq.Name="BL_"..key;seq.Priority=Enum.AnimationPriority.Action2;seq.Loop=false
- seq:SetAttribute("Character","Gustave");seq:SetAttribute("Author","BloodsLocks / ChatGPT");seq:SetAttribute("SourceRevision",1)
+ seq:SetAttribute("Character","Gustave");seq:SetAttribute("Author","BloodsLocks / ChatGPT");seq:SetAttribute("SourceRevision",2)
  for _,f in frames do
   local k=Instance.new("Keyframe");k.Name="Pose";k.Time=f.t;k.Parent=seq
   local root=Instance.new("Pose");root.Name="HumanoidRootPart";root.Weight=0;root.Parent=k
@@ -82,7 +83,7 @@ for key,frames in clips do
    pose.Name=name;if name~="Torso" then pose.Parent=torso end
    local data=f.body[name] or idle[name] or {0,0,0}
    local basis=bases[name] or CFrame.identity
-   pose.CFrame=basis:Inverse()*(CFrame.new(data[4] or 0,data[5] or 0,data[6] or 0)*r(data[1],data[2],data[3]))*basis
+   pose.CFrame=basis:Inverse()*(CFrame.new(data[4] or 0,data[5] or 0,data[6] or 0)*r(if name=="Torso" or name=="Head" then -data[1] else data[1],data[2],data[3]))*basis
    pose.Weight=if key=="SMGBurst" and (name=="Right Leg" or name=="Left Leg") then 0 else if key=="BloodBlade" and (name=="Right Leg" or name=="Left Leg") then .25 else 1
    pose.EasingStyle=Enum.PoseEasingStyle.CubicV2;pose.EasingDirection=Enum.PoseEasingDirection.InOut
   end
