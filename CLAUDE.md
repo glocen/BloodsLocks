@@ -4,13 +4,19 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
 
 ## Where things are
 
-- The game lives in Roblox Studio, reached through the Roblox Studio MCP. Castle hub = place "ROLOCK" (placeId 76593217243342, GameId 10772800943). Match places come later.
-- Code lives in Studio (Studio-first, laid out so a Rojo export later is mechanical):
-  - `ReplicatedStorage.Shared`: Config, Definitions, Simulation (Runner is the step pipeline), Assets, Net, Util
-  - `ServerScriptService.Server`: Boot + Services
-  - `StarterPlayer.StarterPlayerScripts.Client`: Boot + Controllers
-  - `ServerScriptService.Data` + `ServerScriptService.Libraries`: the owner's data system and libraries (ProfileStore, ProductManager, RockModuleServer)
-  - `ReplicatedStorage.Modules`: the owner's modules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D, Combat Agent placeholder, WeaponRarities, Tween list)
+- **The project folder is `C:\Users\gloce\BloodsLocks`**, a git clone of https://github.com/glocen/BloodsLocks. The old `Documents\BloodsLocks - Project` folder is retired (kept only as a backup).
+- The game lives in Roblox Studio, reached through the Roblox Studio MCP. Places in universe 10772800943:
+  - **Manor** hub (the hub is called the Manor now, not the castle) = place "ROLOCK", placeId 76593217243342.
+  - **Victorian** match place = placeId 112559855790294.
+- **Code lives in `src/` and reaches Studio through Rojo** (since 2026-10-29). The files are the source of truth: edit code in files, never in Studio's script editor (Studio edits get overwritten on the next sync). How-to: [docs/github-sync-lesson.md](docs/github-sync-lesson.md), Part 5.
+  - `src/shared` → `ReplicatedStorage.Shared`: Config, Definitions, Simulation (Runner is the step pipeline), Assets, Net, Util
+  - `src/server` → `ServerScriptService.Server`: Boot + Services
+  - `src/client` → `StarterPlayer.StarterPlayerScripts.Client`: Boot + Controllers
+  - `src/owner/Data`, `src/owner/Libraries` → `ServerScriptService.Data` / `.Libraries`: the owner's data system and libraries (ProfileStore, ProductManager, RockModuleServer)
+  - `src/owner/Modules`, `src/owner/Events` → `ReplicatedStorage.Modules` / `.Events`: the owner's modules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D, Combat Agent placeholder, WeaponRarities, Tween list) and remotes
+  - `src/storage/BLInput` → `ServerStorage.BLInput` (the input context)
+  - Mapping: `default.project.json`. Tool versions: `rokit.toml` (`rokit install`).
+  - Not in Rojo (place-specific, stays in Studio): world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, the `PlaceRole` workspace attribute.
   - The old jump/M1/block/HUD prototype was deleted on 2026-10-28 at the owner's request (they keep their own copy).
 - Source of truth for every decision, spec and build step: [docs/engineering-plan.md](docs/engineering-plan.md)
 - Duskbloods research notes: [docs/duskbloods-reference.md](docs/duskbloods-reference.md)
@@ -55,6 +61,6 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
 - Tab is also the player-list key, so `InputBegan` reports it as processed; skip keys only while a TextBox is focused.
 - Client context scripts can't see `ServerStorage`; put VFX templates in `ReplicatedStorage.Shared.Assets.Vfx`.
 - Beam textures run their **vertical** image axis along the beam's length; draw beam art tall (see engineering-plan 11c).
-- The sandboxed shell can't create or write files under Documents (Python/PowerShell). Draw generated assets into the scratchpad; upload images by serving that folder with `py -m http.server` on 127.0.0.1 and calling MCP `upload_image` with the URLs. Use `py`, not `python` (the latter is the Store shim).
+- Windows **Controlled Folder Access** is on: git, Rojo, Python and PowerShell can't write anywhere under Documents (only the file Write/Edit tools can). That's why the project lives in `C:\Users\gloce\BloodsLocks`. Don't change the Windows setting. Git and Rojo commands there need the Bash sandbox disabled. Draw generated assets into the scratchpad; upload images by serving that folder with `py -m http.server` on 127.0.0.1 and calling MCP `upload_image` with the URLs. Use `py`, not `python` (the latter is the Store shim).
 - Weapon models: `WeldConstraint`s inside a cloned model don't hold under Server Authority (parts stay at the template's origin). Join parts with `Weld` + explicit C0.
 - To place a player for a test, set the root CFrame from the Server context; client-side CFrame writes are overridden under Server Authority.

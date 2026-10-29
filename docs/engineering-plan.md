@@ -52,6 +52,36 @@ Inspiration: FromSoftware's The Duskbloods (movement, combat, match structure, h
 - Respawns in phases 1–3 are unlimited after a 5s delay *(tune)*: pick a map region, land at a random spot in it. Time spent dead is Virtue not earned; that's the only death penalty.
 - Culled players spectate or return to the castle; they still get rewards.
 
+### Match flow, start to finish: design v1 (2026-10-29, awaiting owner sign-off)
+
+Heavily based on Duskbloods' Dusk Battle (research in docs/duskbloods-reference.md, "How a match starts and runs"). Duskbloods shows no lobby or intro, so those two states are our own. The owner will cut what they don't like later.
+
+One server state machine, `MatchService` (Match role only), with every duration in `Config.Match` *(tune)*:
+
+| State | Length | What players see and do |
+|---|---|---|
+| **Waiting** | until 2+ players | The **Antechamber**: a small candlelit waiting room in the match place, with a relief of the map. Players can move but not fight. A list shows who has arrived. |
+| **Countdown** | 30 s (10 s when full) | A bell tolls each 10 s. Joins close at T-5 and the server delists itself (locked decision 3). |
+| **Intro** | 8 s | Screen fades to black; title card "The Dusk Hunt" + the world's name; a camera flyover of 3 landmarks; the 8 hunters shown with class and name. |
+| **Intermission** (before phases 1, 2, 3) | 20 s (phase 1), 15 s after | The **map screen**: regions with this phase's **regional features** (icons: skill boon, Shinigami boon, forge, Flame Virtue). Click a region to pick it. Each region holds `ceil(players / regions) + 1`; overflow is moved to a random other region; no pick = random region. |
+| **Spawn** | — | A random spawn point inside the region, at least 60 studs from other players when possible. Rise from a pool of blood-mist; 3 s spawn protection that ends early if you attack. |
+| **Phase 1** | 6 min | Clock dial top-right. Explore, kill, level, find Shinigami. No ritual site. |
+| **Phase 2 / 3** | 5 min each | The clock's shining dot (at 40 %) raises a **Ritual Site** that everyone is called to; leaving it after entering drains HP. At the red dot the phase ends. |
+| **Phase end** | 8 s | Commendations awarded (top 2 kills, top 2 items), then the **culling screen**: the cut players' portraits burn away. Culled players choose spectate or return to the Vigil. Flasks refill. |
+| **Final** | until one remains (4 min cap, then sudden death) | The top 3 are moved to the final arena. 2 lives each, max HP + a bonus from earned Virtue. |
+| **Results** | 12 s | Placement, Virtue, kills, Bloodgems earned, then everyone teleports back to the Vigil. |
+
+**Map data, so world builders never touch code:** each map is a definition (`Definitions/Maps/Victorian`) listing its regions. In the world, regions are parts tagged `BL_Region` with a `Region` attribute, and spawn points are parts tagged `BL_Spawn` inside them. The final arena, the Antechamber and the ritual sites are tagged the same way. ChatGPT's Blender world only has to carry these tags.
+
+**Harsh critique of v1:**
+1. An intro the player can't skip gets old by match 10. Keep it at 8 s and skippable by vote later.
+2. A plain map screen is dull. It must be the gothic relief map in Theme style, with regional features readable at a glance; mock it up before building it.
+3. Region overflow by pure chance can split friends in a party. Parties pick together and move together.
+4. Duskbloods' main complaint is sameness. Regional features and ritual site locations must be random per match from a list in the map definition.
+5. Waiting alone in a lobby is dead time. The Antechamber has the training dummy and lets players test their kit (no damage to each other).
+
+**Build order (Step 10 then 11):** Waiting/Countdown + matchmaking → Intro → Intermission + regions + spawn → phase clock + phase end → culling → final → results. Each piece is verified in play before the next. The Victorian world is a test layout of tagged region parts until the real map arrives from Blender.
+
 ### Virtue (score)
 
 | Source | Virtue *(tune)* |
@@ -246,6 +276,18 @@ Simulation step order (Runner): server applies queued hits / client feeds Face+A
 - **Dependency rules:** Definitions require nothing. Simulation requires only Config and Definitions. Server and Client code require Shared, never each other.
 - **Place role:** a Workspace attribute `PlaceRole` ("Castle" / "Match") decides which role-specific services boot.
 
+### Framework archive on GitHub: Rojo (locked by the owner, 2026-10-29)
+
+The owner wants the perfected framework kept on GitHub as an archive: each world place gets it from there, and when a world needs an upgrade it takes the newest version again. This replaces "copy the code over" in locked decision 2 and Step 10.
+
+- **Tools (free, open source):** Rojo 7.7.1 pinned in `rokit.toml`; VS Code with the Rojo and Luau LSP extensions; the Rojo Studio plugin.
+- **Where:** the repo clone at `C:\Users\gloce\BloodsLocks`. It's outside Documents because Windows Controlled Folder Access blocks git and Rojo there.
+- **Mapping (`default.project.json`):** `src/shared`, `src/server`, `src/client`, `src/owner/{Data,Libraries,Modules,Events}`, `src/storage/BLInput`, plus the StarterPlayer settings (R6, jump settings, camera zoom). Place-specific content (world builds, WorldTools, WorldAssets, RBX_ANIMSAVES, Lighting, `PlaceRole`) stays in each place and is never touched by Rojo.
+- **Files are the source of truth.** Code is edited in `src/` and Rojo syncs it to Studio. A Studio-side edit is pulled back with `rojo syncback -i <place>.rbxl -y` (it ignores the noise properties `SerializedOverrides` and `SourceAssetId`).
+- **Versions:** `framework-v0` = the hub's code as exported 2026-10-29, before the fix pass (125 files, script counts verified against Studio). `framework-v1` = after the fix pass; worlds take that one.
+- **Every place runs the same code.** Manor-only and match-only services are split by the `PlaceRole` workspace attribute.
+- **Repo layout:** `docs/` (plan, research, notes, `sessions/`), `src/` (framework), `worlds/<World>/` (world-only tools and notes), `tools/` (our asset scripts), `assets/`.
+
 ## 8. Data (compatible with the owner's ProfileStore system)
 
 - **The owner's system:**
@@ -420,7 +462,7 @@ Also fixed: the saber template's `WeldConstraint`s didn't hold under Server Auth
 **Still to do in Step 8:** the ultimate (level 12, needs Step 11 leveling); animations for guard/howl/bite/SMG/saber (owner publishes in one batch); 1v1 duel test needs two players. |
 | 9 | Castle: Theme + UI kit, HUD, class altar, skin shop shell, training yard | Class choice saves; UI coherent | — |
 | 9a | **UI research + UI kit v2** (owner priority 2026-10-29): research Roblox UI practice and premium game UI, then build the Theme v2 + component kit and restyle the HUD | Research written to docs/ui-research.md; the kit is reviewed in play by the owner | — |
-| 10 | Match place + matchmaking + parties + private lobbies: the Blood Table menu launches a match in the Victorian place and returns players to the hub | 2 players go castle → match → castle in a live dev test (TeleportService needs a published dev copy) | — |
+| 10 | Match place + matchmaking + parties + private lobbies: the Blood Table menu launches a match in the Victorian place and returns players to the hub | 2 players go castle → match → castle in a live dev test (TeleportService needs a published dev copy) | **Started 2026-10-29.** The Victorian place exists: **placeId 112559855790294**, same universe (10772800943), in `Config.Game.MatchMaps.Victorian`. The code-sharing decision (locked decision 2) is **copy the code over**: the owner opens the Victorian place, and Claude copies Shared, Server and Client from the hub through MCP (two Studios open). Packages and Rojo stay options for later. Next: the copy, then `PlaceRole = "Match"` on the Victorian workspace, MatchmakingService (MemoryStore registry, ReserveServer, waiting room 2 min / 30 s countdown, delist at T-5), and return to the hub. **Update 2026-10-29:** the Victorian place is open in Studio and empty (baseplate + spawn). The match flow is designed (section 3, "Match flow, start to finish"). The owner wants a fix pass on the framework, then a GitHub archive of it (section 7, "Framework archive"); the method (Rojo or copy-paste) waits on the owner. |
 | 10a | **Shinigami** (pulled forward from Step 12, owner 2026-10-29): pact circles, roles (melee/ranged/support), levelling, recall and cooldown, as in Duskbloods. Built and tested first at the hub yard's circle | Pact, follow, fight, recall and death cooldown verified against dummies | **Core done 2026-10-29** (melee "Kurogane"). Verified: pact at the yard circle (G), summon/dismiss (T), follows its master, engages enemies in a fight with its master (or with itself), alternates two slashes (40/50), death means dismissed plus a 30 s cooldown with resummon refused, regen while dismissed (2%/s), it never hurts its own master (allegiance via `own` attribute), no leftover models. **To do:** ranged and support types, levelling with its master (Step 11), a real model (Blender), animations. |
 | 11 | Match rules: phases, Virtue, culling, respawn, final arena, leveling, flasks | A full match loop with 2–3 players | — |
 | 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | — |

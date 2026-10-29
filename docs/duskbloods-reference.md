@@ -52,6 +52,18 @@ Research for BloodsLocks design decisions. Sources are network-test and preview 
 - Leveling is tied to Virtue, with a big character ability at level 12.
 - Alliances, duos mode and optional per-character objectives ("sigils") exist.
 
+### How a match starts and runs (research 2026-10-29)
+
+Sources: the official manual (Game Basics 1), GameRant's explainer, and preview round-ups. No source describes a waiting lobby or an intro cutscene, so those parts of our flow are our own design.
+
+1. **Hub:** pick a character (Sigils on or off), set the rules, matchmake from the House of Night.
+2. **Intermission before every phase:** each player picks a **starting area** on the map. Too many in one area → random players are moved to another. You start at a **random spot** in your area. Phase 2 (and 3) open with a fresh pick.
+3. **Phase 1:** explore, kill AI, collect items. PvP is possible but not encouraged. Virtue comes from tough enemies, skulls (Flame), and the two commendations (most AI kills, most items).
+4. **Phases 2 and 3:** partway through, a **Ritual Site** activates and everyone is called to it: a PvP arena with pledge altars you hold until phase end. Standing outside its boundary slowly hurts. When the clock hits 0, the lowest-Virtue players are cut (2 after phase 2; after phase 3 only the top 3 remain).
+5. **Final phase:** the top 3 fight in a smaller arena, one respawn each (2 lives), max HP boosted by earned Virtue. Last one standing wins.
+- **Phase length:** sources disagree (about 5 min per Yahoo; 8–10 min per ResetEra and Console Creatures; about 30 min per match per GameSpot). Ours stays *(tune)*.
+- **Critique from previews:** every match ends in PvP and side objectives repeat, so matches feel samey. We should vary regional features and events per match.
+
 ## Kin (companions)
 
 - Summoned by making a pact at circles marked with light pillars (yellow symbols). They stay for the match.
@@ -75,3 +87,8 @@ Research for BloodsLocks design decisions. Sources are network-test and preview 
 - Albert guide: https://www.gamerfuzion.com/duskbloods-albert/
 - Mobalytics characters: https://mobalytics.gg/gamebase/guides/the-duskbloods-characters
 - Mobalytics first impressions: https://mobalytics.gg/gamebase/previews/the-duskbloods-first-impressions
+- Official manual, Game Basics 1: https://campaign.theduskbloods.jp/manual/en/basic1.html
+- GameRant explainer: https://gamerant.com/the-duskbloods-explain-how-game-works/
+- ResetEra preview thread: https://www.resetera.com/threads/the-duskbloods-preview-thread.1609033/
+- Console Creatures hands-on: https://www.consolecreatures.com/the-duskbloods-hands-on-preview/
+- Yahoo network test impressions: https://tech.yahoo.com/gaming/articles/duskbloods-youre-quick-youre-dead-150000942.html

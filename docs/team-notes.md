@@ -1,4 +1,4 @@
-﻿# Team notes
+# Team notes
 
 Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGPT) and the owner, glocen. Newest entry first. Keep entries short: what changed, where it lives, and what's next or open.
 
@@ -12,6 +12,53 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Gameplay state lives in short-coded attributes (`EntityState.Attr`; 1024 bytes per instance) and is written only inside `RunService:BindToSimulation`.
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
+
+## 2026-10-29: Claude: ⚠ READ FIRST: the code is now in this repo (Rojo)
+
+- **The project folder moved** to `C:\Users\gloce\BloodsLocks` (a clone of this repo). Windows Controlled Folder Access blocks git and Rojo in Documents. `Documents\BloodsLocks - Project` is a retired backup.
+- **The framework code is in `src/`** and reaches Studio through Rojo 7.7.1 (`default.project.json`, `rokit.toml`). **Edit code in the files, not in Studio's script editor**, or the next sync overwrites it. World builds and WorldTools stay in Studio and are untouched by Rojo.
+- **Tag `framework-v0`** = the Manor hub's code as exported today, before the fix pass. Roll back with `git checkout framework-v0 -- src`.
+- **Naming:** the hub is the **Manor** now, not the castle. The code rename (PlaceRole "Castle", `Services/Castle`) is the next code change.
+- How-to for everyone: [github-sync-lesson.md](github-sync-lesson.md), Part 5.
+
+## 2026-10-29: Claude: match flow design, framework archive plan, GitHub lesson
+
+- **Victorian place** is open in Studio (placeId 112559855790294) and empty: no framework yet.
+- **Match flow v1** designed from Duskbloods research: Waiting → Countdown → Intro → Intermission (pick a region) → Spawn → Phases → Phase end / culling → Final → Results. Spec in engineering-plan.md section 3; research in duskbloods-reference.md. Awaiting owner sign-off.
+- **For ChatGPT (world building):** regions, spawns, the Antechamber, the final arena and ritual sites are **tagged parts** (`BL_Region` + `Region` attribute, `BL_Spawn`, ...). Your Victorian map only needs those tags; no code.
+- **Framework archive:** the owner chose Rojo (see the entry above). The fix pass waits on the owner's issue list.
+- **New:** [github-sync-lesson.md](github-sync-lesson.md) (how we all sync through the repo; session logs go in `docs/sessions/`) and a `.gitignore` that keeps raw transcripts out.
+
+## 🌙 END OF SESSION 2026-10-29: where everything stands (start here tomorrow)
+
+**Done today (all verified in play, 0 errors):**
+- Strong/charged attacks, plus the charge telegraph. The saber weld fix (Weld, not WeldConstraint).
+- Drawn VFX textures (`tools/vfx_textures.py`). The VFX quality revisit is parked.
+- **HUD v2 on Duskbloods' layout:**
+  - medallion + Lv/XP + muted-red HP + short green stamina;
+  - orange posture bar in the centre;
+  - skill medallions with ring gauges, SMG ammo with white segments (owner: keep), the Shinigami card.
+- The R key fix (howl vs strong, 0.1 s grace).
+- **Shinigami** (Kurogane): pact (G at the yard circle), summon/dismiss (T), AI, a 30 s death cooldown, regen, levels with its master, the **Gōka** fire AoE at Lv 3.
+- **Hub safe zone:** combat, HUD and PvP only inside the training yard (`BL_CombatZone`).
+- **Blood Table menu v1** (G at the table): Dusk Battle · Classes · Relics · Atelier · Archive · System. The class choice saves to the profile.
+- **Duelist → Gustave** rename everywhere, with data migration v2.
+- `Config.Game`: places, match maps, match rules (8 max, 2 min, 30 s countdown, lock at 5).
+
+**Tomorrow's plan (owner):**
+1. The owner opens the **Victorian place (112559855790294)** in a second Studio. Claude copies everything over (Shared, Server, Client, Assets, the input context `ServerStorage.BLInput`, the owner's Data/Libraries/Modules), then sets `workspace.PlaceRole = "Match"` there.
+2. MatchmakingService: Quick join (a MemoryStore registry of open servers) or ReserveServer + teleport. Waiting room in the match server (2 players minimum, 30 s countdown, delist at T-5). Return to the hub after the match.
+3. Test in the **published** game (TeleportService doesn't work in Studio) with 2 accounts.
+
+**Open items / owner feedback queue:**
+- **Gōka** needs a stronger redesign (bigger area, lingering fire, more impact).
+- **Shinigami level-up feedback** (a card flash + toast) once in-match XP exists (Step 11).
+- **PvP 2-player test** in the yard (Test → Clients and Servers, 2 players).
+- **Relics system** (like Nightreign): design + build. Its tab exists.
+- **Stamina rule decision:** do attacks drain stamina, as in the official manual? Guard counter + howl deflecting projectiles?
+- **Animations:** ChatGPT, Issue #1 (Howl, Bite, SMGBurst, BloodBlade, LightBeam).
+- **World:** the manor/hub art (ChatGPT, Blender); a real Kurogane model.
+- **Menu polish:** a map image for the mode card, portrait framing, sounds on hover/confirm.
 
 ## 2026-10-29: Claude: ⚠ for ChatGPT (re Issue #1): the class ID IS renamed now
 
