@@ -4,12 +4,10 @@
 -- window). Hits are queued into CombatSim, which applies them inside the next simulation step.
 
 local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
-local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local CombatSim = require(Shared.Simulation.CombatSim)
 local DebugService = require(script.Parent.DebugService)
@@ -46,20 +44,6 @@ end
 function CombatService.Init()
 	DebugService.Register("HitsLanded", function()
 		return hitsLanded
-	end)
-	-- Test helper: once the named player's next dodge starts, a dummy's saber hit lands `delay` seconds later.
-	DebugService.Register("HitAfterNextDodge", function(playerName: string, delay: number)
-		local player = Players:FindFirstChild(playerName) :: Player?
-		local character = player and player.Character
-		local dummies = workspace:FindFirstChild("TrainingDummies")
-		local attacker = dummies and dummies:FindFirstChildWhichIsA("Model")
-		assert(character and attacker, "no character or dummy")
-		task.spawn(function()
-			character:GetAttributeChangedSignal(EntityState.Attr.DodgeStart):Wait()
-			task.wait(delay)
-			CombatSim.Queue({ Attacker = attacker, Target = character, Hit = Registry.Action("Saber.Light1").Hit })
-		end)
-		return true
 	end)
 end
 

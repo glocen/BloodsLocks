@@ -5,6 +5,7 @@
 -- While playtesting, from the server side:  game.ServerStorage.BL_Debug:Invoke("Commands")
 -- The bridge never exists on live servers.
 
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,6 +22,25 @@ local commands: { [string]: (...any) -> ...any } = {}
 function DebugService.Register(name: string, command: (...any) -> ...any)
 	assert(commands[name] == nil, `debug command "{name}" registered twice`)
 	commands[name] = command
+end
+
+-- Runs a command: (true, results...) or (false, error).
+function DebugService.Run(name: any, ...: any): (boolean, ...any)
+	local command = commands[name]
+	if not command then
+		return false, `unknown debug command "{tostring(name)}"`
+	end
+	return pcall(command, ...)
+end
+
+-- The player a command means: a Player, a player's name, or nil for the first player (solo playtests).
+function DebugService.ResolvePlayer(who: any): Player?
+	if typeof(who) == "Instance" and who:IsA("Player") then
+		return who
+	elseif who == nil then
+		return Players:GetPlayers()[1]
+	end
+	return Players:FindFirstChild(tostring(who)) :: Player?
 end
 
 function DebugService.Init()
@@ -44,14 +64,12 @@ function DebugService.Init()
 	end
 	local bridge = Instance.new("BindableFunction")
 	bridge.Name = "BL_Debug"
-	bridge.OnInvoke = function(name: any, ...: any)
-		local command = commands[name]
-		if not command then
-			return false, `unknown debug command "{tostring(name)}"`
-		end
-		return pcall(command, ...)
-	end
+	bridge.OnInvoke = DebugService.Run
 	bridge.Parent = ServerStorage
+	-- Clients (the self-test) reach the same commands; the calling player goes first.
+	Net.Server.Handle("DebugCommand", function(player: Player, name: any, ...: any)
+		return DebugService.Run(name, player, ...)
+	end)
 	Log.Info("DebugService", "Studio debug bridge ready (ServerStorage.BL_Debug)")
 end
 

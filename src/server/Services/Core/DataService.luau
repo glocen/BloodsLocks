@@ -76,14 +76,8 @@ function DataService.Wait(player: Player): any
 	return DataService.Get(player)
 end
 
-local function findPlayer(name: any): Player?
-	if name == nil then
-		return Players:GetPlayers()[1]
-	end
-	return Players:FindFirstChild(tostring(name)) :: Player?
-end
-
 function DataService.Init()
+	local findPlayer = DebugService.ResolvePlayer
 	DebugService.Register("GetData", function(name: any)
 		local player = findPlayer(name)
 		local data = if player then DataService.Get(player) else nil

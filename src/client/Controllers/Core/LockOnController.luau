@@ -103,6 +103,11 @@ function LockOnController.GetTarget(): Model?
 	return target
 end
 
+-- Locks onto a model (nil unlocks). Used by tools such as the self-test; players lock with Tab.
+function LockOnController.SetTarget(model: Model?)
+	setTarget(model)
+end
+
 local function buildMarker()
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "BL_LockOn"

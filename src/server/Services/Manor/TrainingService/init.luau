@@ -4,21 +4,18 @@
 -- BaseParts in Workspace.TrainingDummies; a spot with the attribute Aggressive = true gets a dummy that swings
 -- at players in reach (see DummyBrain).
 
-local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
+local Config = require(Shared.Config.Combat).Training
 local EntityState = require(Shared.Simulation.EntityState)
 local CombatSim = require(Shared.Simulation.CombatSim)
+local EntityService = require(script.Parent.Parent.Core.EntityService)
 local DummyBrain = require(script.DummyBrain)
 
 local A = EntityState.Attr
 local num = EntityState.Number
-
-local DUMMY_HEALTH = 2000
-local REGEN_AFTER = 3
-local REVIVE_AFTER = 1.5
 
 local TrainingService = {}
 
@@ -27,21 +24,9 @@ local dummies: { Dummy } = {}
 
 -- Each dummy is named after its spot (DummySpot1 -> TrainingDummy1), so names don't depend on child order.
 local function spawnDummy(template: Model, spot: BasePart)
-	local model = template:Clone()
-	model.Name = "TrainingDummy" .. (spot.Name:match("%d+$") or spot.Name)
-	for _, d in model:GetDescendants() do
-		if d:IsA("BaseScript") then
-			d:Destroy()
-		end
-	end
-	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-	humanoid.MaxHealth, humanoid.Health = math.huge, math.huge
-	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-	model:PivotTo(spot.CFrame * CFrame.new(0, 3 + spot.Size.Y / 2, 0))
-	EntityState.InitCombat(model, DUMMY_HEALTH, time())
-	CollectionService:AddTag(model, EntityState.Tag)
-	model.Parent = spot.Parent
+	local name = "TrainingDummy" .. (spot.Name:match("%d+$") or spot.Name)
+	local cframe = spot.CFrame * CFrame.new(0, 3 + spot.Size.Y / 2, 0)
+	local model = EntityService.MakeDummy(template, name, cframe, Config.DummyHealth, spot.Parent :: Instance)
 	table.insert(dummies, {
 		Model = model,
 		Brain = if spot:GetAttribute("Aggressive") == true then DummyBrain.new(model) else nil,
@@ -51,7 +36,7 @@ end
 local function heal(model: Model, now: number)
 	local lastHit = num(EntityState.Fx(model), A.LastHitAt, 0)
 	local hp, max = num(model, A.HP, 0), num(model, A.HPMax, 0)
-	if (hp <= 0 and now - lastHit >= REVIVE_AFTER) or (hp < max and now - lastHit >= REGEN_AFTER) then
+	if (hp <= 0 and now - lastHit >= Config.ReviveAfter) or (hp < max and now - lastHit >= Config.RegenAfter) then
 		model:SetAttribute(A.HP, max)
 	end
 end

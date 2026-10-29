@@ -180,8 +180,8 @@ function Locomotion.Step(character: Model, humanoid: Humanoid, root: BasePart, s
 			local extra = (Config.FallGravityMultiplier - 1) * GRAVITY * dt
 			root.AssemblyLinearVelocity = Vector3.new(v.X, math.max(v.Y - extra, -Config.MaxFallSpeed), v.Z)
 		end
-		walkSpeed = act.WalkSpeed
-			or (if charging then Config.ChargeWalkSpeed elseif sprinting then Config.SprintSpeed else Config.WalkSpeed)
+		walkSpeed = if act.Lunge then act.Lunge.Magnitude -- like the dodge: a lower walk speed would brake the lunge
+			else act.WalkSpeed or (if charging then Config.ChargeWalkSpeed elseif sprinting then Config.SprintSpeed else Config.WalkSpeed)
 	end
 	if humanoid.WalkSpeed ~= walkSpeed then
 		humanoid.WalkSpeed = walkSpeed

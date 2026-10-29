@@ -30,4 +30,11 @@ return {
 	InputBuffer = 0.25, -- a bite/shot/attack pressed this close to the end of an action fires when it ends
 	PvPInManor = true, -- players can spar inside the Manor's training yard (the rest of the Manor is a safe zone)
 	ShowHitboxes = true, -- Studio only: MuchachoHitbox visualizer
+
+	-- The Manor's training dummies.
+	Training = {
+		DummyHealth = 2000,
+		RegenAfter = 3, -- seconds after the last hit before a dummy heals to full
+		ReviveAfter = 1.5, -- seconds after "dying"
+	},
 }
