@@ -13,6 +13,21 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: hub safe zone, yard PvP, Shinigami skill
+
+- **Hub rules (owner):**
+  - Combat only exists in the **training yard**: a part tagged `BL_CombatZone` (`workspace.Vigil.Yard.TrainingZone`, also made by the graybox builder) checked by `Shared.Util.Zones`.
+  - Outside it, no actions start (ActionSim), no damage lands (CombatSim), and the combat HUD hides.
+  - In the yard, players can spar (`Config.Combat.PvPInCastle = true`).
+  - Match places are combat zones everywhere.
+- **Shinigami level + skill:**
+  - The pact levels with its master (never down; `ShinigamiLevel` debug command).
+  - `Def.Skill` unlocks at its `UnlockLevel` (all unlocked in the castle).
+  - **Kurogane → Gōka** (Lv 3): a red flash telegraph (0.45 s), then a fire ring AoE (20×20 box, 90 damage, +30 stagger, heavy), on a 12 s cooldown.
+  - Verified: 90 damage to the dummy, 0 to the master standing inside it.
+- **Data-driven action effects:** `action.Fx = "<Vfx module>"` plays when the action starts (CombatFxController `ACTION_FX`). First: `Client.Vfx.FireNova`.
+- **Open:** a 2-player PvP test in the yard (Studio → Test → Clients and Servers, 2 players).
+
 ## 2026-10-29: Claude: Shinigami system (core)
 
 - **Data:** `Definitions.Shinigami.<Id>` (first: `Kurogane`, melee). `Registry.Shinigami(id)` validates them; their attacks are normal actions.
