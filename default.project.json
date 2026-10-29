@@ -1,0 +1,44 @@
+{
+  "name": "BloodsLocks",
+  "servePort": 34872,
+  "globIgnorePaths": ["**/*.md"],
+  "syncbackRules": {
+    "ignoreProperties": {
+      "Instance": ["SerializedOverrides", "SourceAssetId"]
+    }
+  },
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" },
+      "Modules": { "$path": "src/owner/Modules" },
+      "Events": { "$path": "src/owner/Events" }
+    },
+
+    "ServerScriptService": {
+      "Server": { "$path": "src/server" },
+      "Data": { "$path": "src/owner/Data" },
+      "Libraries": { "$path": "src/owner/Libraries" }
+    },
+
+    "ServerStorage": {
+      "BLInput": { "$path": "src/storage/BLInput" }
+    },
+
+    "StarterPlayer": {
+      "$properties": {
+        "AvatarJointUpgrade": "Enabled",
+        "CameraMaxZoomDistance": 128.0,
+        "CharacterBreakJointsOnDeath": false,
+        "CharacterUseJumpPower": false,
+        "EnableMouseLockOption": false,
+        "GameSettingsAvatar": "R6",
+        "UseImprovedCharacterEvents": { "Enum": 0 }
+      },
+      "StarterPlayerScripts": {
+        "Client": { "$path": "src/client" }
+      }
+    }
+  }
+}

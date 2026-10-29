@@ -1,0 +1,5 @@
+# Tools pinned for this project. Install them with: rokit install
+# Rokit itself: https://github.com/rojo-rbx/rokit (free, open source)
+
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
