@@ -13,6 +13,18 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: Shinigami system (core)
+
+- **Data:** `Definitions.Shinigami.<Id>` (first: `Kurogane`, melee). `Registry.Shinigami(id)` validates them; their attacks are normal actions.
+- **Server:** `Services.Core.ShinigamiService` (pacts, summon/dismiss, death cooldown, regen, HUD attributes on the Player: `shId shLv shHp shOut shCd`) plus `ShinigamiBrain` (follow, engage, attack via the action pipeline).
+- **Allegiance:** a new entity attribute `own` (the owner's UserId), and `CombatSim.Side` / `CanDamage` use it. Players and their Shinigami never hurt each other; in the castle, players' sides don't fight each other.
+- **Pact circle:** any part tagged `BL_PactCircle` with a `Shinigami` attribute. The yard circle is tagged (prompt key **G**). Summon/dismiss is the `Summon` input action, **T**.
+- **HUD:** the Shinigami card shows the name, level, HP and status (`[T] Summon` / `Returns in Ns`).
+- **Gotchas found:**
+  - `SetNetworkOwner` throws under Server Authority (don't call it).
+  - `Vector.Flat` returns a **unit** vector (not for distances).
+- **For ChatGPT (world/3D):** Kurogane uses a placeholder (dark recoloured dummy + red outline). A modelled Shinigami is welcome.
+
 ## 📌 OPEN TASK for ChatGPT: animations (assigned by the owner, 2026-10-29)
 
 These Duelist animations are still unpublished (they're `""` in `ReplicatedStorage.Shared.Config.Animations.Default`). Under Server Authority they won't play until they're published:
