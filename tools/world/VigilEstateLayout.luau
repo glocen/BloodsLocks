@@ -5,7 +5,7 @@
 -- Rebuild the grounds from layout data so the combat rectangle cannot leak into the manor.
 local E={}
 local ORIGIN=CFrame.new(0,0,-1000)
-local L={ManorScale=1.5,YardHalf=120,YardSouth=64,YardNorth=340,WallHeight=18,
+local L={ManorScale=1.5,ManorVerticalScale=1.15,YardHalf=120,YardSouth=64,YardNorth=340,WallHeight=18,
  Duel=Vector3.new(0,.5,-185),DummyLine=Vector3.new(-90,.5,-280),Pact=Vector3.new(86,.15,-280),Tower=370}
 E.Layout=L
 local stone=Color3.fromRGB(78,77,84)
@@ -69,13 +69,53 @@ local function restoreHandScale(props:any,f:number)
   else r.part.Size=r.size;r.part.CFrame=target end
  end
 end
+
+-- Stretch the architectural height separately from the footprint. Hand-use props are restored below.
+local function tallerStoreys(region:Instance,props:any)
+ local exclusions={}
+ for _,r in props do exclusions[r.model or r.part]=true end
+ local sy=L.ManorVerticalScale
+ for i,p in region:GetDescendants() do
+  if p:IsA("BasePart") then
+   local excluded=false
+   local a:Instance?=p
+   while a and a~=region do if exclusions[a] then excluded=true;break end;a=a.Parent end
+   if not excluded then
+    local cf=p.CFrame;local pos=cf.Position
+    local target=Vector3.new(pos.X,pos.Y*sy,pos.Z)
+    local axes={cf.RightVector,cf.UpVector,cf.ZVector}
+    local size=p.Size;local found=false
+    for axis,v in axes do
+     if math.abs(v.Y)>.999 then
+      if axis==1 then size=Vector3.new(size.X*sy,size.Y,size.Z)
+      elseif axis==2 then size=Vector3.new(size.X,size.Y*sy,size.Z)
+      else size=Vector3.new(size.X,size.Y,size.Z*sy) end
+      found=true;break
+     end
+    end
+    if not found and math.abs(cf.ZVector.Y)<.001 then
+     local up=Vector3.new(cf.UpVector.X,cf.UpVector.Y*sy,cf.UpVector.Z)
+     size=Vector3.new(size.X,size.Y*up.Magnitude,size.Z)
+     local y=up.Unit;local z=cf.ZVector
+     p.CFrame=CFrame.fromMatrix(target,y:Cross(z).Unit,y,z)
+    else p.CFrame=CFrame.new(target)*cf.Rotation end
+    p.Size=size
+   end
+  end
+  if i%1000==0 then task.wait() end
+ end
+end
+
 function E.Apply(root:Instance)
- if root:GetAttribute("EstateLayoutRevision")==1 then return root end
+ local revision=root:GetAttribute("EstateLayoutRevision")
+ if revision==2 then return root end
+ assert(revision==nil,"Rebuild from masters before changing the estate revision")
  assert(not game:GetService("RunService"):IsRunning(),"Estate rebuilding is edit-time only")
  local props=preserveHandScale(root)
  for _,child in root.GreatHall:GetChildren() do scaleRegion(child,L.ManorScale);task.wait() end
  scaleRegion(root.HallOfOaths,L.ManorScale);task.wait()
  scaleRegion(root.Atelier,L.ManorScale);task.wait()
+ for _,region in {root.GreatHall,root.HallOfOaths,root.Atelier} do tallerStoreys(region,props) end
  restoreHandScale(props,L.ManorScale)
  -- Re-lay real-width oak boards rather than leaving oversized scaled planks.
  local manor=root.GreatHall.ManorHall
@@ -167,7 +207,8 @@ function E.Apply(root:Instance)
   if a and a:IsA("BasePart")then a.CFrame=spots.DummyAggressive end
   if b and b:IsA("BasePart")then b.CFrame=spots.DummyLine end
  end
- root:SetAttribute("EstateLayoutRevision",1)
+ root:SetAttribute("EstateLayoutRevision",2)
+ root:SetAttribute("ManorVerticalScale",L.ManorVerticalScale)
  root:SetAttribute("ManorLayoutScale",L.ManorScale)
  root:SetAttribute("ArtStatus","Placeholder layout; larger manor and yard; final Blender art pending")
  return root
