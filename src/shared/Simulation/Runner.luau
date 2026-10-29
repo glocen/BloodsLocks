@@ -27,7 +27,7 @@ local function step(rig: Rigs.Rig, now: number, dt: number)
 	if not handles or humanoid:GetState() == Enum.HumanoidStateType.Dead then
 		return
 	end
-	Spawn.EnsureReady(character, humanoid, now)
+	Spawn.EnsureReady(rig.Player, character, humanoid, now)
 	local input = Input.Read(handles, character)
 	local sense = Locomotion.Sense(character, humanoid, now)
 	local act = ActionSim.Step(character, Vector.Flat(root.CFrame.LookVector), {

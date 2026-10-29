@@ -10,14 +10,18 @@ local WEAPON_NAME = "BL_Weapon"
 
 local Equipment = {}
 
--- Server only: welds the class's melee weapon to the right arm (once per character).
+-- Server only: welds the class's melee weapon to the right arm, replacing the weapon it held before (class change).
 function Equipment.AttachMelee(character: Model)
 	local class = Registry.Class(character:GetAttribute(EntityState.Attr.ClassId))
 	local weapon = Registry.Weapon(class.Melee)
 	local assets = Shared:FindFirstChild("Assets")
 	local template = assets and assets.Weapons:FindFirstChild(weapon.Model)
 	local arm = character:FindFirstChild("Right Arm") :: BasePart?
-	if not template or not arm or character:FindFirstChild(WEAPON_NAME) then
+	local held = character:FindFirstChild(WEAPON_NAME)
+	if held then
+		held:Destroy()
+	end
+	if not template or not arm then
 		return
 	end
 	local model = template:Clone()

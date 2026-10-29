@@ -8,7 +8,7 @@
 --   Regen: it recovers Regen (fraction of max HP per second) while dismissed or out of combat.
 --   Level: it levels with its master (never below the level it reached); its special Skill unlocks at
 --     Skill.UnlockLevel (everything is unlocked in the Manor, like player skills).
--- The HUD reads Player attributes: shId, shLv, shHp (0..1), shOut (summoned), shCd (time() the cooldown ends).
+-- The HUD reads the pact from the Player's PlayerState.Shinigami* attributes.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -18,6 +18,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
+local PlayerState = require(Shared.Simulation.PlayerState)
 local Equipment = require(Shared.Simulation.Equipment)
 local Parts = require(Shared.Util.Parts)
 local Net = require(Shared.Net)
@@ -30,7 +31,7 @@ local num = EntityState.Number
 
 local CIRCLE_TAG = "BL_PactCircle"
 local OUT_OF_COMBAT = 5 -- seconds without a hit before it regenerates while summoned
-local PLAYER_ATTR = { Id = "shId", Level = "shLv", Hp = "shHp", Out = "shOut", Cooldown = "shCd" }
+local P = PlayerState.Attr
 
 type Pact = {
 	Id: string,
@@ -47,11 +48,11 @@ local pacts: { [Player]: Pact } = {}
 local folder: Folder
 
 local function publish(player: Player, pact: Pact?)
-	player:SetAttribute(PLAYER_ATTR.Id, if pact then pact.Id else nil)
-	player:SetAttribute(PLAYER_ATTR.Level, if pact then pact.Level else nil)
-	player:SetAttribute(PLAYER_ATTR.Hp, if pact then pact.Hp else nil)
-	player:SetAttribute(PLAYER_ATTR.Out, if pact then pact.Model ~= nil else nil)
-	player:SetAttribute(PLAYER_ATTR.Cooldown, if pact then pact.CooldownUntil else nil)
+	player:SetAttribute(P.ShinigamiId, if pact then pact.Id else nil)
+	player:SetAttribute(P.ShinigamiLevel, if pact then pact.Level else nil)
+	player:SetAttribute(P.ShinigamiHp, if pact then pact.Hp else nil)
+	player:SetAttribute(P.ShinigamiOut, if pact then pact.Model ~= nil else nil)
+	player:SetAttribute(P.ShinigamiCooldown, if pact then pact.CooldownUntil else nil)
 end
 
 local function maxHealth(def: any, level: number): number

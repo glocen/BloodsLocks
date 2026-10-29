@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local EntityState = require(Shared.Simulation.EntityState)
+local PlayerState = require(Shared.Simulation.PlayerState)
 local ActionSim = require(Shared.Simulation.ActionSim)
 local Registry = require(Shared.Definitions.Registry)
 local SHINIGAMI_KEY = "T"
@@ -26,6 +27,7 @@ local StaggerGauge = require(UI.Hud.StaggerGauge)
 local LockOnController = require(script.Parent.LockOnController)
 
 local A = EntityState.Attr
+local P = PlayerState.Attr
 local num = EntityState.Number
 
 -- Emblem tint per icon name (skill definitions name their Icon from Theme.Images).
@@ -94,15 +96,15 @@ function HudController.Start()
 			Stamina = stamina / math.max(1, num(character, A.StaminaMax, 1)),
 			StaminaEmpty = stamina <= 0,
 		}, dt)
-		local pactId = player:GetAttribute("shId")
+		local pactId = player:GetAttribute(P.ShinigamiId)
 		local pactDef = Registry.Shinigami(pactId)
 		if pactDef then
-			local summoned = player:GetAttribute("shOut") == true
-			local cooldown = (player:GetAttribute("shCd") or 0) - time()
+			local summoned = player:GetAttribute(P.ShinigamiOut) == true
+			local cooldown = (player:GetAttribute(P.ShinigamiCooldown) or 0) - time()
 			shinigami:Update({
 				Name = pactDef.DisplayName,
-				Level = player:GetAttribute("shLv") or 1,
-				Hp = player:GetAttribute("shHp") or 1,
+				Level = player:GetAttribute(P.ShinigamiLevel) or 1,
+				Hp = player:GetAttribute(P.ShinigamiHp) or 1,
 				Summoned = summoned,
 				Status = if summoned then nil elseif cooldown > 0 then `Returns in {math.ceil(cooldown)}s` else `[{SHINIGAMI_KEY}] Summon`,
 			}, dt)

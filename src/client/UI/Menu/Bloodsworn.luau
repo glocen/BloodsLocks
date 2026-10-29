@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
+local PlayerState = require(Shared.Simulation.PlayerState)
 local Net = require(Shared.Net)
 local Theme = require(script.Parent.Parent.Theme)
 local Motion = require(script.Parent.Parent.Core.Motion)
@@ -157,7 +158,7 @@ function Bloodsworn.new(parent: Instance): Screen
 		end)
 		self._cards[slot] = { Id = classId, Stroke = stroke, Chosen = chosen, Name = name, Card = card }
 	end
-	Players.LocalPlayer:GetAttributeChangedSignal("class"):Connect(function()
+	Players.LocalPlayer:GetAttributeChangedSignal(PlayerState.Attr.Class):Connect(function()
 		self:_refresh()
 	end)
 	self:_refresh()
@@ -166,7 +167,7 @@ function Bloodsworn.new(parent: Instance): Screen
 end
 
 function Bloodsworn._refresh(self: any)
-	local current = Players.LocalPlayer:GetAttribute("class") or Registry.DefaultClass
+	local current = Players.LocalPlayer:GetAttribute(PlayerState.Attr.Class) or Registry.DefaultClass
 	for _, card in self._cards do
 		local picked = card.Id ~= nil and card.Id == current
 		Motion.To(card.Stroke, { Transparency = if picked then 0 else 0.35, Color = if picked then Theme.Colors.Hairline else Theme.Colors.Stroke }, "Fast")

@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Registry = require(ReplicatedStorage.Shared.Definitions.Registry)
+local PlayerState = require(ReplicatedStorage.Shared.Simulation.PlayerState)
 local Theme = require(script.Parent.Parent.Theme)
 local Text = require(script.Parent.Parent.Kit.Text)
 local ListRow = require(script.Parent.Parent.Kit.ListRow)
@@ -125,7 +126,7 @@ end
 
 function DuskBattle.Begin(self: any)
 	local player = Players.LocalPlayer
-	local class = Registry.Class(player:GetAttribute("class"))
+	local class = Registry.Class(player:GetAttribute(PlayerState.Attr.Class))
 	self:_status(`{class.DisplayName} waits at the Blood Table… The Victorian quarter isn't open yet.`)
 end
 
