@@ -1,6 +1,8 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0 and F1 done; next slice: F2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1 and F2 done; next slice: W1.**
+
+> **D11 (owner, 2026-10-29):** 2 real players minimum; AI hunters fill the field to 8. They are real participants from F2 on; their bodies arrive with L1 and their movement and judgement in a later AI slice.
 
 This is the working order for Claude's sessions. [engineering-plan.md](engineering-plan.md) stays the source of truth for locked rules and specs. ChatGPT's [whole-game brief](duskbloods-gameplay-breakdown.md) is the behaviour spec each slice implements, and the [UI quality standard](ui-quality-standard.md) is the bar every screen passes.
 

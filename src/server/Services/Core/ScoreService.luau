@@ -1,9 +1,11 @@
 --!strict
--- ScoreService: the match score (Config.Score; shown as "Renown"). A ledger per player: every gain is an entry
--- (source, amount, time) so standings can be audited, plus the running total on the Player (PlayerState.Score) for
--- the HUD. Ranking: higher total first; on a tie, whoever reached that total first. Starts over with each match.
--- Sources wired now: enemy kills (the enemy's Score, to the killer). Player kills, objectives and commendations join
--- with their systems.
+-- ScoreService: the match score (Config.Score; shown as "Renown"). One Ledger book per participant id: a player's
+-- UserId, or a negative id for a Studio bot (ParticipantService). Books outlive a player leaving, so standings,
+-- culls and settlement still see them. Every gain is a ledger entry tagged with the current phase; a gain with an
+-- event key pays once only, and keyed gains can be revoked (Shared.Match.Ledger has the rules and the standings).
+-- A player's total is mirrored on the Player (PlayerState.Score) for the HUD; Changed fires for everyone else.
+-- Sources wired now: enemy kills (the enemy's Score, to the killer). Objectives and commendations join with their
+-- systems; player kills give Renown only inside ritual sites (owner decision D4), from R1.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,93 +13,119 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Score)
 local PlayerState = require(Shared.Simulation.PlayerState)
+local Ledger = require(Shared.Match.Ledger)
+local Signal = require(Shared.Util.Signal)
 local Log = require(Shared.Util.Log)
 local DebugService = require(script.Parent.DebugService)
 local NpcService = require(script.Parent.NpcService)
 
 local P = PlayerState.Attr
 
-export type Entry = { Source: string, Amount: number, At: number, Detail: string? }
-type Ledger = { Total: number, ReachedAt: number, Entries: { Entry } }
+export type Who = Player | number
 
 local ScoreService = {}
 
-local ledgers: { [Player]: Ledger } = {}
+-- Fires (participantId, newTotal) whenever a total changes.
+ScoreService.Changed = Signal.new() :: Signal.Signal<number, number>
 
-local function ledger(player: Player): Ledger
-	local found = ledgers[player]
+local books: { [number]: Ledger.Book } = {}
+local seq = 0
+local phase = 0
+
+local function idOf(who: Who): number
+	return if type(who) == "number" then who else (who :: Player).UserId
+end
+
+local function book(id: number): Ledger.Book
+	local found = books[id]
 	if not found then
-		found = { Total = 0, ReachedAt = time(), Entries = {} }
-		ledgers[player] = found
+		found = Ledger.new()
+		books[id] = found
 	end
 	return found
 end
 
--- Awards score from a known source. Detail is a short note for the ledger (e.g. the enemy's id).
-function ScoreService.Add(player: Player, source: string, amount: number, detail: string?)
+local function publish(id: number)
+	local total = book(id).Total
+	local player = if id > 0 then Players:GetPlayerByUserId(id) else nil
+	if player then
+		player:SetAttribute(P.Score, total)
+	end
+	ScoreService.Changed:Fire(id, total)
+end
+
+-- Awards score from a known source. `key` makes the award one-time (e.g. "Lantern:<id>"). True if it was paid.
+function ScoreService.Add(who: Who, source: string, amount: number, detail: string?, key: string?): boolean
 	if not Config.Sources[source] then
 		Log.Warn("ScoreService", `unknown score source "{source}"`)
-		return
+		return false
 	end
-	if amount <= 0 or player.Parent ~= Players then
-		return
+	local id = idOf(who)
+	seq += 1
+	local paid = Ledger.Add(book(id), { Source = source, Amount = amount, Seq = seq, Phase = phase, Detail = detail, Key = key })
+	if paid then
+		publish(id)
 	end
-	local book = ledger(player)
-	table.insert(book.Entries, { Source = source, Amount = amount, At = time(), Detail = detail })
-	book.Total += amount
-	book.ReachedAt = time()
-	player:SetAttribute(P.Score, book.Total)
+	return paid
 end
 
-function ScoreService.Total(player: Player): number
-	return ledger(player).Total
+-- Takes back a keyed award (a pledge overwritten). Returns the amount removed.
+function ScoreService.Revoke(who: Who, key: string): number
+	local id = idOf(who)
+	local amount = Ledger.Revoke(book(id), key)
+	if amount > 0 then
+		publish(id)
+	end
+	return amount
 end
 
--- Players in standing order: higher total first, then whoever reached it first.
-function ScoreService.Ranking(): { Player }
-	local list = Players:GetPlayers()
-	table.sort(list, function(a, b)
-		local la, lb = ledger(a), ledger(b)
-		if la.Total ~= lb.Total then
-			return la.Total > lb.Total
+function ScoreService.Total(who: Who): number
+	return book(idOf(who)).Total
+end
+
+-- Totals per source, for commendations, debugging and the results screen.
+function ScoreService.BySource(who: Who): { [string]: number }
+	return Ledger.BySource(book(idOf(who)))
+end
+
+-- Participant ids in standing order. `ids` limits it (e.g. to eligible participants); default: every book.
+function ScoreService.Ranking(ids: { number }?): { number }
+	local list = ids
+	if not list then
+		local all = {}
+		for id in books do
+			table.insert(all, id)
 		end
-		return la.ReachedAt < lb.ReachedAt
-	end)
-	return list
+		list = all
+	end
+	return Ledger.Rank(books, list :: { number })
 end
 
--- Totals per source, for debugging and later the results screen.
-function ScoreService.BySource(player: Player): { [string]: number }
-	local sums = {}
-	for _, entry in ledger(player).Entries do
-		sums[entry.Source] = (sums[entry.Source] or 0) + entry.Amount
-	end
-	return sums
+-- The phase new entries are tagged with (MatchService sets it; 0 before the first phase).
+function ScoreService.SetPhase(index: number)
+	phase = index
 end
 
 function ScoreService.Init()
 	DebugService.Register("Score", function(who: any)
 		local player = assert(DebugService.ResolvePlayer(who), "no such player")
 		local ranking = {}
-		for i, p in ScoreService.Ranking() do
-			ranking[i] = `{p.Name} {ScoreService.Total(p)}`
+		for i, id in ScoreService.Ranking() do
+			ranking[i] = `{id} {book(id).Total}`
 		end
-		return ScoreService.Total(player), ScoreService.BySource(player), ranking, #ledger(player).Entries
+		return ScoreService.Total(player), ScoreService.BySource(player), ranking, #book(player.UserId).Entries
 	end)
 end
 
 function ScoreService.Start()
-	local function reset(player: Player)
-		ledgers[player] = { Total = 0, ReachedAt = time(), Entries = {} }
-		player:SetAttribute(P.Score, 0)
+	-- a player who comes back to the same match server finds their book where they left it
+	local function show(player: Player)
+		player:SetAttribute(P.Score, book(player.UserId).Total)
 	end
-	Players.PlayerAdded:Connect(reset)
+	Players.PlayerAdded:Connect(show)
 	for _, player in Players:GetPlayers() do
-		reset(player)
+		show(player)
 	end
-	Players.PlayerRemoving:Connect(function(player)
-		ledgers[player] = nil
-	end)
 	NpcService.Died:Connect(function(_model: Model, def: any, killer: Player?)
 		if killer then
 			ScoreService.Add(killer, Config.Sources.EnemyKill, def.Score, def.Id)

@@ -3,7 +3,7 @@
 -- pad, facing the dummy, idle, full stamina). Expected numbers come from Config and the definitions, never from
 -- literals, so retuning a value doesn't break a check; tolerances cover simulation-step and network timing.
 -- Not covered yet: sprint (its input has no Scriptable binding), bite, howl, the charged attack, Light Beam, enemy
--- leashing and the two-attackers limit.
+-- leashing and the two-attackers limit. "Player kill credit" kills the player, so it stays last.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -365,6 +365,29 @@ return {
 			t.Check("and the slot refills once the area is clear", waitFor(function()
 				return count() == 1
 			end, respawn + 4))
+		end,
+	},
+	{
+		Name = "Player kill credit",
+		Run = function(t)
+			local side = -7 -- an AI hunter's participant id: whoever the attacker fights for gets the credit
+			local before = t.Character()
+			local hp = t.Num(A.HP)
+			t.Server("TestLethalHit", side)
+			local died = waitFor(function()
+				local humanoid = before:FindFirstChildOfClass("Humanoid")
+				return humanoid == nil or humanoid.Health <= 0
+			end, 3)
+			t.Check("a killing blow kills the player", died)
+			t.Wait(0.2)
+			local victim, killer, share = t.Server("TestLastDeath")
+			t.Check("the death is reported once, for this player", victim == Players.LocalPlayer.Name, tostring(victim))
+			t.Check("credited to the attacker's side", killer == side, tostring(killer))
+			t.Check("with that side's damage share", type(share) == "number" and share >= hp, tostring(share))
+			t.Check("a new body comes back", waitFor(function()
+				local character = Players.LocalPlayer.Character
+				return character ~= nil and character ~= before and character:GetAttribute(A.Ready) == true
+			end, Players.RespawnTime + 6))
 		end,
 	},
 }

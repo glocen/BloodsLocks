@@ -196,6 +196,20 @@ local function testKillEnemies(): number
 	return count
 end
 
+-- The last player death EntityService reported (TestLastDeath).
+local lastDeath: { Victim: string, Killer: number?, Shares: { [number]: number } }? = nil
+
+-- A killing blow on the player from the pad dummy, fighting for `side` (a participant id), so the death's credit can
+-- be checked: the dummy takes that side for the hit.
+local function testLethalHit(who: any, side: number): boolean
+	local _, character = characterOf(who)
+	local attacker = assert(padDummy(), "no dummy to attack with")
+	attacker:SetAttribute(A.OwnerId, side)
+	local lethal = { Damage = EntityState.Number(character, A.HP, 0) + 1000, Stagger = 0, Reaction = "None" }
+	CombatSim.Queue({ Attacker = attacker, Target = character, Hit = lethal })
+	return true
+end
+
 -- Removes the pad and puts the player back where they were.
 local function testPadClear(who: any): boolean
 	local player, _, root = characterOf(who)
@@ -206,7 +220,7 @@ local function testPadClear(who: any): boolean
 	end
 	local back = returnTo[player]
 	returnTo[player] = nil
-	if back then
+	if back and EntityState.Number(root.Parent :: Model, A.HP, 0) > 0 then
 		root.AssemblyLinearVelocity = Vector3.zero
 		root.CFrame = back
 	end
@@ -223,9 +237,25 @@ function SelfTestService.Init()
 	DebugService.Register("TestEnemy", testEnemy)
 	DebugService.Register("TestEnemySpawn", testEnemySpawn)
 	DebugService.Register("TestKillEnemies", testKillEnemies)
+	DebugService.Register("TestLethalHit", testLethalHit)
+	DebugService.Register("TestLastDeath", function()
+		if not lastDeath then
+			return nil
+		end
+		return lastDeath.Victim, lastDeath.Killer, if lastDeath.Killer then lastDeath.Shares[lastDeath.Killer] else nil
+	end)
 	-- Older name for the i-frame test helper (CLAUDE.md).
 	DebugService.Register("HitAfterNextDodge", function(who: any, delay: number)
 		return testHitAfter(who, "Dodge", delay)
+	end)
+end
+
+function SelfTestService.Start()
+	if not RunService:IsStudio() then
+		return
+	end
+	EntityService.PlayerDied:Connect(function(player: Player, killer: number?, shares: { [number]: number })
+		lastDeath = { Victim = player.Name, Killer = killer, Shares = shares }
 	end)
 end
 

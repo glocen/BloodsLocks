@@ -4,6 +4,14 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude: F2 done: participants, AI hunters, score ledger v2, kill credit
+
+- **Owner decision D11:** a match needs only 2 real players; **AI hunters** fill the field to 8 (names: Ambrose Vane, Cordelia Ashgrove, Silas Wren, ...; `Config.Match.AiHunters`). They're full participants with negative ids. Bodies come with L1; their AI is scripted later.
+- Match places now publish `ReplicatedStorage.MatchState.Participants.<id>` (name, AI, class, eligible, alive, culled, left, lives, region, kills, deaths, score, placement).
+- The score is per participant, survives a player leaving, and can't pay the same event twice. Player kills are credited to the attacker's side (a Shinigami's kill is its master's); per D4 they give no Renown outside ritual sites.
+- **Tests:** logic 41/41, self-test 49/49 in both places.
+- **Next:** W1, the Cathedral Quarter blockout from ChatGPT's spec.
+
 ## 2026-10-29: Claude: F1 done: rules as data, the world contract, logic tests
 
 - **For ChatGPT's world work: the tag list is now code.** `src/shared/World/Tags.luau` lists every gameplay tag with its attributes (regions, spawns, enemy spawns, pact circles, antechamber, final arena and spawns, ritual sites, boss arenas, interactables). In a playtest, `game.ServerStorage.BL_Debug:Invoke("WorldReport")` checks a place's markers: wrong types, unknown ids, markers with no ground under them, and what's still missing. The Manor reports clean.

@@ -2,6 +2,10 @@
 -- EntityService: makes every player character a combat entity (the tag hit detection and feedback look for)
 -- and turns 0 HP into a real death, since Humanoid.Health isn't simulation state. MakeEntity builds a non-player
 -- entity from a rig template (training dummies, the self-test's dummy, enemies).
+-- PlayerDied fires once per death with the credit: damage on a character is tallied by the attacker's side
+-- (CombatSim.Side: a player's UserId, the master of a Shinigami or minion, a bot participant's negative id), and the
+-- killer is the side that landed the killing blow. Enemies (the hostile side) and the victim's own side never get
+-- credit. The tally starts over with each new character.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -10,17 +14,53 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Parts = require(Shared.Util.Parts)
+local Signal = require(Shared.Util.Signal)
 local EntityState = require(Shared.Simulation.EntityState)
+local CombatSim = require(Shared.Simulation.CombatSim)
+
+type Tally = { Shares: { [number]: number }, Killer: number? }
 
 local EntityService = {}
+
+-- Fires (player, killerSide: number?, sharesBySide) once when a player's character reaches 0 HP.
+EntityService.PlayerDied = Signal.new() :: Signal.Signal<Player, number?, { [number]: number }>
+
+local tallies: { [Model]: Tally } = {}
 
 local function watch(player: Player)
 	local function tag(character: Model)
 		CollectionService:AddTag(character, EntityState.Tag)
+		tallies[character] = { Shares = {}, Killer = nil }
+		character.Destroying:Connect(function()
+			tallies[character] = nil
+		end)
 	end
 	player.CharacterAdded:Connect(tag)
 	if player.Character then
 		tag(player.Character)
+	end
+end
+
+-- The side that gets credit for a hit on `target`, or nil (enemies, its own side, unowned dummies).
+local function creditSide(target: Model, attacker: Model): number?
+	local side = CombatSim.Side(attacker)
+	if side == nil or side == EntityState.HostileSide or side == CombatSim.Side(target) then
+		return nil
+	end
+	return side
+end
+
+local function onDamaged(target: Model, attacker: Model, amount: number, hpLeft: number)
+	local tally = tallies[target]
+	if not tally then
+		return
+	end
+	local side = creditSide(target, attacker)
+	if side then
+		tally.Shares[side] = (tally.Shares[side] or 0) + amount
+	end
+	if hpLeft <= 0 then
+		tally.Killer = side -- an enemy's killing blow leaves no killer
 	end
 end
 
@@ -56,12 +96,15 @@ function EntityService.Start()
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
+	CombatSim.Damaged:Connect(onDamaged)
 	RunService.Heartbeat:Connect(function()
 		for _, player in Players:GetPlayers() do
 			local character = player.Character
 			local humanoid = Parts.Humanoid(character)
 			if character and humanoid and humanoid.Health > 0 and EntityState.Number(character, EntityState.Attr.HP, 1) <= 0 then
-				humanoid.Health = 0
+				humanoid.Health = 0 -- only once: the next check sees a dead Humanoid
+				local tally = tallies[character] or { Shares = {}, Killer = nil }
+				EntityService.PlayerDied:Fire(player, tally.Killer, tally.Shares)
 			end
 		end
 	end)

@@ -9,6 +9,7 @@ local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
 local Culling = require(Shared.Match.Culling)
 local Rewards = require(Shared.Match.Rewards)
+local Ledger = require(Shared.Match.Ledger)
 local WorldTags = require(Shared.World.Tags)
 
 local standard = Registry.Rule("Standard")
@@ -79,6 +80,32 @@ return {
 			local bonus = Rewards.FinalHpBonus(standard, 100)
 			t.Check("final HP bonus at 100 Renown", math.abs(bonus - 100 * standard.Final.HpBonusPerRenown) < 1e-9, tostring(bonus))
 			t.Equal("final HP bonus is capped (D2)", Rewards.FinalHpBonus(standard, 5000), standard.Final.HpBonusCap)
+		end,
+	},
+	{
+		Name = "Ledger",
+		Run = function(t)
+			local seq = 0
+			local function gain(book: Ledger.Book, amount: number, key: string?): boolean
+				seq += 1
+				return Ledger.Add(book, { Source = "Objective", Amount = amount, Seq = seq, Phase = 1, Key = key })
+			end
+			local a, b, c = Ledger.new(), Ledger.new(), Ledger.new()
+			t.Check("a keyed award pays", gain(a, 10, "Lantern:1"))
+			t.Check("the same event can't pay twice", not gain(a, 10, "Lantern:1"))
+			t.Equal("total after a replay", a.Total, 10)
+			t.Check("nothing for zero", not gain(a, 0))
+			gain(b, 10) -- b reaches 10 after a did
+			t.Equal("tie: first to reach the total ranks higher", table.concat(Ledger.Rank({ [1] = a, [2] = b }, { 2, 1 }), " "), "1 2")
+			gain(c, 4, "Pledge:R1")
+			gain(c, 6)
+			t.Equal("revoking a pledge takes its amount back", Ledger.Revoke(c, "Pledge:R1"), 4)
+			t.Equal("total after the revoke", c.Total, 6)
+			t.Equal("a revoked key stays used", gain(c, 4, "Pledge:R1"), false)
+			t.Equal("revoking twice takes nothing", Ledger.Revoke(c, "Pledge:R1"), 0)
+			t.Equal("by source", Ledger.BySource(a).Objective, 10)
+			t.Equal("higher total first, then reach order, then id",
+				table.concat(Ledger.Rank({ [5] = a, [-2] = b, [3] = c }, { 3, -2, 5, 9, -4 }), " "), "5 -2 3 -4 9")
 		end,
 	},
 	{
