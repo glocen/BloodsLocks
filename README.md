@@ -1,6 +1,6 @@
 ﻿# BloodsLocks
 
-A PvPvE Roblox action game inspired by FromSoftware's *The Duskbloods* (inspiration only: names, art and lore are our own). Director: **glocen**. Budget: **0 â‚¬** until the game earns revenue, so everything is custom and free.
+A PvPvE Roblox action game inspired by FromSoftware's *The Duskbloods* (inspiration only: names, art and lore are our own). Director: **glocen**. Budget: **0 €** until the game earns revenue, so everything is custom and free.
 
 The game itself lives in Roblox Studio (castle hub place "ROLOCK"). This repo is the team's shared brain: the plan, research, decisions, tools and handoff notes for everyone working on it (the owner, Claude, ChatGPT).
 
