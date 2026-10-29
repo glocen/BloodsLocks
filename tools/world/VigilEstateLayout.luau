@@ -104,7 +104,7 @@ function E.Apply(root:Instance)
  local oldPact=pact and pact:FindFirstChild("Sigil")
  if pactCopy and oldPact and oldPact:IsA("BasePart") then
   local delta=ORIGIN:PointToWorldSpace(L.Pact)-oldPact.Position
-  pactCopy:PivotTo(pactCopy:GetPivot()+delta)
+  for _,v in pactCopy:GetDescendants() do if v:IsA("BasePart") then v.CFrame+=delta end end
  end
  oldYard:Destroy()
  local yard=group(root,"Yard")
