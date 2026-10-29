@@ -1,18 +1,21 @@
 --!strict
--- ShinigamiBrain: a Shinigami's behaviour. It follows its master; it engages any enemy fighting its master (the
--- master hit it, it hit the master, or it hit the Shinigami recently) within AggroRange; it walks into Reach and
--- attacks through the normal action pipeline (so hits, guards, parries and staggers all apply), alternating its
--- attacks. It never acts while stunned, and teleports back if left far behind.
+-- ShinigamiBrain: a Shinigami's behaviour. It follows its master (Config.Npc.FollowOffset: out of the camera's
+-- way); it engages any enemy fighting its master (the master hit it, it hit the master, or it hit the Shinigami
+-- recently) within AggroRange; it walks into Reach and attacks through the normal action pipeline (so hits,
+-- guards, parries and staggers all apply), alternating its attacks, and uses its special skill when it's ready.
+-- It teleports back if left far behind. Body control: NpcActor.
 
 local CollectionService = game:GetService("CollectionService")
-local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local Shared = ReplicatedStorage.Shared
+local NpcConfig = require(Shared.Config.Npc)
 local Parts = require(Shared.Util.Parts)
 local EntityState = require(Shared.Simulation.EntityState)
 local CombatSim = require(Shared.Simulation.CombatSim)
 local PlaceRole = require(Shared.Util.PlaceRole)
+local NpcActor = require(ServerScriptService.Server.Npc.NpcActor)
 
 local A = EntityState.Attr
 local ALL_UNLOCKED = PlaceRole.IsManor -- training ground: everything unlocked
@@ -37,6 +40,11 @@ ShinigamiBrain.__index = ShinigamiBrain
 
 function ShinigamiBrain.new(model: Model, owner: Player, def: any): Brain
 	return (setmetatable({ Model = model, Owner = owner, Def = def, NextAttack = 0, AttackIndex = 0, SkillReadyAt = 0, Winding = false }, ShinigamiBrain) :: any) :: Brain
+end
+
+-- Its spot next to the master.
+function ShinigamiBrain.FollowSpot(ownerRoot: BasePart): CFrame
+	return ownerRoot.CFrame * CFrame.new(NpcConfig.FollowOffset)
 end
 
 -- Horizontal offset (keeps its length; Vector.Flat returns a unit direction).
@@ -78,35 +86,13 @@ function ShinigamiBrain.Step(self: Brain, now: number)
 	if not root or not humanoid or not ownerRoot then
 		return
 	end
-
-	-- finish the current attack (driving its lunge, since NPCs don't run ActionSim)
-	local _, action, startedAt = EntityState.CurrentAction(model)
-	if action then
-		local elapsed = now - startedAt
-		if elapsed >= action.Duration then
-			model:SetAttribute(A.ActionId, "")
-		else
-			humanoid:Move(Vector3.zero)
-			local lunge = action.Lunge
-			if lunge and elapsed >= lunge.From and elapsed < lunge.To then
-				local facing = model:GetAttribute(A.ActionFacing) :: Vector3
-				local v = root.AssemblyLinearVelocity
-				root.AssemblyLinearVelocity = Vector3.new(facing.X * lunge.Speed, v.Y, facing.Z * lunge.Speed)
-			end
-			return
-		end
-	end
-	if self.Winding then
-		humanoid:Move(Vector3.zero)
-		return
-	end
-	if EntityState.IsStunned(model, now) then
-		humanoid:Move(Vector3.zero)
+	if NpcActor.Update(model, now) or self.Winding or not NpcActor.CanAct(model, now) then
+		NpcActor.Hold(humanoid)
 		return
 	end
 
 	if (root.Position - ownerRoot.Position).Magnitude > LEASH then
-		model:PivotTo(ownerRoot.CFrame * CFrame.new(4, 0, 3))
+		model:PivotTo(ShinigamiBrain.FollowSpot(ownerRoot))
 		return
 	end
 
@@ -120,55 +106,38 @@ function ShinigamiBrain.Step(self: Brain, now: number)
 		if skillReady and distance >= skill.MinRange and distance <= skill.MaxRange then
 			self.SkillReadyAt = now + skill.Cooldown
 			self.Winding = true
-			humanoid:Move(Vector3.zero)
-			model:PivotTo(CFrame.lookAt(root.Position, root.Position + offset.Unit))
-			-- telegraph: a flash of red before the draw-cut, so it can be read and dodged
-			local flash = Instance.new("Highlight")
-			flash.FillColor = Color3.fromRGB(176, 22, 44)
-			flash.FillTransparency = 0.25
-			flash.OutlineColor = Color3.fromRGB(255, 120, 120)
-			flash.Parent = model
-			TweenService:Create(flash, TweenInfo.new(skill.Telegraph), { FillTransparency = 1 }):Play()
+			NpcActor.Hold(humanoid)
+			NpcActor.Face(model, offset)
+			NpcActor.Telegraph(model, NpcConfig.Telegraph.Skill, skill.Telegraph)
 			task.delay(skill.Telegraph, function()
-				flash:Destroy()
 				self.Winding = false
 				local liveTarget = Parts.Root(target)
-				if not model.Parent or not liveTarget or EntityState.IsStunned(model, time()) then
-					return
+				if NpcActor.CanAct(model, time()) and liveTarget then
+					NpcActor.Begin(model, skill.Action, liveTarget.Position - root.Position, time())
 				end
-				local aim = flat(liveTarget.Position - root.Position)
-				local facing = if aim.Magnitude > 0.1 then aim.Unit else offset.Unit
-				model:PivotTo(CFrame.lookAt(root.Position, root.Position + facing))
-				model:SetAttribute(A.ActionFacing, facing)
-				model:SetAttribute(A.ActionId, skill.Action)
-				model:SetAttribute(A.ActionStart, time())
 			end)
 			return
 		end
 		if distance > self.Def.Reach then
-			humanoid:MoveTo(targetRoot.Position - offset.Unit * (self.Def.Reach * 0.6))
+			NpcActor.Approach(humanoid, targetRoot.Position - offset.Unit * (self.Def.Reach * 0.6), self.Def.WalkSpeed)
 		elseif now >= self.NextAttack then
 			self.NextAttack = now + self.Def.AttackInterval
 			self.AttackIndex = self.AttackIndex % #self.Def.Attacks + 1
-			local facing = offset.Unit
-			humanoid:Move(Vector3.zero)
-			model:PivotTo(CFrame.lookAt(root.Position, root.Position + facing))
-			model:SetAttribute(A.ActionFacing, facing)
-			model:SetAttribute(A.ActionId, self.Def.Attacks[self.AttackIndex])
-			model:SetAttribute(A.ActionStart, now)
+			NpcActor.Hold(humanoid)
+			NpcActor.Begin(model, self.Def.Attacks[self.AttackIndex], offset, now)
 		else
-			humanoid:Move(Vector3.zero)
-			model:PivotTo(CFrame.lookAt(root.Position, root.Position + offset.Unit))
+			NpcActor.Hold(humanoid)
+			NpcActor.Face(model, offset)
 		end
 		return
 	end
 
-	-- follow: keep a spot behind and to the right of the master
-	local spot = (ownerRoot.CFrame * CFrame.new(4, 0, 4)).Position
+	-- follow: keep to its spot beside the master
+	local spot = ShinigamiBrain.FollowSpot(ownerRoot).Position
 	if flat(spot - root.Position).Magnitude > self.Def.FollowDistance * 0.5 and (ownerRoot.Position - root.Position).Magnitude > self.Def.FollowDistance * 0.6 then
-		humanoid:MoveTo(spot)
+		NpcActor.Approach(humanoid, spot, self.Def.WalkSpeed)
 	else
-		humanoid:Move(Vector3.zero)
+		NpcActor.Hold(humanoid)
 	end
 end
 

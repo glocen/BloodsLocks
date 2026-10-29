@@ -18,6 +18,7 @@ local Stamina = require(script.Parent.Stamina)
 local ActionSim = require(script.Parent.ActionSim)
 local Zones = require(Shared.Util.Zones)
 local PlaceRole = require(Shared.Util.PlaceRole)
+local Signal = require(Shared.Util.Signal)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -30,7 +31,17 @@ export type HitRequest = {
 
 local CombatSim = {}
 
+-- Server: fires (target, attacker, amount, hpLeft) whenever a hit takes HP, inside the simulation step. Handlers
+-- must be quick bookkeeping (kill credit, damage shares); anything heavier defers itself.
+CombatSim.Damaged = Signal.new() :: Signal.Signal<Model, Model, number, number>
+
 local queue: { HitRequest } = {}
+
+local function loseHp(target: Model, attacker: Model, amount: number)
+	local left = math.max(0, num(target, A.HP, 0) - amount)
+	target:SetAttribute(A.HP, left)
+	CombatSim.Damaged:Fire(target, attacker, amount, left)
+end
 
 function CombatSim.Queue(request: HitRequest)
 	table.insert(queue, request)
@@ -93,7 +104,7 @@ end
 local function damage(request: HitRequest, now: number, amount: number)
 	local target, attacker, hit = request.Target, request.Attacker, request.Hit
 	local fx = EntityState.Fx(target)
-	target:SetAttribute(A.HP, math.max(0, num(target, A.HP, 0) - amount))
+	loseHp(target, attacker, amount)
 	fx:SetAttribute(A.LastHitDamage, amount)
 	fx:SetAttribute(A.LastHitBy, attacker.Name)
 	fx:SetAttribute(A.LastHitAt, now)
@@ -168,7 +179,7 @@ local function apply(request: HitRequest, now: number)
 			return
 		end
 		Stamina.Drain(target, hit.Damage * Config.Guard.StaminaPerDamage * (hit.GuardDrain or 1), now)
-		target:SetAttribute(A.HP, math.max(0, hp - hit.Damage * Config.Guard.ChipDamage))
+		loseHp(target, attacker, hit.Damage * Config.Guard.ChipDamage)
 		fx:SetAttribute(A.LastBlockAt, now)
 		if num(target, A.Stamina, 0) <= 0 then
 			interrupt(target, now, Config.Guard.BreakStun, nil)

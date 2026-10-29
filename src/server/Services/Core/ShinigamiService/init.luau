@@ -19,6 +19,7 @@ local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local PlayerState = require(Shared.Simulation.PlayerState)
+local CombatSim = require(Shared.Simulation.CombatSim)
 local Equipment = require(Shared.Simulation.Equipment)
 local Parts = require(Shared.Util.Parts)
 local Net = require(Shared.Net)
@@ -103,7 +104,7 @@ local function build(player: Player, def: any, pact: Pact): Model?
 	model:SetAttribute(A.HP, math.max(1, math.floor(max * pact.Hp)))
 	model:SetAttribute(A.OwnerId, player.UserId)
 	model:SetAttribute(A.Level, pact.Level)
-	model:PivotTo(ownerRoot.CFrame * CFrame.new(4, 0, 3))
+	model:PivotTo(ShinigamiBrain.FollowSpot(ownerRoot))
 	-- (no SetNetworkOwner: it throws under Server Authority; server-created NPCs are server-simulated already)
 	model.Parent = folder
 	if def.Weapon then
@@ -178,6 +179,7 @@ local function step(dt: number)
 					model:SetAttribute(A.HP, math.min(max, hp + max * def.Regen * dt))
 				end
 				pact.Hp = num(model, A.HP, 0) / math.max(1, max)
+				CombatSim.StepStagger(model, now, dt) -- NPCs aren't in the player simulation, so their owner drains it
 				if pact.Brain then
 					pact.Brain:Step(now)
 				end

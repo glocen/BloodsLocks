@@ -1,7 +1,8 @@
 --!strict
 -- SelfTestService (Studio only): the server half of the regression self-test (client half: SelfTestController).
 -- It builds a test pad far above the map (a floor, a combat zone and a passive target dummy) so every place runs the
--- same checks whatever its world looks like, puts the player on it, and queues scripted hits on request. Clients
+-- same checks whatever its world looks like, puts the player on it, queues scripted hits and spawns test enemies on
+-- request (all cleared by the next TestPad / TestPadClear). Clients
 -- call these through the Studio-only DebugCommand remote (the player goes first); the MCP bridge can too.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,8 +17,10 @@ local Parts = require(Shared.Util.Parts)
 local Zones = require(Shared.Util.Zones)
 local DebugService = require(script.Parent.DebugService)
 local EntityService = require(script.Parent.EntityService)
+local NpcService = require(script.Parent.NpcService)
 
 local A = EntityState.Attr
+local ENEMY_SPAWN_TAG = NpcService.SpawnTag
 
 local PAD_NAME = "BL_TestPad"
 local PAD_CENTER = CFrame.new(0, 3000, 0) -- far above any map
@@ -78,7 +81,7 @@ local function freshDummy(pad: Instance, facing: Vector3): Model?
 		return nil
 	end
 	local position = standAt(Vector3.new(0, 0, -DUMMY_DISTANCE))
-	return EntityService.MakeDummy(template, "Dummy", CFrame.lookAt(position, facing), DUMMY_HEALTH, pad)
+	return EntityService.MakeEntity(template, "Dummy", CFrame.lookAt(position, facing), DUMMY_HEALTH, pad)
 end
 
 local function padDummy(): Model?
@@ -98,9 +101,25 @@ local function characterOf(who: any): (Player, Model, BasePart)
 	return player, character, root
 end
 
--- Puts the player on the pad facing a fresh dummy, at full HP. Returns the dummy's name.
+local testEnemies: { Model } = {}
+
+local function clearTestEnemies()
+	for _, model in testEnemies do
+		NpcService.Despawn(model)
+	end
+	table.clear(testEnemies)
+	local pad = workspace:FindFirstChild(PAD_NAME)
+	for _, child in if pad then pad:GetChildren() else {} do
+		if CollectionService:HasTag(child, ENEMY_SPAWN_TAG) then
+			child:Destroy()
+		end
+	end
+end
+
+-- Puts the player on the pad facing a fresh dummy, at full HP, with no test enemies. Returns the dummy's name.
 local function testPad(who: any): string?
 	local player, character, root = characterOf(who)
+	clearTestEnemies()
 	local pad = workspace:FindFirstChild(PAD_NAME) or buildPad()
 	local spot = standAt(Vector3.zero)
 	if not returnTo[player] then
@@ -134,9 +153,51 @@ local function testHitAfter(who: any, trigger: string, delay: number, actionId: 
 	return true
 end
 
+-- Spawns an enemy `distance` studs in front of the player on the pad, facing them. Returns its name.
+local function testEnemy(who: any, enemyId: string, distance: number): string?
+	local _, _, root = characterOf(who)
+	local spot = (root.CFrame * CFrame.new(0, 0, -distance)).Position
+	local model = NpcService.SpawnAt(enemyId, CFrame.lookAt(spot, root.Position))
+	if model then
+		model.Name = `{model.Name}_Test{#testEnemies + 1}`
+		table.insert(testEnemies, model)
+	end
+	return model and model.Name
+end
+
+-- Puts an enemy spawn marker on the pad `distance` studs behind the dummy, refilling after `respawn` seconds.
+local function testEnemySpawn(_who: any, enemyId: string, distance: number, respawn: number): boolean
+	local pad = assert(workspace:FindFirstChild(PAD_NAME), "no test pad")
+	local marker = Instance.new("Part")
+	marker.Name = "TestEnemySpawn"
+	marker.Anchored = true
+	marker.Size = Vector3.new(2, 1, 2)
+	marker.Position = standAt(Vector3.new(0, -STAND_HEIGHT + 0.5, -distance))
+	marker:SetAttribute("Enemy", enemyId)
+	marker:SetAttribute("Respawn", respawn)
+	marker:SetAttribute("Radius", 0)
+	marker.Parent = pad
+	CollectionService:AddTag(marker, ENEMY_SPAWN_TAG)
+	return true
+end
+
+-- Sets every enemy's HP to 0 (they die with no killer).
+local function testKillEnemies(): number
+	local count = 0
+	local folder = workspace:FindFirstChild(NpcService.FolderName)
+	for _, model in if folder then folder:GetChildren() else {} do
+		if model:IsA("Model") and EntityState.Number(model, A.HP, 0) > 0 then
+			model:SetAttribute(A.HP, 0)
+			count += 1
+		end
+	end
+	return count
+end
+
 -- Removes the pad and puts the player back where they were.
 local function testPadClear(who: any): boolean
 	local player, _, root = characterOf(who)
+	clearTestEnemies()
 	local pad = workspace:FindFirstChild(PAD_NAME)
 	if pad then
 		pad:Destroy()
@@ -157,6 +218,9 @@ function SelfTestService.Init()
 	DebugService.Register("TestPad", testPad)
 	DebugService.Register("TestHitAfter", testHitAfter)
 	DebugService.Register("TestPadClear", testPadClear)
+	DebugService.Register("TestEnemy", testEnemy)
+	DebugService.Register("TestEnemySpawn", testEnemySpawn)
+	DebugService.Register("TestKillEnemies", testKillEnemies)
 	-- Older name for the i-frame test helper (CLAUDE.md).
 	DebugService.Register("HitAfterNextDodge", function(who: any, delay: number)
 		return testHitAfter(who, "Dodge", delay)

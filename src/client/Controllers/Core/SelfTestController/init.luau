@@ -19,6 +19,7 @@ local Cases = require(script.Cases)
 
 local BRIDGE_NAME = "BL_SelfTest"
 local PAD_NAME = "BL_TestPad"
+local ENEMY_FOLDER = "BL_Enemies" -- NpcService's folder (server code isn't visible to clients)
 local SETTLE_TIMEOUT = 4 -- seconds to wait for the character to land, idle and refill stamina
 local PRESS_TIME = 0.05
 
@@ -39,7 +40,8 @@ export type Test = {
 	Wait: (seconds: number) -> (),
 	Server: (command: string, ...any) -> ...any,
 	Reset: () -> (),
-	Lock: () -> (),
+	Lock: (model: Model?) -> (), -- the dummy unless a model is given
+	Enemy: (name: string) -> Model?,
 	Check: (label: string, ok: boolean, detail: string?) -> (),
 	Near: (label: string, actual: number, expected: number, tolerance: number) -> (),
 }
@@ -120,9 +122,13 @@ local function run(filter: string?): string
 			until settled or os.clock() > deadline
 			task.wait(0.2)
 		end,
-		Lock = function()
-			LockOnController.SetTarget(t.Dummy())
+		Lock = function(model)
+			LockOnController.SetTarget(model or t.Dummy())
 			task.wait(0.1)
+		end,
+		Enemy = function(name)
+			local folder = workspace:FindFirstChild(ENEMY_FOLDER)
+			return folder and folder:FindFirstChild(name) :: Model?
 		end,
 		Check = function(label, ok, detail)
 			record(ok, label, detail)

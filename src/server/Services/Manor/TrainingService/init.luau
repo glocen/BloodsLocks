@@ -26,7 +26,7 @@ local dummies: { Dummy } = {}
 local function spawnDummy(template: Model, spot: BasePart)
 	local name = "TrainingDummy" .. (spot.Name:match("%d+$") or spot.Name)
 	local cframe = spot.CFrame * CFrame.new(0, 3 + spot.Size.Y / 2, 0)
-	local model = EntityService.MakeDummy(template, name, cframe, Config.DummyHealth, spot.Parent :: Instance)
+	local model = EntityService.MakeEntity(template, name, cframe, Config.DummyHealth, spot.Parent :: Instance)
 	table.insert(dummies, {
 		Model = model,
 		Brain = if spot:GetAttribute("Aggressive") == true then DummyBrain.new(model) else nil,

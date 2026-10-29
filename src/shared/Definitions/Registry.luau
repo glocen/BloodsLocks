@@ -1,5 +1,5 @@
 --!strict
--- Registry: looks up class, weapon and action definitions by id. Everything is validated once at load, so a typo
+-- Registry: looks up class, weapon, Shinigami, enemy, map and action definitions by id. Everything is validated once at load, so a typo
 -- fails loudly in Studio instead of silently in a match.
 
 local Definitions = script.Parent
@@ -11,6 +11,10 @@ Registry.SkillSlots = 2
 
 local classes: { [string]: any } = {}
 local shinigami: { [string]: any } = {}
+local enemies: { [string]: any } = {}
+local maps: { [string]: any } = {}
+
+local ENEMY_TIERS = { Fodder = true, Heavy = true, Elite = true, Boss = true }
 local weapons: { [string]: any } = {}
 local actions: { [string]: any } = {}
 
@@ -60,6 +64,44 @@ for _, module in Definitions.Shinigami:GetChildren() do
 	assert(not def.Weapon or weapons[def.Weapon], `shinigami {def.Id}: weapon {def.Weapon} doesn't exist`)
 	shinigami[def.Id] = def
 end
+-- Enemies are grouped in one folder per map (Enemies/<Map>/<Id>); ids are unique across every map.
+local enemyModules: { ModuleScript } = {}
+for _, mapFolder in Definitions.Enemies:GetChildren() do
+	for _, module in mapFolder:GetChildren() do
+		if module:IsA("ModuleScript") then
+			table.insert(enemyModules, module)
+		end
+	end
+end
+for _, module in enemyModules do
+	local def = require(module) :: any
+	assert(enemies[def.Id or ""] == nil, `enemy {def.Id} is defined twice`)
+	assert(def.Id == module.Name, `enemy module {module.Name} has Id {def.Id}`)
+	assert(ENEMY_TIERS[def.Tier], `enemy {def.Id}: unknown Tier {def.Tier}`)
+	addActions(`Enemies.{module.Name}`, def.Actions)
+	assert(#def.Attacks > 0, `enemy {def.Id}: no attacks`)
+	for _, attack in def.Attacks do
+		assert(actions[attack.Action] and actions[attack.Action].Hit, `enemy {def.Id}: attack {attack.Action} missing or has no Hit`)
+		assert(attack.Range and attack.Weight, `enemy {def.Id}: attack {attack.Action} needs Range and Weight`)
+	end
+	for _, key in { "BaseHealth", "WalkSpeed", "ChaseSpeed", "AggroRange", "LeashRange", "AlertTime", "AttackInterval", "Telegraph", "Xp", "Virtue", "Respawn" } do
+		assert(type(def[key]) == "number", `enemy {def.Id}: {key} must be a number`)
+	end
+	assert(def.LeashRange > def.AggroRange, `enemy {def.Id}: LeashRange must exceed AggroRange`)
+	enemies[def.Id] = def
+end
+for _, module in Definitions.Maps:GetChildren() do
+	local def = require(module) :: any
+	assert(def.Id == module.Name, `map module {module.Name} has Id {def.Id}`)
+	assert(type(def.PlaceId) == "number", `map {def.Id}: PlaceId must be a number`)
+	for zoneId, zone in def.Zones do
+		assert(zone.DisplayName, `map {def.Id}: zone {zoneId} has no DisplayName`)
+		for _, entry in zone.Enemies or {} do
+			assert(enemies[entry.Id] and entry.Weight and entry.Weight > 0, `map {def.Id}, zone {zoneId}: bad roster entry {entry.Id}`)
+		end
+	end
+	maps[def.Id] = def
+end
 for id, class in classes do
 	for slot, skillId in class.Skills or {} do
 		assert(actions[skillId] and actions[skillId].Charges, `class {id}: skill slot {slot} ({skillId}) isn't a skill`)
@@ -75,6 +117,21 @@ end
 
 function Registry.Weapon(id: string): any
 	return weapons[id]
+end
+
+-- An enemy definition, or nil for an unknown id.
+function Registry.Enemy(id: string?): any
+	return if id then enemies[id] else nil
+end
+
+-- The map definition of a place (by PlaceId), or nil (the Manor has none).
+function Registry.MapForPlace(placeId: number): any
+	for _, map in maps do
+		if map.PlaceId == placeId then
+			return map
+		end
+	end
+	return nil
 end
 
 function Registry.Shinigami(id: string?): any

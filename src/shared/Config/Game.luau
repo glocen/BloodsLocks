@@ -15,10 +15,7 @@ return {
 	Places = {
 		Manor = 76593217243342, -- ROLOCK: the hub
 	},
-	-- Match maps by id; the Dusk Battle tab lists these.
-	MatchMaps = {
-		Victorian = { PlaceId = 112559855790294, DisplayName = "The Victorian Quarter" },
-	},
+	-- Match maps (their places, zones and enemies) are definitions: Definitions/Maps.
 
 	Match = {
 		MaxPlayers = 8,

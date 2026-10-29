@@ -2,7 +2,8 @@
 -- Cases: the self-test's checks, in run order. Each starts from a fresh test pad (SelfTestController's Reset: on the
 -- pad, facing the dummy, idle, full stamina). Expected numbers come from Config and the definitions, never from
 -- literals, so retuning a value doesn't break a check; tolerances cover simulation-step and network timing.
--- Not covered yet: sprint (its input has no Scriptable binding), bite, howl, the charged attack, Light Beam.
+-- Not covered yet: sprint (its input has no Scriptable binding), bite, howl, the charged attack, Light Beam, enemy
+-- leashing and the two-attackers limit.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -14,6 +15,7 @@ local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 
 local A = EntityState.Attr
+local TEST_ENEMY = "Wretch"
 local class = Registry.Class(Registry.DefaultClass)
 local saber = Registry.Weapon(class.Melee)
 local gun = Registry.Weapon(class.Ranged)
@@ -226,6 +228,70 @@ return {
 			t.Check("a hit right after raising guard is parried", parried)
 			t.Check("and does no damage", t.Num(A.HP) == hp)
 			t.Check("the attacker is stunned", dummy ~= nil and EntityState.Number(dummy, A.HitstunUntil, 0) > 0)
+		end,
+	},
+	{
+		Name = "Enemy aggro",
+		Run = function(t)
+			local def = Registry.Enemy(TEST_ENEMY)
+			local hp = t.Num(A.HP)
+			local name = t.Server("TestEnemy", TEST_ENEMY, def.AggroRange * 0.6)
+			local enemy = t.Enemy(name)
+			t.Check("spawns", enemy ~= nil, name)
+			local hit = waitFor(function()
+				return t.Num(A.HP) < hp
+			end, 8)
+			t.Check("notices, chases and lands an attack", hit)
+			t.Check("the hit came from it", t.Fx():GetAttribute(A.LastHitBy) == name, tostring(t.Fx():GetAttribute(A.LastHitBy)))
+			local attackDamage = {}
+			for _, attack in def.Attacks do
+				attackDamage[Registry.Action(attack.Action).Hit.Damage] = true
+			end
+			t.Check("for one of its attacks' damage", attackDamage[hp - t.Num(A.HP)] == true, `lost {hp - t.Num(A.HP)}`)
+		end,
+	},
+	{
+		Name = "Enemy kill credit",
+		Run = function(t)
+			local name = t.Server("TestEnemy", TEST_ENEMY, 7)
+			local enemy = t.Enemy(name)
+			t.Lock(enemy)
+			local dead = waitFor(function()
+				t.Press("Attack")
+				t.Wait(0.25)
+				return enemy == nil or EntityState.Number(enemy, A.HP, 0) <= 0
+			end, 12)
+			t.Check("dies to the player's attacks", dead)
+			t.Wait(0.3)
+			local _, _, lastKill = t.Server("Enemies")
+			t.Check("credits the player", lastKill ~= nil and lastKill.Killer == t.Character().Name and lastKill.Enemy == TEST_ENEMY,
+				if lastKill then `{lastKill.Enemy} by {tostring(lastKill.Killer)}` else "no kill recorded")
+			t.Check("can't be locked once dead", (function()
+				t.Wait(0.2)
+				local humanoid = enemy and enemy:FindFirstChildOfClass("Humanoid")
+				return humanoid == nil or humanoid.Health <= 0
+			end)())
+		end,
+	},
+	{
+		Name = "Enemy respawn",
+		Run = function(t)
+			local respawn = 1
+			t.Server("TestEnemySpawn", TEST_ENEMY, 120, respawn) -- beyond the clear radius, beyond aggro
+			local function count(): number
+				local list = t.Server("Enemies")
+				return #list
+			end
+			t.Check("the spawn fills", waitFor(function()
+				return count() == 1
+			end, 3))
+			t.Server("TestKillEnemies")
+			t.Check("it dies", waitFor(function()
+				return count() == 0
+			end, 3))
+			t.Check("and the slot refills once the area is clear", waitFor(function()
+				return count() == 1
+			end, respawn + 4))
 		end,
 	},
 }
