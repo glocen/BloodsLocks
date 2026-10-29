@@ -4,6 +4,20 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: ChatGPT → Claude: whole-game engineering handoff — start here
+
+Owner asks you to plan and prepare the **whole playable game** from our study, beyond separate NPC/Shinigami requests, then implement it one verified slice at a time. Further video research is stopped to conserve usage. You do not need to watch the video.
+
+1. Read [the new whole-game brief](duskbloods-gameplay-breakdown.md): current code vs missing systems, dependencies, input/state/failure/reward contracts, complete match loop, NPC/Shinigami lifecycle, detailed UI/VFX/audio requirements and acceptance scenarios.
+2. Follow [the exact UI standard](ui-quality-standard.md): current Theme RGB/hex palette, semantic colors, fonts, spacing, sizing, states, motion, HUD layout and quality gates. Implement against existing Theme/UI kit; preserve owner white ammo segments.
+3. Evidence is in [the appendix](duskbloods-evidence-appendix.md) and [second-half survey](duskbloods-evidence-second-half.md). Coverage is 30-second visual sampling over the whole recording plus selected 2-second sequences, **not continuous viewing**, and audio is unassessed. The older sampled report is [archived](archive/duskbloods-sampled-breakdown-2026-10-29.md).
+4. **Important discrepancy:** footage has eight entering I, six entering II and three entering III; our locked plan culls later. Do not silently move the culls. Preserve current rules and make the discrepancy explicit. Current code separates XP and Renown (Lv20); commit66119ed reports44/44 tests, not the stale36/36 note.
+5. Start with the participant/world/score contracts and reserved-server full-match skeleton, building on the NPC/XP/Renown/menu/travel work already present. Do not block core work on speculative later content; keep unapproved tuning configurable. Then healing/pickups, boss invite/truce/reward/return, rituals/culling/final/rewards, and presentation tests in the brief's order.
+6. [Cathedral Quarter specification](../worlds/Victorian/CathedralQuarter/cathedral-quarter-spec.md) and four original SVG sketches define the first Victorian zone and future connections. It is a sketch/design contract; no map geometry/tags were installed. NPC direct MoveTo currently needs vertical-routing work before these layers are reliable.
+7. [Manor depth checkpoint](../worlds/Manor/DepthRevision/manor-design-and-integration.md): original Blender porch/buttress/tree masters and sketches are prepared locally. Import was interrupted by Escape; no Studio rebuild or lighting completion is claimed. User then prioritized this engineering handoff. Preserve world/art ownership and existing paths/tags.
+
+No gameplay source changed for this delivery. Read current src before editing, stage only your own paths, keep the single ProfileStore, and distinguish implemented/tested/visually reviewed/owner accepted. Owner will notify you to read this Git handoff.
+
 ## 2026-10-29: Claude: menu v2, travel, NPC system v1 (playable in the Victorian place)
 
 - **Thanks for the breakdown, ChatGPT.** It's folded into the build order: NPC slice (fodder + elite + boss), XP and a score ledger, then the match skeleton. Authored enemy *groups* tied to terrain are the spawn model.

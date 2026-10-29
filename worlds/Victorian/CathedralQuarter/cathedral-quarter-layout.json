@@ -1,0 +1,58 @@
+{
+  "artifactKind": "design-data-not-runtime-schema",
+  "status": "proposed-not-built",
+  "date": "2026-10-29",
+  "mapId": "Victorian",
+  "placeId": 112559855790294,
+  "proposedZoneId": "CathedralQuarter",
+  "displayName": "Cathedral Quarter",
+  "coordinates": { "units": "studs", "north": "-Z", "origin": [0, 0, 0], "heightsReferTo": "finished-walking-surface" },
+  "envelope": { "center": [0, 50, -10], "size": [480, 196, 500] },
+  "sourceTreeObserved": "66119edad61c1dac424c6e7835d77c5f4d55589e",
+  "futureRegionDefinition": { "DisplayName": "Cathedral Quarter", "Enemies": [ { "Id": "Wretch", "Weight": 8 }, { "Id": "Butcher", "Weight": 1 } ] },
+  "surfaces": [
+    { "id": "Nave", "center": [0, 8, -106], "sizeXZ": [96, 102] },
+    { "id": "ProcessionalCourt", "center": [0, 0, 54], "sizeXZ": [100, 80] },
+    { "id": "CloisterCourt", "center": [-98, 0, 53], "sizeXZ": [60, 70] },
+    { "id": "BellYard", "center": [107, 0, 67], "sizeXZ": [62, 78] },
+    { "id": "WestSpawnRoofCourt", "center": [-126, 36, 124], "sizeXZ": [32, 24] },
+    { "id": "EastSpawnRoofCourt", "center": [132, 36, -128], "sizeXZ": [32, 24] },
+    { "id": "Gallery", "surfaceY": 24, "minWidth": 12 },
+    { "id": "RoofCircuit", "surfaceY": 36, "minWidth": 12 },
+    { "id": "Crypt", "surfaceY": -18, "ceilingUndersideY": -2, "minWidth": 14 }
+  ],
+  "spawnCandidates": [
+    { "id": "S1", "floor": [-194, 0, 188] },
+    { "id": "S2", "floor": [184, 0, 178] },
+    { "id": "S3", "floor": [-196, 0, -202] },
+    { "id": "S4", "floor": [196, 0, -208] },
+    { "id": "S5", "floor": [-184, 0, 24] },
+    { "id": "S6", "floor": [192, 0, -14] },
+    { "id": "S7", "floor": [-126, 36, 124] },
+    { "id": "S8", "floor": [132, 36, -128] }
+  ],
+  "enemyGroups": [
+    { "id": "A", "enemy": "Wretch", "floors": [[-104,0,142],[-92,0,150],[-80,0,142]], "activation": "after-engine-traversal-review" },
+    { "id": "B", "enemy": "Wretch", "floors": [[104,0,88],[120,0,88]], "activation": "after-engine-traversal-review" },
+    { "id": "C", "enemy": "Butcher", "floors": [[112,0,-38]], "activation": "after-engine-traversal-review" },
+    { "id": "D", "enemy": "Wretch", "floors": [[-38,8,-138],[-28,8,-122],[-44,8,-112]], "activation": "after-engine-traversal-review-and-no-boss" },
+    { "id": "E", "enemy": "Butcher", "floors": [[32,8,-114]], "activation": "after-engine-traversal-review-and-no-boss" },
+    { "id": "F", "enemy": "Wretch", "floors": [[-78,-18,24],[-62,-18,28]], "activation": "reserved-until-vertical-AI-tests-pass" }
+  ],
+  "enemyMarkerDesign": { "tag": "BL_EnemySpawn", "attributes": { "Count": 1, "Radius": 0 }, "enemyAttribute": "Enemy", "markerOffsetAboveFloor": 0.25, "respawn": "existing-enemy-definition-default" },
+  "reservedSites": [
+    { "id": "R1", "floor": [0,0,48], "use": "future-ritual", "clearRadius": 32, "runtimeTag": null },
+    { "id": "R2", "floor": [0,8,-124], "use": "future-boss", "clearSizeXZ": [64,64], "runtimeTag": null, "enemyId": null },
+    { "id": "O1", "floor": [-112,0,38], "use": "pact-location", "existingCompatibleContract": { "tag": "BL_PactCircle", "Shinigami": "Kurogane" } },
+    { "id": "O2", "floor": [112,0,48], "use": "future-forge", "runtimeTag": null },
+    { "id": "O3", "floor": [-44,-18,-72], "use": "future-pickup", "runtimeTag": null },
+    { "id": "O4", "floor": [-120,0,-122], "use": "future-Flame-shrine", "runtimeTag": null }
+  ],
+  "expansionSockets": [
+    { "id": "West", "center": [-240,0,66], "clearWidth": 28, "clearHeight": 20, "transitionDepth": 40, "upperTieY": 36 },
+    { "id": "East", "center": [240,0,52], "clearWidth": 28, "clearHeight": 20, "transitionDepth": 40 },
+    { "id": "North", "center": [0,0,-260], "clearWidth": 24, "clearHeight": 20, "transitionDepth": 40 }
+  ],
+  "acceptance": { "studioTraversalRun": false, "pngVisuallyInspected": true, "sourceContractRead": true, "minimumSpawnCandidateDistanceCalculated": 100.07996802557443 }
+}
+
