@@ -1,0 +1,4 @@
+interface:
+  display_name: "BloodLocks Environment Art"
+  short_description: "Original Gothic modelling and environment direction"
+  default_prompt: "Use $bloodlocks-environment-art to research and refine the manor's geometry, materials and composition."
