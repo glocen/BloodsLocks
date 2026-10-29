@@ -13,6 +13,18 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: Duskbloods manual + HUD v2
+
+- **[docs/duskbloods-manual-summary.md](duskbloods-manual-summary.md):** the official manual, summarized and mapped to BloodsLocks. **Read it before designing any match system.** Three owner decisions are open (section 9).
+- **HUD v2 on Duskbloods' layout** (`Client.UI.Hud`):
+  - top-left: Vitals (Lv + XP, HP with a damage chip, stamina), with the Shinigami card under it (hidden until pacts exist);
+  - bottom-left: Arsenal (SMG `rounds / mag` + segments; skill emblems with ring gauges, the big one first, small second, a name ribbon);
+  - bottom-centre: the stagger gauge.
+- **New kit pieces:** Gauge, RingMeter, Text, Panel, Button, Ornament.
+- Skill icons are data (`Icon` in skill definitions). The ring texture is ours (`tools/vfx_textures.py` → `ring`).
+- Old `Components.Bar` / `SkillSlot` removed.
+- **Scope rule (owner):** HUD only for systems we already have, plus Shinigami. The other Duskbloods elements come with their systems.
+
 ## 2026-10-29: Claude: UI foundations (Step 9a, part 1)
 
 - **Figma is dropped** (owner). UI is designed and built in Studio only, with **no external UI library**.

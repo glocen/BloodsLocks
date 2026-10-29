@@ -45,6 +45,73 @@ It's fine for a HUD. It won't scale to full menus (match browser, party, class a
   - Bloodborne's reading type is a legible serif/semi-serif chosen for TV distance; FromSoftware never published the font name ([Made Good Designs](https://madegooddesigns.com/bloodborne-font/)).
   - We use that lineage as **inspiration only**: thin bars top-left, quick items at the bottom corners, dark translucent panels, serif type. The art is our own.
 
+## 2c. Duskbloods HUD and menus, from real footage (2026-10-29)
+
+Sources: an annotated in-match screenshot the owner provided, plus frames of [Oroboro's network-test video](https://www.youtube.com/watch?v=yV0EjPXYZQE) (chapters "House of Night" and "Gameplay").
+
+**In-match HUD (letters follow the owner's annotated screenshot):**
+
+| | Element | Where | Our version |
+|---|---|---|---|
+| A | Round blood-red medallion with a number (Virtue) | top-left corner | Virtue medallion (match); level crest in the hub |
+| B | `Lv. 16` + a short XP bar | right of A, top line | same |
+| C | Long thin health bar | under B | same, in blood red, with a pale "lag" chip after hits |
+| D | Thinner stamina bar | under C | same, in ember |
+| E | Row of small square buff/status icons | under D | the same row (empty until passives/buffs exist) |
+| F | Companion portrait + `Name Lv. 3` + thin HP | under E | the **Shinigami** card |
+| G | Small lantern/candle icon | left edge, above the ammo | reserved |
+| H | Ammo box: bullet icon, `16/40`, segmented bar | bottom-left, above the slots | SMG magazine `24/24` + segments |
+| I | Shield-shaped badge with a count (8) | above the slot circles | flask/heal count (Step 11) |
+| J | Big round slot with charges `3/3` | bottom-left | skill slot (Blood Blade, charges) |
+| K | Second round slot + count, the name in a label to its right ("Fire Flask") | bottom-left, right of J | second skill (Light Beam) with a name label |
+| L | Compass strip with W / NW ticks and a pointer | top-centre | compass |
+| M | Enemy title (red "Sworn Enemy") + name + HP bar above the target | over the target | the target's name + HP over the locked enemy |
+| N | Lock-on glint (white diamond) on the target | on the target | our lock marker as a diamond glint |
+| O | Shield icon near the player | by the player when guarding | guard indicator |
+| P | Green bar with an icon under the player | centre, under the character | the player's stagger/stance meter |
+| Q | Thin bar with a gold centre | bottom-centre | charge and channel progress (strong charge, beam) |
+| R | Location name with an icon on a dark ribbon | top-right | area name ("The Vigil") |
+| S | Circular minimap, cut by the corner | top-right corner | minimap (match, later) |
+| T | Two currencies with pouch icons | bottom-right | Bloodgems (+ match currency later) |
+
+**The official in-game HUD guide** (screenshots from the owner) settles these elements:
+- **A Virtue:** "You win phases and claim victory by acquiring enough Virtue". Lives are shown in the final phase.
+- **B Level:** the experience gauge to the right fills to level up.
+- **C HP Gauge.**
+- **D Stamina Gauge:** decreased by **attacking**, sprinting and dodging; regenerates, and isn't consumed out of combat. ⚠ This conflicts with the earlier press reports that attacks are free, which we followed. Not changing it without the owner.
+- **E Effects:** Powers of Blood being manifested and attributes on weapons.
+- **F Kin Information:** name, level and HP of the Kin you have a compact with. For us, the **Shinigami** card.
+- **G Instant Travel Icon:** whether instant travel is possible.
+- **H Ranged Attack Resources:** projectile count or a gauge.
+- **I Goldblood Stake:** the heal's uses; a gauge above it adds uses as it fills.
+- **J Selected Bloodsworn Skill:** a **ring gauge around the icon** shows whether it can be used and drains on use. The next selectable skill shows small at the bottom-left.
+- **K Selected Item:** the next item shows small at the bottom-right.
+- **L Compass:** direction plus points of interest.
+- **Q Stagger Gauge:** **the player's own** stagger; full means staggered and vulnerable; it recovers over time.
+- **R Area Name:** with a regional feature.
+- **S Clock:** time left in the phase (the circular top-right dial; **not a minimap**).
+- **T Commendation:** Bloodfang and Collector Commendation values from kills and pickups.
+
+**Scope now (owner, 2026-10-29): only the systems we already have, plus Shinigami.**
+- **Building now:** B (level + XP), C (HP), D (stamina), F (Shinigami card, shown when summoned), H (SMG ammo), J (skills with ring gauges: Blood Blade large, Light Beam small at the bottom-left), Q (stagger gauge), N (lock-on glint), and the crosshair.
+- **Later, with their systems:** A Virtue, E Effects, G Travel, I Stake, K Items, L Compass, R Area, S Clock, T Commendations.
+
+The style these screens share:
+- Thin bars with no heavy frames, sitting directly on the world.
+- Text in a serif with a light shadow.
+- Dark, slightly warm ribbons behind labels.
+- Round medallions for slots and stats.
+- Everything hugs the corners; the centre stays clear except the target info and Q.
+
+**Menus (House of Night):**
+- **Top tab bar:** *Dusk Battle · Bloodsworn Selection · Battle Remembrance · Archive · System*. The active tab is highlighted; small icons sit on the right.
+- **Class select ("Bloodsworn Selection"):** six tall, slightly arched portrait cards in a row, with the class name on a label above each card. Under each portrait sits a sigil icon plus a caption, and the selected card's label is lit. Back/OK hints sit bottom-right.
+- **Detail screens:** a left column list, a centre title with the description (stats, special actions), a right list of skills/items with icons, and the character render in the middle.
+- **Dusk Battle (matchmaking):** the character stands in the hub room (red sigil floor) with a menu list on the left and prompts at the bottom.
+- **Palette:** near-black with a warm brown tint, hairline borders, cream serif text, red for selection accents.
+
+Our take: the **same placement and structure** (players read it instantly, and it's genre convention), drawn with our own art: Vigil gothic colours, our ornaments, our names.
+
 ## 3. Figma → Roblox (optional)
 
 - **Free importers exist:**

@@ -16,6 +16,7 @@ Research for BloodsLocks design decisions. Sources are network-test and preview 
 
 - **Costs stamina:** dodging, mid-air dashes, air double-jumps (VGC: "not something you can spam"), and some skills (one character's continuous roar).
 - **Free:** sprinting and every attack, melee and ranged (Inven, VGC, GameRant). Game Informer says attacks drain it; **we follow the majority: attacks are free.**
+  - ⚠ **Update 2026-10-29:** the game's own HUD guide (screenshots from the owner) says stamina "will decrease from actions like attacking, sprinting, and dodging", and is "not consumed while out of combat". That contradicts both "attacks are free" and "sprinting is free". Our rule stays as built until the owner decides. See docs/ui-research.md 2c.
 - **Evasion cancel (tentative name):** a dodge timed right after an attack costs no stamina. Mastering it lets you alternate attacks and dodges with zero stamina use.
 - **Guard counter:** counterattack right after blocking. Whether guarding costs stamina is unknown.
 

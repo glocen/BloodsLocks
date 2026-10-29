@@ -137,6 +137,16 @@ def blood_glow(x, y):
     return (1, 1, 1, clamp(a))
 
 
+def ring(x, y, n=256, inner=0.80, outer=0.96):
+    """A clean white ring (anti-aliased), for HUD gauges: swept in code into a radial meter."""
+    u = (x + 0.5) / n * 2 - 1
+    v = (y + 0.5) / n * 2 - 1
+    r = math.hypot(u, v)
+    edge = 1.5 / (n / 2)
+    a = smoothstep(inner - edge, inner + edge, r) * (1 - smoothstep(outer - edge, outer + edge, r))
+    return (1, 1, 1, a)
+
+
 def preview(path, width, height, pixels, background=(0.12, 0.08, 0.12)):
     """The texture composited over a dark background, for judging white/alpha art by eye."""
     def over(x, y):
@@ -213,6 +223,7 @@ def main():
         ("beam_energy", 128, 512, lambda x, y: beam_energy(y, x)),
         ("glint", 256, 256, glint),
         ("soft_glow", 128, 128, soft_glow),
+        ("ring", 256, 256, ring),
     ]
     for name, w, h, pixels in textures:
         write_png(os.path.join(out, name + ".png"), w, h, pixels)

@@ -1,6 +1,6 @@
-# BloodsLocks
+﻿# BloodsLocks
 
-A PvPvE Roblox action game inspired by FromSoftware's *The Duskbloods* (inspiration only: names, art and lore are our own). Director: **glocen**. Budget: **0 €** until the game earns revenue, so everything is custom and free.
+A PvPvE Roblox action game inspired by FromSoftware's *The Duskbloods* (inspiration only: names, art and lore are our own). Director: **glocen**. Budget: **0 â‚¬** until the game earns revenue, so everything is custom and free.
 
 The game itself lives in Roblox Studio (castle hub place "ROLOCK"). This repo is the team's shared brain: the plan, research, decisions, tools and handoff notes for everyone working on it (the owner, Claude, ChatGPT).
 
@@ -11,6 +11,7 @@ The game itself lives in Roblox Studio (castle hub place "ROLOCK"). This repo is
 | [CLAUDE.md](CLAUDE.md) | Working rules from the owner + Studio gotchas. **Every AI teammate reads this first.** |
 | [docs/engineering-plan.md](docs/engineering-plan.md) | Source of truth: locked decisions, systems, code architecture, build-step table |
 | [docs/team-notes.md](docs/team-notes.md) | Handoff log between teammates, newest first. Add an entry after every piece of work. |
+| [docs/duskbloods-manual-summary.md](docs/duskbloods-manual-summary.md) | **The official Duskbloods manual, summarized**: our main inspiration, mapped to BloodsLocks |
 | [docs/duskbloods-reference.md](docs/duskbloods-reference.md) | Research on how Duskbloods works, with sources |
 | [docs/ui-research.md](docs/ui-research.md) | UI research, the "Vigil gothic" style, the UI architecture |
 | [tools/](tools/) | Our own asset tools (e.g. `vfx_textures.py` draws the VFX textures) |
