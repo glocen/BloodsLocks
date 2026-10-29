@@ -24,8 +24,10 @@ local function finishWood(root:Instance):number
   if p:IsA("BasePart") and (p.Material==Enum.Material.Wood or p.Material==Enum.Material.WoodPlanks) then
    local floor=p.Name=="OakBoard"or p.Name=="WingOakBoard"or p.Name=="OakTread"or p.Name=="UsableUpperGallery"
    local plank=p.Material==Enum.Material.WoodPlanks
-   p.MaterialVariant=if floor then (if plank then "Vigil_VarnishedOakPlanks" else "Vigil_VarnishedOak") else (if plank then "Vigil_AgedJoineryPlanks" else "Vigil_AgedJoinery")
-   p.Reflectance=0 -- Gloss comes from low roughness and environment lighting; the wood is not metal.
+   -- Native wood remains visible while newly uploaded PBR maps fail ContentProvider checks.
+   -- Re-enable custom variants only after their maps load successfully in Studio and Client.
+   p.MaterialVariant=""
+   p.Reflectance=0 -- Native wood provides grain and softer highlights without a mirror coating.
    if floor then
     local tint=math.clamp((p.Color.R*255-67)*.4,-5,5)
     p.Color=Color3.fromRGB(81+tint,58+tint*.6,45+tint*.4)
@@ -76,6 +78,12 @@ function A.Apply(root:Instance?):{[string]:any}
  variant("Vigil_AgedJoineryPlanks",Enum.Material.WoodPlanks,"VigilOak_JoineryRoughness.png")
  local count=0
  if root then
+  -- Darken the broad wall field; preserve lighter dressings for architectural depth.
+  for _,region in {root.GreatHall,root.HallOfOaths,root.Atelier} do
+   for _,p in region:GetDescendants() do
+    if p:IsA("BasePart") and (p.Name=="CarvedWall" or p.Name=="SideWall" or p.Name=="EndWall" or p.Name=="SideWallLintel" or p.Name=="EndWallLintel") then p.Color=Color3.fromRGB(44,42,49) end
+   end
+  end
   count=finishWood(root)
   local old=root:FindFirstChild("ArtLighting");if old then old:Destroy()end
   local rig=Instance.new("Model");rig.Name="ArtLighting";rig.Parent=root
