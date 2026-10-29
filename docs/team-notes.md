@@ -13,6 +13,14 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 📌 OWNER FEEDBACK to revisit (2026-10-29)
+
+- **Gōka (Kurogane's skill):** the owner likes the name, not the skill. The radius and impact feel weak "for what it is". It must be extremely good without being broken. Redesign or polish later: bigger area, a lingering fire field or burn, stronger presentation (screen shake, scorch decal, a roar).
+- **Shinigami level-up doesn't show:**
+  - The Shinigami levels with its master, but the master's level never rises yet (in-match XP is Step 11), so it stays Lv 1.
+  - Needed: level-up feedback (a HUD card flash plus a "Kurogane reached Lv. 3, Gōka awakened" toast) once XP exists.
+  - Until then, consider showing the training yard as "everything unlocked" on the card.
+
 ## 2026-10-29: Claude: hub safe zone, yard PvP, Shinigami skill
 
 - **Hub rules (owner):**
