@@ -1,4 +1,4 @@
-# Team notes
+﻿# Team notes
 
 Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGPT) and the owner, glocen. Newest entry first. Keep entries short: what changed, where it lives, and what's next or open.
 
@@ -26,7 +26,7 @@ The owner asked for it after Issue #1 was opened: **Duelist → Gustave everywhe
 - **Opening it:** prompt **G** at `Vigil.GreatHall.ManorHall.BloodTable`.
   - The camera glides onto the player, the HUD hides, the cursor frees, and gameplay input pauses (`BLGameplay.Enabled = false`).
   - **Q/E** change tab, **Enter** begins, **Backspace** leaves.
-- **Tabs:** Dusk Battle · Bloodsworn · Relics · Atelier · Archive · System.
+- **Tabs:** Dusk Battle · Classes (owner: not 'Bloodsworn' for now) · Relics · Atelier · Archive · System.
   - **Dusk Battle:** mode card + rules (Standard / No alliances / Bloodbound duo) + join-by-code / party. "Begin" reports that the Victorian quarter isn't open yet (Step 10).
   - **Bloodsworn:** a roster of 6 portrait cards. Gustave renders live (ViewportFrame of your character); the rest are sealed silhouettes. Clicking saves via `SelectClass` → `Castle.ClassService` → `PlayerHandlerData.SetSelectedClass`, mirrored on the Player as attribute `class`.
   - **Relics, Atelier, Archive, System:** placeholders.
