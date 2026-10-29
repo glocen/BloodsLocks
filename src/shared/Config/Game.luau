@@ -15,12 +15,6 @@ return {
 	Places = {
 		Manor = 76593217243342, -- ROLOCK: the hub
 	},
-	-- Match maps (their places, zones and enemies) are definitions: Definitions/Maps.
-
-	Match = {
-		MaxPlayers = 8,
-		MinPlayers = 2, -- the countdown starts once this many are in the waiting room
-		Countdown = 30, -- seconds; the server delists itself when it locks (T-5)
-		LockAt = 5,
-	},
+	-- Match maps (their places, zones and enemies) are definitions: Definitions/Maps. Match rules: Definitions/Rules;
+	-- the waiting room and the Studio fast profile: Config.Match.
 }

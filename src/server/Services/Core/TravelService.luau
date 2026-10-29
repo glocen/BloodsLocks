@@ -19,8 +19,6 @@ local Net = require(Shared.Net)
 local PlaceRole = require(Shared.Util.PlaceRole)
 local Log = require(Shared.Util.Log)
 
-local RULES = { Standard = true, Solo = true, Bound = true }
-
 local TravelService = {}
 
 local travelling: { [Player]: boolean } = {}
@@ -64,7 +62,12 @@ function TravelService.Start()
 	if PlaceRole.IsManor then
 		Net.Server.On("SeekHunt", function(player: Player, mapId: any, ruleId: any)
 			local map = Registry.Map(if type(mapId) == "string" then mapId else nil)
-			if not map or not RULES[ruleId] then
+			local rule = Registry.Rule(if type(ruleId) == "string" then ruleId else nil)
+			if not map or not rule then
+				return
+			end
+			if not rule.Playable then
+				status(player, `{rule.DisplayName} hunts aren't open yet.`, true)
 				return
 			end
 			-- TeleportData is a hint only (it can be forged): class and loadout always come from the profile

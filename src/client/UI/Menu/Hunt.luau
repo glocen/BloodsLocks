@@ -18,11 +18,7 @@ local KeyHints = require(script.Parent.Parent.Kit.KeyHints)
 
 local M = Theme.Menu
 local TOP = M.Top + M.TabHeight + 40 -- below the tab ribbon
-local RULES = {
-	{ Id = "Standard", Label = "Standard", Sub = "alliances allowed" },
-	{ Id = "Solo", Label = "No alliances", Sub = "every hunter alone" },
-	{ Id = "Bound", Label = "Bound pairs", Sub = "teams of two" },
-}
+local RULES = Registry.Rules() -- Definitions/Rules, in display order
 local MAP_ID = "Victorian"
 
 export type Screen = { Frame: Frame, Begin: (self: Screen) -> (), Hints: { { string } } }
@@ -172,11 +168,16 @@ end
 function Hunt._setRule(self: any, index: number)
 	self.Rule = index
 	local rule = RULES[index]
-	self._ruleLabel.Text = `‹  {rule.Label}  ›   <font transparency="0.45">{rule.Sub}</font>`
+	self._ruleLabel.Text = `‹  {rule.DisplayName}  ›   <font transparency="0.45">{rule.Summary}</font>`
 end
 
 function Hunt.Begin(self: any)
 	if self.Seeking then
+		return
+	end
+	local rule = RULES[self.Rule]
+	if not rule.Playable then
+		self._status.Text = `{rule.DisplayName} hunts aren't open yet. Choose another rule.`
 		return
 	end
 	self.Seeking = true

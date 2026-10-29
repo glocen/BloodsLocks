@@ -24,13 +24,14 @@ local Equipment = require(Shared.Simulation.Equipment)
 local Parts = require(Shared.Util.Parts)
 local Net = require(Shared.Net)
 local Log = require(Shared.Util.Log)
+local WorldTags = require(Shared.World.Tags)
 local DebugService = require(script.Parent.DebugService)
 local ShinigamiBrain = require(script.ShinigamiBrain)
 
 local A = EntityState.Attr
 local num = EntityState.Number
 
-local CIRCLE_TAG = "BL_PactCircle"
+local CIRCLE_TAG = WorldTags.PactCircle.Tag
 local OUT_OF_COMBAT = 5 -- seconds without a hit before it regenerates while summoned
 local P = PlayerState.Attr
 

@@ -1,6 +1,6 @@
 --!strict
--- Registry: looks up class, weapon, Shinigami, enemy, map and action definitions by id. Everything is validated once at load, so a typo
--- fails loudly in Studio instead of silently in a match.
+-- Registry: looks up class, weapon, Shinigami, enemy, map, match rule and action definitions by id. Everything is validated once
+-- at load, so a typo fails loudly in Studio instead of silently in a match.
 
 local Definitions = script.Parent
 
@@ -13,6 +13,8 @@ local classes: { [string]: any } = {}
 local shinigami: { [string]: any } = {}
 local enemies: { [string]: any } = {}
 local maps: { [string]: any } = {}
+local rules: { [string]: any } = {}
+local ruleOrder: { any } = {}
 
 local ENEMY_TIERS = { Fodder = true, Heavy = true, Elite = true, Boss = true }
 local weapons: { [string]: any } = {}
@@ -102,6 +104,58 @@ for _, module in Definitions.Maps:GetChildren() do
 	end
 	maps[def.Id] = def
 end
+-- Match rules: RuleDefaults overlaid with each rule file. Nested tables merge key by key; lists replace whole.
+local function isList(t: any): boolean
+	return type(t) == "table" and #t > 0
+end
+local function overlay(base: any, changes: any): any
+	local result = table.clone(base)
+	for key, value in changes do
+		if type(value) == "table" and type(base[key]) == "table" and not isList(value) then
+			result[key] = overlay(base[key], value)
+		else
+			result[key] = value
+		end
+	end
+	return result
+end
+local function freeze(t: any): any
+	for _, value in t do
+		if type(value) == "table" and not table.isfrozen(value) then
+			freeze(value)
+		end
+	end
+	return table.freeze(t)
+end
+local ALLIANCE_MODES = { Standard = true, None = true, Bound = true }
+local ruleDefaults = require(Definitions.RuleDefaults) :: any
+for _, module in Definitions.Rules:GetChildren() do
+	local rule = overlay(ruleDefaults, require(module) :: any)
+	local id = rule.Id
+	assert(id == module.Name, `rule module {module.Name} has Id {id}`)
+	assert(type(rule.DisplayName) == "string" and type(rule.Order) == "number", `rule {id}: needs DisplayName and Order`)
+	assert(ALLIANCE_MODES[rule.Alliances], `rule {id}: unknown Alliances "{rule.Alliances}"`)
+	assert(#rule.Phases >= 1, `rule {id}: no phases`)
+	for i, phase in rule.Phases do
+		assert(type(phase.Duration) == "number" and phase.Duration > 0, `rule {id}: phase {i} needs a Duration`)
+	end
+	local last = 0
+	for _, phase in rule.CullAfter do
+		assert(phase > last and phase <= #rule.Phases, `rule {id}: CullAfter must rise and name existing phases`)
+		last = phase
+	end
+	assert(rule.Finalists >= 1, `rule {id}: Finalists must be at least 1`)
+	assert(rule.Ritual.ActivateAt > 0 and rule.Ritual.ActivateAt < 1, `rule {id}: Ritual.ActivateAt must be inside the phase`)
+	assert(rule.Final.Lives >= 1 and rule.Final.SuddenDeath.Lives >= 1, `rule {id}: final lives must be at least 1`)
+	assert(#rule.Rewards.Placement >= 1 and rule.Rewards.Cap > 0, `rule {id}: rewards incomplete`)
+	rules[id] = freeze(rule)
+	table.insert(ruleOrder, rules[id])
+end
+table.sort(ruleOrder, function(a, b)
+	return a.Order < b.Order
+end)
+assert(rules.Standard, "the Standard rule must exist")
+
 for id, class in classes do
 	for slot, skillId in class.Skills or {} do
 		assert(actions[skillId] and actions[skillId].Charges, `class {id}: skill slot {slot} ({skillId}) isn't a skill`)
@@ -137,6 +191,16 @@ function Registry.MapForPlace(placeId: number): any
 		end
 	end
 	return nil
+end
+
+-- A match rule by id (RuleDefaults merged in, frozen), or nil.
+function Registry.Rule(id: string?): any
+	return if id then rules[id] else nil
+end
+
+-- Every match rule in display order.
+function Registry.Rules(): { any }
+	return ruleOrder
 end
 
 function Registry.Shinigami(id: string?): any

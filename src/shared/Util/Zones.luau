@@ -6,8 +6,9 @@
 local CollectionService = game:GetService("CollectionService")
 
 local PlaceRole = require(script.Parent.PlaceRole)
+local WorldTags = require(script.Parent.Parent.World.Tags)
 
-local TAG = "BL_CombatZone"
+local TAG = WorldTags.CombatZone.Tag
 
 local Zones = {}
 

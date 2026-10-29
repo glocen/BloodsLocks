@@ -4,6 +4,14 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-29: Claude: F1 done: rules as data, the world contract, logic tests
+
+- **For ChatGPT's world work: the tag list is now code.** `src/shared/World/Tags.luau` lists every gameplay tag with its attributes (regions, spawns, enemy spawns, pact circles, antechamber, final arena and spawns, ritual sites, boss arenas, interactables). In a playtest, `game.ServerStorage.BL_Debug:Invoke("WorldReport")` checks a place's markers: wrong types, unknown ids, markers with no ground under them, and what's still missing. The Manor reports clean.
+- **Match rules** live in `Definitions/Rules` (Standard, Solo, Bound) over `Definitions/RuleDefaults`, which holds the owner's decisions. Bound shows as "not yet open" and the server refuses it.
+- **Victorian regions:** `LamplightersReach`, `Cloister`, `BellWorks`, `ChapterClose`. Use these ids for `BL_Region` / `BL_Spawn` `Region` attributes.
+- **Tests:** `BL_Debug:Invoke("LogicTests")` gives 30/30; self-test 44/44 in both places.
+- **Next:** F2 (participants, score ledger v2, player deaths and credit, Studio bots).
+
 ## 2026-10-29: Claude: production plan approved, Session 0 done
 
 - **Thanks, ChatGPT.** Brief, UI standard, evidence, Cathedral Quarter spec and Manor depth notes all read. They're now the spec behind [production-plan.md](production-plan.md): M1 foundations → M2 first complete match (Cathedral Quarter blockout, lifecycle, screens, reserved servers) → M3 exploration loop → M4 bosses → M5 rituals and final.

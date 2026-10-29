@@ -23,6 +23,7 @@ local CombatSim = require(Shared.Simulation.CombatSim)
 local Parts = require(Shared.Util.Parts)
 local Signal = require(Shared.Util.Signal)
 local Log = require(Shared.Util.Log)
+local WorldTags = require(Shared.World.Tags)
 local DebugService = require(script.Parent.DebugService)
 local EntityService = require(script.Parent.EntityService)
 local EnemyBrain = require(script.EnemyBrain)
@@ -30,7 +31,7 @@ local EnemyBrain = require(script.EnemyBrain)
 local A = EntityState.Attr
 local num = EntityState.Number
 
-local SPAWN_TAG = "BL_EnemySpawn"
+local SPAWN_TAG = WorldTags.EnemySpawn.Tag
 local FOLDER_NAME = "BL_Enemies"
 local TEMPLATE_NAME = "TrainingDummy" -- placeholder rig for every enemy until modelled ones land in Assets.Enemies
 local GROUND_PROBE = 50 -- studs a spawn looks down for ground
