@@ -11,6 +11,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local EntityState = require(Shared.Simulation.EntityState)
 local PlayerState = require(Shared.Simulation.PlayerState)
+local Leveling = require(Shared.Simulation.Leveling)
+local PlaceRole = require(Shared.Util.PlaceRole)
 local ActionSim = require(Shared.Simulation.ActionSim)
 local Registry = require(Shared.Definitions.Registry)
 local SHINIGAMI_KEY = "T"
@@ -89,12 +91,14 @@ function HudController.Start()
 		end
 
 		local stamina = num(character, A.Stamina, 0)
+		local level = num(character, A.Level, 1)
 		vitals:Update({
-			Level = num(character, A.Level, 1),
-			Xp = 0, -- in-match experience arrives with Step 11
+			Level = level,
+			Xp = (player:GetAttribute(P.Xp) or 0) / Leveling.XpToNext(level),
 			Hp = num(character, A.HP, 0) / math.max(1, num(character, A.HPMax, 1)),
 			Stamina = stamina / math.max(1, num(character, A.StaminaMax, 1)),
 			StaminaEmpty = stamina <= 0,
+			Score = if PlaceRole.IsMatch then player:GetAttribute(P.Score) or 0 else nil, -- the Renown total
 		}, dt)
 		local pactId = player:GetAttribute(P.ShinigamiId)
 		local pactDef = Registry.Shinigami(pactId)

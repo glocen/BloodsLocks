@@ -46,7 +46,7 @@ local function watchViewport()
 	bind()
 end
 
--- The ScreenGui for a layer. Every layer ignores the GUI inset and covers the whole screen.
+-- The ScreenGui for a layer. Every layer but the HUD ignores the GUI inset and covers the whole screen.
 function Layers.Get(name: LayerName): ScreenGui
 	local existing = guis[name]
 	if existing then
@@ -59,9 +59,11 @@ function Layers.Get(name: LayerName): ScreenGui
 	gui.DisplayOrder = order
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	-- every layer covers the whole screen, top bar included (owner, 2026-10-29); layouts keep their own margins
-	gui.IgnoreGuiInset = true
-	gui.ScreenInsets = Enum.ScreenInsets.None
+	-- every layer covers the whole screen, top bar included (owner, 2026-10-29), except the HUD: its vitals sit just
+	-- below Roblox's own icon and chat buttons
+	local respectsInset = name == "HUD"
+	gui.IgnoreGuiInset = not respectsInset
+	gui.ScreenInsets = if respectsInset then Enum.ScreenInsets.CoreUISafeInsets else Enum.ScreenInsets.None
 	local uiScale = Instance.new("UIScale")
 	uiScale.Parent = gui
 	table.insert(scales, uiScale)

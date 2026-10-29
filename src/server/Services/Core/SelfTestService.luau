@@ -18,6 +18,7 @@ local Zones = require(Shared.Util.Zones)
 local DebugService = require(script.Parent.DebugService)
 local EntityService = require(script.Parent.EntityService)
 local NpcService = require(script.Parent.NpcService)
+local ProgressionService = require(script.Parent.ProgressionService)
 
 local A = EntityState.Attr
 local ENEMY_SPAWN_TAG = NpcService.SpawnTag
@@ -128,6 +129,7 @@ local function testPad(who: any): string?
 	player:RequestStreamAroundAsync(spot)
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.CFrame = CFrame.lookAt(spot, spot + Vector3.new(0, 0, -1))
+	ProgressionService.Reset(player) -- level 1, so damage checks read the definitions' numbers
 	character:SetAttribute(A.HP, EntityState.Number(character, A.HPMax, 0))
 	local dummy = freshDummy(pad, spot)
 	return dummy and dummy.Name

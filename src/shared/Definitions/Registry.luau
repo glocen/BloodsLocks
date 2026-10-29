@@ -84,7 +84,7 @@ for _, module in enemyModules do
 		assert(actions[attack.Action] and actions[attack.Action].Hit, `enemy {def.Id}: attack {attack.Action} missing or has no Hit`)
 		assert(attack.Range and attack.Weight, `enemy {def.Id}: attack {attack.Action} needs Range and Weight`)
 	end
-	for _, key in { "BaseHealth", "WalkSpeed", "ChaseSpeed", "AggroRange", "LeashRange", "AlertTime", "AttackInterval", "Telegraph", "Xp", "Virtue", "Respawn" } do
+	for _, key in { "BaseHealth", "WalkSpeed", "ChaseSpeed", "AggroRange", "LeashRange", "AlertTime", "AttackInterval", "Telegraph", "Xp", "Score", "Respawn" } do
 		assert(type(def[key]) == "number", `enemy {def.Id}: {key} must be a number`)
 	end
 	assert(def.LeashRange > def.AggroRange, `enemy {def.Id}: LeashRange must exceed AggroRange`)

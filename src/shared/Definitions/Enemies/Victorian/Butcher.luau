@@ -20,8 +20,8 @@ return {
 		{ Action = "Enemy.Butcher.Cleave", Range = 8, Weight = 2 },
 		{ Action = "Enemy.Butcher.Overhead", Range = 7, Weight = 1 },
 	},
-	Xp = 60,
-	Virtue = 20,
+	Xp = 120,
+	Score = 20,
 	Respawn = 90,
 	CanBeSpellbound = false,
 	Actions = {

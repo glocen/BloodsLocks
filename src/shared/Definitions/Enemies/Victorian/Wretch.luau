@@ -6,7 +6,7 @@
 --   BaseHealth, WalkSpeed (patrol), ChaseSpeed, AggroRange (studs to notice a target), LeashRange (studs from its
 --   spawn it will chase), AlertTime (seconds it turns and pauses before chasing: fair warning),
 --   AttackInterval (seconds between attacks, ±20%), Telegraph (seconds of flash before each attack),
---   Attacks: { { Action, Range (studs it attacks from), Weight } }, Xp, Virtue, Respawn (seconds after its spawn
+--   Attacks: { { Action, Range (studs it attacks from), Weight } }, Xp, Score (Renown), Respawn (seconds after its spawn
 --   area is clear of players), CanBeSpellbound (a bite can turn it into a minion, later),
 --   Actions (its own action definitions, same format as weapons).
 
@@ -27,8 +27,8 @@ return {
 		{ Action = "Enemy.Wretch.Rake", Range = 6, Weight = 3 },
 		{ Action = "Enemy.Wretch.Pounce", Range = 12, Weight = 1 },
 	},
-	Xp = 10,
-	Virtue = 5,
+	Xp = 25,
+	Score = 5, -- Renown for the killer
 	Respawn = 45,
 	CanBeSpellbound = true,
 	Actions = {

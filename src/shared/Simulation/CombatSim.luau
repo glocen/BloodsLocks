@@ -19,6 +19,7 @@ local ActionSim = require(script.Parent.ActionSim)
 local Zones = require(Shared.Util.Zones)
 local PlaceRole = require(Shared.Util.PlaceRole)
 local Signal = require(Shared.Util.Signal)
+local Leveling = require(script.Parent.Leveling)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -137,6 +138,8 @@ local function apply(request: HitRequest, now: number)
 		return
 	end
 	local fx = EntityState.Fx(target)
+	-- the attacker's in-match level adds damage (Leveling); rounded so HP stays whole
+	local power = math.floor(hit.Damage * Leveling.DamageMultiplier(num(attacker, A.Level, 1)) + 0.5)
 
 	if EntityState.IsInvincible(target, now) then
 		fx:SetAttribute(A.LastEvadedAt, now)
@@ -160,7 +163,7 @@ local function apply(request: HitRequest, now: number)
 			return
 		end
 		target:SetAttribute(A.StaggerUntil, now)
-		damage(request, now, hit.Damage)
+		damage(request, now, power)
 		local maxHealth = num(attacker, A.HPMax, 0)
 		local heal = math.floor(maxHealth * (hit.Heal or 0))
 		attacker:SetAttribute(A.HP, math.min(maxHealth, num(attacker, A.HP, 0) + heal))
@@ -178,8 +181,8 @@ local function apply(request: HitRequest, now: number)
 			fx:SetAttribute(A.LastParryAt, now)
 			return
 		end
-		Stamina.Drain(target, hit.Damage * Config.Guard.StaminaPerDamage * (hit.GuardDrain or 1), now)
-		loseHp(target, attacker, hit.Damage * Config.Guard.ChipDamage)
+		Stamina.Drain(target, power * Config.Guard.StaminaPerDamage * (hit.GuardDrain or 1), now)
+		loseHp(target, attacker, power * Config.Guard.ChipDamage)
 		fx:SetAttribute(A.LastBlockAt, now)
 		if num(target, A.Stamina, 0) <= 0 then
 			interrupt(target, now, Config.Guard.BreakStun, nil)
@@ -188,7 +191,7 @@ local function apply(request: HitRequest, now: number)
 		return
 	end
 
-	damage(request, now, hit.Damage)
+	damage(request, now, power)
 end
 
 -- Server only, called at the start of each simulation step. Hits from attackers that were already dead (or gone)

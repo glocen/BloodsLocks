@@ -6,6 +6,10 @@
 local A = {
 	Class = "class", -- class id mirrored from the profile's SelectedClass (ClassService)
 	ClientReady = "ClientReady", -- the client finished booting (PlayerService)
+	-- in-match progression and score (ProgressionService, ScoreService); Spawn applies Level to the character
+	Level = "lv",
+	Xp = "xp", -- progress inside the current level
+	Score = "sc", -- Renown total
 	-- the Shinigami pact (ShinigamiService), read by the HUD card
 	ShinigamiId = "shId",
 	ShinigamiLevel = "shLv",

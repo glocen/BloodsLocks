@@ -1,5 +1,5 @@
 --!strict
--- Vitals (top-left, Duskbloods A/B/C/D): an engraved medallion in the corner (our crest now; the Virtue counter in
+-- Vitals (top-left, Duskbloods A/B/C/D): an engraved medallion in the corner (our crest now; the Renown score in
 -- matches), and growing out of it: "Lv. N" with the experience gauge, the long HP gauge (with a damage chip) and the
 -- short, thin green stamina gauge (flashes when empty). Effects (E) join under it once that system exists.
 
@@ -7,7 +7,7 @@ local Theme = require(script.Parent.Parent.Theme)
 local Gauge = require(script.Parent.Parent.Kit.Gauge)
 local Text = require(script.Parent.Parent.Kit.Text)
 
-export type State = { Level: number, Xp: number, Hp: number, Stamina: number, StaminaEmpty: boolean, Virtue: number? }
+export type State = { Level: number, Xp: number, Hp: number, Stamina: number, StaminaEmpty: boolean, Score: number? }
 export type Vitals = { Frame: Frame, Update: (self: Vitals, state: State, dt: number) -> () }
 
 local MARGIN = Vector2.new(36, 26)
@@ -56,8 +56,8 @@ function Vitals.new(parent: Instance): Vitals
 	image(medallion, "Bezel", Theme.Images.Medallion, 1.06, Theme.Palette.GoldDim, 0, 9)
 	local crest = image(medallion, "Crest", Theme.Images.BloodCrescent, 0.62, Color3.new(1, 1, 1), 0, 7)
 	crest.ScaleType = Enum.ScaleType.Fit
-	local virtue = Text.new(medallion, "Title", {
-		Name = "Virtue",
+	local score = Text.new(medallion, "Title", {
+		Name = "Score",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromScale(1, 0.5),
@@ -86,7 +86,7 @@ function Vitals.new(parent: Instance): Vitals
 		Width = STAMINA_WIDTH, Height = 3, Color = Theme.Colors.Stamina, ColorDark = Theme.Colors.StaminaDark,
 		Position = UDim2.fromOffset(BARS_X, 41),
 	})
-	return (setmetatable({ Frame = frame, _level = level, _xp = xp, _hp = hp, _stamina = stamina, _crest = crest, _virtue = virtue }, Vitals) :: any) :: Vitals
+	return (setmetatable({ Frame = frame, _level = level, _xp = xp, _hp = hp, _stamina = stamina, _crest = crest, _score = score }, Vitals) :: any) :: Vitals
 end
 
 function Vitals.Update(self: any, state: State, dt: number)
@@ -95,11 +95,11 @@ function Vitals.Update(self: any, state: State, dt: number)
 	self._hp:Set(state.Hp, dt)
 	self._stamina:Set(state.Stamina, dt)
 	self._stamina.Fill.BackgroundTransparency = if state.StaminaEmpty then 0.5 + 0.5 * math.sin(os.clock() * 18) else 0
-	local hasVirtue = state.Virtue ~= nil
-	self._crest.Visible = not hasVirtue
-	self._virtue.Visible = hasVirtue
-	if hasVirtue then
-		self._virtue.Text = tostring(state.Virtue)
+	local hasScore = state.Score ~= nil
+	self._crest.Visible = not hasScore
+	self._score.Visible = hasScore
+	if hasScore then
+		self._score.Text = tostring(state.Score)
 	end
 end
 

@@ -13,8 +13,17 @@ local StaminaConfig = require(Shared.Config.Stamina)
 local Combat = require(Shared.Config.Combat)
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
+local PlayerState = require(Shared.Simulation.PlayerState)
+local Leveling = require(Shared.Simulation.Leveling)
+local Players = game:GetService("Players")
 
 local A = EntityState.Attr
+local P = PlayerState.Attr
+
+local function playerNum(attribute: string): number
+	local value = Players.LocalPlayer:GetAttribute(attribute)
+	return if type(value) == "number" then value else 0
+end
 local TEST_ENEMY = "Wretch"
 local class = Registry.Class(Registry.DefaultClass)
 local saber = Registry.Weapon(class.Melee)
@@ -271,6 +280,44 @@ return {
 				local humanoid = enemy and enemy:FindFirstChildOfClass("Humanoid")
 				return humanoid == nil or humanoid.Health <= 0
 			end)())
+		end,
+	},
+	{
+		Name = "Level up",
+		Run = function(t)
+			t.Check("starts at level 1", t.Num(A.Level) == 1, `lvl {t.Num(A.Level)}`)
+			local hp, base = t.Num(A.HP), class.BaseHealth
+			t.Server("GiveXp", Leveling.XpToNext(1))
+			local up = waitFor(function()
+				return t.Num(A.Level) == 2
+			end, 2)
+			t.Check("enough XP reaches level 2 on the character", up)
+			t.Near("max HP grows", t.Num(A.HPMax), Leveling.MaxHealth(base, 2), 0)
+			t.Near("and the gain is added to HP", t.Num(A.HP) - hp, Leveling.MaxHealth(base, 2) - Leveling.MaxHealth(base, 1), 0)
+			t.Near("max stamina grows", t.Num(A.StaminaMax), Leveling.MaxStamina(2), 0)
+			t.Lock()
+			local before = t.DummyHp()
+			t.Press("Strong")
+			t.Wait(1)
+			local strong = Registry.Action(saber.Strong).Hit.Damage
+			t.Near("hits harder", before - t.DummyHp(), math.floor(strong * Leveling.DamageMultiplier(2) + 0.5), 0)
+		end,
+	},
+	{
+		Name = "Kill rewards",
+		Run = function(t)
+			local def = Registry.Enemy(TEST_ENEMY)
+			local xp, score = playerNum(P.Xp), playerNum(P.Score)
+			local enemy = t.Enemy(t.Server("TestEnemy", TEST_ENEMY, 7))
+			t.Lock(enemy)
+			waitFor(function()
+				t.Press("Attack")
+				t.Wait(0.25)
+				return enemy == nil or EntityState.Number(enemy, A.HP, 0) <= 0
+			end, 12)
+			t.Wait(0.4)
+			t.Near("the kill's XP", playerNum(P.Xp) - xp, def.Xp, 0)
+			t.Near("and its Renown", playerNum(P.Score) - score, def.Score, 0)
 		end,
 	},
 	{
