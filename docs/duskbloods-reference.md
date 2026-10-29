@@ -64,6 +64,37 @@ Sources: the official manual (Game Basics 1), GameRant's explainer, and preview 
 - **Phase length:** sources disagree (about 5 min per Yahoo; 8–10 min per ResetEra and Console Creatures; about 30 min per match per GameSpot). Ours stays *(tune)*.
 - **Critique from previews:** every match ends in PvP and side objectives repeat, so matches feel samey. We should vary regional features and events per match.
 
+### PvE and the minute-to-minute match (network-test impressions, research 2026-10-29)
+
+Sources: Fextralife Game Mechanics, Nintendo Life, Gaming Trend, Destructoid (links below). Note: theduskbloods.wiki's "Hunter/Prey, VP" loop contradicts the official manual and every preview, so we ignore it.
+
+- **About 25–30 min per match**, with result screens between phases.
+- **Phase 1:** explore, level up, collect items, fight mobs, light lantern corpses (Flame), find a Kin early (Kin level up with you). Players can avoid each other entirely; a PvP kill gives no Virtue yet.
+- **Phase 2:** mini-bosses and bosses appear; ritual sites open. **Phase 3:** ritual sites heavily contested; PvP kills give Sword Virtue; random events more likely.
+- **Enemies seen:**
+  - Standard mobs that can catch new players off guard.
+  - Cavalry-type mobs.
+  - "Hefty" big enemies (mid-match fights).
+  - Crystal lizards (loot runners).
+  - Swarms of **blood sac bugs** (an event; killing them grants power-ups and passives).
+  - Mini-bosses and bosses in phase 2 (a giant toad).
+  - **Trespassers:** roaming raid bosses; nearby players get an alliance prompt and are teleported into the fight.
+  - **Invaders:** a reward goes to whoever is still fighting when the invader dies.
+- **Enemies hit very hard and can stagger the player.** Dying costs only time: a quick respawn.
+- **Upgrades in a match:**
+  - Blood Roses from bosses: passives such as weapon damage, stamina, or heal-on-kill.
+  - Forges: iron / flame / poison affinities on your weapon.
+  - Bloodsacs: skill upgrades (cooldown, damage, uses).
+  - Kin circles: Kin level boosts.
+  - Leveling: HP, attack, stamina, then a second class ability.
+- **Map:** dense with icons. Players read them and plan routes. Free teleport between set points; spawn choice shows population density. Random events, such as **starfall**.
+- **Criticisms to learn from:**
+  - Limited enemy variety; bosses less fun than they look.
+  - Virtue (commendations) shifts confusingly between close players.
+  - Invader rewards favour last-hitters.
+  - Lower areas too dark.
+  - The endgame always becomes a sweaty PvP battle royale.
+
 ## Kin (companions)
 
 - Summoned by making a pact at circles marked with light pillars (yellow symbols). They stay for the match.
@@ -92,3 +123,7 @@ Sources: the official manual (Game Basics 1), GameRant's explainer, and preview 
 - ResetEra preview thread: https://www.resetera.com/threads/the-duskbloods-preview-thread.1609033/
 - Console Creatures hands-on: https://www.consolecreatures.com/the-duskbloods-hands-on-preview/
 - Yahoo network test impressions: https://tech.yahoo.com/gaming/articles/duskbloods-youre-quick-youre-dead-150000942.html
+- Fextralife Game Mechanics: https://duskbloods.wiki.fextralife.com/Game_Mechanics
+- Nintendo Life first impressions: https://www.nintendolife.com/previews/first-impressions-network-issues-aside-the-duskbloods-could-wind-up-being-really-special
+- Gaming Trend network test impressions: https://gamingtrend.com/impressions/the-duskbloods-network-test-impressions/
+- Destructoid network test impressions: https://www.destructoid.com/duskbloods-network-test-impressions-switch-2/

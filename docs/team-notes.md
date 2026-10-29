@@ -13,6 +13,51 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude → ChatGPT: two requests from the owner
+
+### 1. Watch full Duskbloods matches and write a breakdown (you can watch video; Claude can't)
+
+Owner's direction: we now build **the actual game**, taking big inspiration from Duskbloods. Claude's text research is in duskbloods-reference.md and the roadmap in engineering-plan.md section 3b. Please watch 2–3 **full network-test matches** (start to finish, ideally different characters) and write `docs/duskbloods-gameplay-breakdown.md` with timestamps and links:
+
+1. **Timeline of one match**, minute by minute: what the player does, what the UI shows, when phases, events, ritual sites, bosses and culls happen.
+2. **Enemy roster:** each enemy's look, size, how many in a group, its attacks (wind-up length, range, combo length), how it reacts to hits and stagger, roughly how hard it hits, what it drops.
+3. **Bosses and Trespassers:** the arena, the attack list, phases, how the co-op prompt works, the rewards.
+4. **Pickups and interactables:** items, chests, lanterns/skull chairs, forges, Kin circles, bloodsacs, travel points: what each looks like and gives.
+5. **Screens:** intro, region pick, phase results, culling, final, results. What's shown, how long each lasts.
+6. **What felt good / bad** to watch.
+
+Keep it factual, original names only in quotes. Claude turns it into specs.
+
+### 2. Level up the art, to capture the Duskbloods ambiance (you're our art designer)
+
+The owner judged the manor below the bar. Here is a study plan, all free. Add what you learn to your skill (`skills/bloodlocks-environment-art`), and apply it to one hero bay before replicating anything.
+
+1. **Light before geometry.**
+   - Value structure first: squint or grayscale every view; it must read in 3–4 values.
+   - Warm key light against cold fill; pools of light in darkness, with practical sources (candles, braziers, lancet windows) that explain every light.
+   - Roblox: Future lighting, Atmosphere density/haze for depth, Bloom only on true highlights, ColorCorrection last.
+   - Exercise: recreate the lighting of one Duskbloods frame using **only a graybox**. If the mood works in gray, lighting is solved.
+2. **Composition and silhouette.**
+   - Gothic is vertical: pinnacles and spires against the sky, read from far away.
+   - Layer the view into foreground, midground and background. Use arches to frame landmarks and paths that lead to them.
+   - Study: Bloodborne's Yharnam, Lies of P's Krat, Dishonored's Dunwall (screenshots, free).
+3. **Real architecture.**
+   - Learn the vocabulary and proportions: pointed arch, rib vault, flying buttress, tracery, pinnacle, crocket.
+   - Victorian street language: brick terraces, slate roofs, chimney stacks, wrought iron, gas lamps.
+   - Draw from photos, not memory.
+4. **Surface storytelling, not noise.**
+   - Wear only where it happens: edge chips where hands and feet go, grime pooling low, water streaks under sills, moss on the north and damp sides.
+   - Trim sheets and tileables for efficiency; decals for unique damage.
+   - Uniform procedural noise reads as "AI/placeholder". Avoid it.
+5. **Modular kit discipline.**
+   - Snap to a stud grid; build a small kit, then kitbash for variety.
+   - Respect Roblox budgets: about 20k triangles per MeshPart, 1024 px textures, SurfaceAppearance limits, StreamingEnabled.
+6. **Review like a pro.**
+   - Player-camera screenshots, side by side with the reference at the same framing.
+   - Grayscale check; write a harsh critique *before* showing the owner.
+
+Free resources: The Level Design Book (book.leveldesignbook.com), Blender Guru's lighting and composition videos, 80.lv environment breakdowns, Wikimedia Commons for Gothic and Victorian architecture photos.
+
 ## 2026-10-29: Claude: framework fix pass (audit done except lag compensation)
 
 - **Audit + status:** [framework-audit.md](framework-audit.md). Fixed: class from the profile in every place, the PlayerState schema, the owner's data-layer bugs (with OK), the hit queue, the Theme colours, the Shinigami weapon, the boot log and DataService.Wait.

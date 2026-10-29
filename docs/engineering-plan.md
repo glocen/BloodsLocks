@@ -128,6 +128,68 @@ Biting a staggered fodder enemy converts it into a temporary minion (its allegia
 - Formula *(tune)*: 15 participation + placement (1st 60, 2nd 40, 3rd 30, others 15) + `floor(virtueEarned / 50)` + 2 per player kill, capped at 150.
 - Saved as `Bloodgems` in the profile and spent on class skins in the castle shop.
 
+## 3b. Game roadmap: from framework to the full Duskbloods loop (2026-10-29)
+
+Owner, 2026-10-29: "we're far from v1; work on the actual game; big inspiration from Duskbloods, creative freedom." Research: duskbloods-reference.md ("PvE and the minute-to-minute match"). ChatGPT is asked for a timestamped video breakdown to refine this.
+
+**Every system a match needs, and where we are:**
+
+| Area | Duskbloods | BloodsLocks today |
+|---|---|---|
+| Movement + combat kit | multi-jump, air dash, guard/parry/howl, bite, skills, gun | ✅ built (self-test covers it) |
+| Companions | Kin: melee / ranged / support, level with you | 🟡 Shinigami core (melee only) |
+| **PvE enemies** | mobs, cavalry, hefty brutes, crystal lizards, blood sac swarms | ❌ only training dummies |
+| **Bosses** | phase-2 bosses, roaming **Trespassers** (co-op prompt) | ❌ |
+| Minions | bite a staggered weak foe → spellbound | ❌ (bite exists) |
+| In-match growth | XP/levels (HP, attack, stamina, 2nd ability), Blood Roses (passives), forges (affinities), bloodsacs (skill upgrades) | ❌ (level attribute only) |
+| Healing | Goldblood stake (2–4 uses, gauge from kills) | ❌ |
+| Items | pickups, chests, 6 quick items | ❌ |
+| Score | Virtue: Sword, Pledge, Repulsion, Flame, Commendation, Other | ❌ |
+| Match flow | lobby, region pick, 4 phases + clock, culling, final arena, results | 📝 designed (section 3), not built |
+| Map | regions, regional features, instant travel, compass, area names, ritual sites, events (starfall) | ❌ (Victorian is an empty baseplate) |
+| Social | alliances, sigils, duos | ❌ (later) |
+
+**Build order.** Each step is a playable slice, verified with the self-test plus new checks:
+1. **NPC system v1** (below): enemies that patrol, aggro, attack through the same combat pipeline, die, give XP, and respawn. First roster: a fodder mob and a hefty brute. The dummy and Shinigami AIs move onto the same shared base.
+2. **In-match XP + levels + Virtue (Repulsion)**, with the HUD medallion showing the number. This is what makes killing NPCs matter.
+3. **Match flow skeleton** in the Victorian place on a graybox of tagged regions: waiting → intro → region pick → phases + clock → culling → final → results.
+4. **Heal stake + pickups + Flame lanterns** (the phase-1 exploration loop).
+5. **Bosses + Trespassers + Blood Roses** (the phase-2 loop).
+6. **Ritual sites** (Sword/Pledge, boundary drain) + commendations (the phase-3 loop).
+7. **Forges, bloodsacs, minions, random events.**
+8. **Alliances, sigils**, then the owner backlog (menu redesign, VFX upgrades).
+
+In parallel (ChatGPT): the Victorian map in Blender carrying our tags, Gustave's look, enemy models.
+
+### NPC system v1: design (2026-10-29)
+
+- **Definitions** (`Definitions/Enemies/<Id>`), validated by Registry:
+  - Tier: Fodder / Heavy / Elite / Boss.
+  - Body: BaseHealth, StaggerMax, WalkSpeed, ChaseSpeed.
+  - Senses: AggroRange, LeashRange.
+  - Combat: Attacks (action ids, chosen by range and weight), Telegraph.
+  - Rewards: Xp, Virtue.
+  - Spawning: Respawn (seconds), Model (template in `Shared.Assets.Enemies`).
+  - CanBeSpellbound (for minions later).
+- **World contract (no code for world builders):** a part tagged `BL_EnemySpawn` with an `Enemy` attribute (id) and an optional `Count` / `Radius`. ChatGPT's maps only need these.
+- **Server:**
+  - `NpcService` spawns, despawns and respawns enemies.
+  - Each enemy is an entity (`EntityService.MakeEntity`, generalised from MakeDummy).
+  - Brains tick at 10 Hz, and only when a player is within 200 studs (performance: a match may hold 60+ enemies).
+- **Shared actor base `NpcActor`** (removes today's duplication between DummyBrain and ShinigamiBrain): CanAct, Telegraph, StartAction, FinishAction, Face, Approach. The dummy, Shinigami and enemy brains all use it.
+- **Enemy brain:**
+  - States: Idle/Patrol → Alert (turn to the target, brief pause: fair) → Chase → Attack (telegraph → action) → Recover → Leash (walk home and heal when the target is gone or out of range).
+  - Targets players and Shinigami, nearest, sticky for a few seconds. Never attacks its own spellbound side.
+- **Death and credit:** CombatSim records damage per attacker on NPCs. On death, `NpcService.Died` fires with the killer and damage shares; XP/Virtue (step 2) listen to it. The body fades, then respawns after `Respawn`.
+- **Self-test:** new cases cover a fodder mob that aggroes, attacks (a hit lands or is dodged), dies at 0 HP, credits the killer, and respawns.
+
+**Harsh critique:**
+1. Enemies with saber animations on default rigs will look placeholder. Accepted for the system slice: the look waits on ChatGPT's models and the owner publishing animations. The system must not hard-code any look.
+2. Duskbloods' enemies "hit very hard" and testers found enemy variety thin. Tune damage high from day one, and keep the roster data-driven so variety is cheap to add.
+3. Several enemies swinging at once can be unreadable. Cap simultaneous attackers per player at 2 (others circle), like Souls group AI.
+4. Server cost: 60 brains at 10 Hz plus hit detection. Sleep far-away brains, and measure server frame time in the self-test once enemies exist.
+5. Respawning enemies in place makes farming trivial. Respawn only after the area is empty of players for a while (`Respawn` counts from then).
+
 ## 4. Movement
 
 ### Kit (from the Duskbloods research)
@@ -469,7 +531,7 @@ Also fixed: the saber template's `WeldConstraint`s didn't hold under Server Auth
 - Next: the owner's framework issue list (fix pass → tag `framework-v1`), then MatchService per the match flow v1. |
 | 10a | **Shinigami** (pulled forward from Step 12, owner 2026-10-29): pact circles, roles (melee/ranged/support), levelling, recall and cooldown, as in Duskbloods. Built and tested first at the hub yard's circle | Pact, follow, fight, recall and death cooldown verified against dummies | **Core done 2026-10-29** (melee "Kurogane"). Verified: pact at the yard circle (G), summon/dismiss (T), follows its master, engages enemies in a fight with its master (or with itself), alternates two slashes (40/50), death means dismissed plus a 30 s cooldown with resummon refused, regen while dismissed (2%/s), it never hurts its own master (allegiance via `own` attribute), no leftover models. **To do:** ranged and support types, levelling with its master (Step 11), a real model (Blender), animations. |
 | 11 | Match rules: phases, Virtue, culling, respawn, final arena, leveling, flasks | A full match loop with 2–3 players | — |
-| 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | — |
+| 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | **Pulled forward 2026-10-29** (owner: "work on the actual game"). Order and NPC system v1 design: section 3b. Next: NPC system v1. |
 | 13 | Rewards + skin purchases | Bloodgems granted once per match; purchases persist | — |
 | 14 | Victorian world map | Streaming, regions, spawn areas | — |
 | 15 | Class 2 | Added with zero core edits | — |
