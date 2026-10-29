@@ -13,6 +13,19 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: stamina green + posture bar
+
+- **Owner-approved HUD:** HP stays as is. Stamina is now short (250), thin (4) and **green** (`Theme.Colors.Stamina` = Moss).
+- **Posture bar** (`Hud.StaggerGauge`, shown as "PostureGauge"):
+  - **Orange**, in the **middle** of the screen under the character (0.5, 0.7); always shown, dimmed when empty.
+  - Fills outward from a gold centre mark.
+- `Theme.Colors.Warm` (ember) now drives tracers, the HOWL/STAGGERED callouts and the lock ring, which were orange before.
+- **Next (owner):**
+  1. Shinigami.
+  2. Player vs player PvP fix.
+  3. Big menu UI.
+  4. The new Victorian place.
+
 ## 2026-10-29: Claude: R key fix + HUD polish
 
 - **Howl vs strong on R** (`ActionSim`, `Config.Combat.Howl.InputGrace = 0.1`):
