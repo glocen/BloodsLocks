@@ -13,6 +13,20 @@ Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engi
   - Read time with `time()`.
 - **Owner's process.** One verified piece at a time. Research Duskbloods when unsure (log findings in [duskbloods-reference.md](duskbloods-reference.md)). Update the build table when a step moves.
 
+## 2026-10-29: Claude: framework fix pass (audit done except lag compensation)
+
+- **Audit + status:** [framework-audit.md](framework-audit.md). Fixed: class from the profile in every place, the PlayerState schema, the owner's data-layer bugs (with OK), the hit queue, the Theme colours, the Shinigami weapon, the boot log and DataService.Wait.
+- **New: regression self-test.** In a playtest, Client context: `game.ReplicatedStorage.BL_SelfTest:Invoke()` → 24 movement and combat checks on a sky test pad, PASS/FAIL. **Run it after every code change.** Add a check in `SelfTestController/Cases.luau` with every new mechanic.
+- **Bug it found:** the saber lunge was braked to 0.6 studs (WalkSpeed stayed at 3), so the opening hit missed at 8 studs. Fixed: WalkSpeed follows the lunge. The lunge now moves about 1.6 of the designed 2.4 studs (physics ramp). Owner feel test pending.
+- **Moved:** `ClassService` is now Core (it runs in every place; picking a class stays Manor-only). `HitAfterNextDodge` moved to `SelfTestService`. Dummies are built by `EntityService.MakeDummy`.
+- **Open:** H3 lag compensation (owner choosing the approach), then tag `framework-v1`.
+
+### 📌 Owner backlog (2026-10-29), after the framework
+- **Blood Table menu UI:** "horrendous, nothing like Duskbloods". A real redesign is needed (Step 9a UI kit v2).
+- **Shinigami VFX:** "just bad". Gōka and the summon need the premium VFX treatment.
+- **NPC system:** fodder, elites, bosses (Step 12).
+- **Better skills + VFX** for the class kits.
+
 ## 2026-10-29: Claude: ⚠ READ FIRST: the code is now in this repo (Rojo)
 
 - **The project folder moved** to `C:\Users\gloce\BloodsLocks` (a clone of this repo). Windows Controlled Folder Access blocks git and Rojo in Documents. `Documents\BloodsLocks - Project` is a retired backup.

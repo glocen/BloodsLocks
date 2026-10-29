@@ -1,5 +1,17 @@
 # Framework audit (2026-10-29, Claude)
 
+## Status (2026-10-29, end of the fix pass)
+
+| Item | Status |
+|---|---|
+| H1 class reaches the game · M5 PlayerState schema | **Fixed** (commit 2ccde3a) |
+| H2 automated tests | **Done**: `BL_SelfTest`, 24 checks, PASS in the Manor and Victorian. It found a real bug: the saber **lunge was braked** to 0.6 studs (fixed, 678251a) |
+| M1–M4 owner data layer | **Fixed** with the owner's OK (d55e801). The purchase flow still needs a test on the published game with a real dev product |
+| M6, L1, L2, L3, L4, L5 | **Fixed** (38428aa, L4 in 678251a) |
+| H3 lag compensation | **Open**: waits on the owner's choice of approach (see H3 below) |
+
+---
+
 The `framework-v0` code (tag), read before the fix pass. The simulation, networking, combat and server services were read fully; the client UI and VFX got a lighter pass. **Nothing has been changed yet.** The owner picks what gets fixed. After the fixes and regression checks, the result is tagged `framework-v1`.
 
 **Overall:** the core is solid. One simulation pipeline, data-driven actions, a rate-limited network layer, the damage pipeline in the right order, and clean boot. The problems are a few real bugs, missing pieces the match will need, and some rule breaks (magic strings, colors outside Theme).
