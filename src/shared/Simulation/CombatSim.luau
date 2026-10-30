@@ -125,7 +125,8 @@ local function damage(request: HitRequest, now: number, amount: number)
 	loseHp(target, attacker, amount)
 	fx:SetAttribute(A.LastHitDamage, amount)
 	fx:SetAttribute(A.LastHitBy, attacker.Name)
-	fx:SetAttribute(A.LastHitAt, now)
+	fx:SetAttribute(A.LastHitRanged, hit.Ranged == true)
+	fx:SetAttribute(A.LastHitAt, now) -- last: clients read the others when this one changes
 
 	local reaction = hit.Reaction or "Flinch"
 	local stagger = num(target, A.Stagger, 0) + hit.Stagger

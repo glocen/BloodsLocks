@@ -24,6 +24,7 @@ local UiLint = require(script.Parent.UiLint)
 local PlateController = require(script.Parent.Parent.PlateController)
 local PactSiteController = require(script.Parent.Parent.PactSiteController)
 local Budget = require(script.Parent.Parent.Parent.Parent.Util.Budget)
+local Sfx = require(script.Parent.Parent.Parent.Parent.Audio.Sfx)
 
 local A = EntityState.Attr
 local P = PlayerState.Attr
@@ -313,6 +314,34 @@ return {
 			local fired = bursts * #burst.Shots
 			t.Check(`at {SPREAD_RANGE} studs some rounds miss`, landed < fired, `{landed} of {fired} landed`)
 			t.Check("but the bursts still land", landed >= fired * 0.25, `{landed} of {fired} landed`)
+		end,
+	},
+	{
+		Name = "Sounds",
+		Run = function(t)
+			-- every cue is a region of the combat sound sheet, and Sfx plays exactly that region (or nothing at all
+			-- until the owner uploads the sheet)
+			local sounds, sheet = Registry.Sounds(), Registry.SoundSheet()
+			local missing = {}
+			for name in sounds.Cues do
+				local region = sheet.Regions[name]
+				if not region or region.To <= region.From then
+					table.insert(missing, name)
+				end
+			end
+			t.Check("every cue has a region on the sheet", #missing == 0, table.concat(missing, ", "))
+			local root = t.Root()
+			Sfx.Play("GunShot", root)
+			local sound = root:FindFirstChild("GunShot")
+			if sheet.Id == "" then
+				t.Check("silent until the sheet is uploaded", sound == nil)
+				return
+			end
+			local region = sheet.Regions.GunShot
+			local playing = sound ~= nil and sound:IsA("Sound") and (sound :: Sound).Playing
+			local range = if playing then (sound :: Sound).PlaybackRegion else NumberRange.new(0)
+			t.Check("a cue plays its own region of the sheet", playing and math.abs(range.Min - region.From) < 1e-3
+				and math.abs(range.Max - region.To) < 1e-3, `{range.Min}-{range.Max}`)
 		end,
 	},
 	{

@@ -5,11 +5,12 @@
 --   Tracer: a short pale streak flying from the muzzle to where the round stopped, at TRACER_SPEED; the impact shows
 --           when it lands.
 --   Surface: hot sparks thrown off along the surface's facing, falling; dust the colour of the surface; a brief light.
---   Body: a crimson mist plume thrown back toward the shooter and up, with a few red streaks: a hit, never a wound
---         (no gore).
+--   Body: a dark, wet mist plume thrown back toward the shooter and up (blood-red to near-black, alpha-blended, never
+--         glowing), with a few hot red streaks as its edge: a hit, never a wound (no gore).
 --   Miss: only the tracer.
--- Play(shooter, origin, hitPosition, normal?, hitBody): the muzzle is the shooter's held gun (its Muzzle attachment)
--- when it has one, else `origin`, where the server's ray left.
+-- Play(shooter, origin, hitPosition, normal?, hitBody?, onImpact?): the muzzle is the shooter's held gun (its Muzzle
+-- attachment) when it has one, else `origin`, where the server's ray left. Returns that muzzle position; onImpact
+-- runs when the round lands (sounds use it to stay in step with the picture).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -187,15 +188,13 @@ local function bodyHit(position: Vector3, direction: Vector3)
 	-- thrown back out of the wound side and upward, so the shooter sees it (along the shot, the body hides it)
 	local spray = (-direction + Vector3.yAxis * BODY_LIFT).Unit
 	Kit.Burst(CFrame.lookAt(position, position + spray), {
-		{ -- a crimson mist plume
+		{ -- a dark, wet mist plume (alpha-blended: darkness can't come from glow)
 			Count = 2,
 			Texture = T.MistBurst,
 			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
 			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 			Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors({ { 0, V.BloodCore }, { 0.35, V.Blood }, { 1, V.BloodWet } }),
-			LightEmission = 0.25,
-			Brightness = 1.5,
+			Color = Kit.Colors({ { 0, V.Blood }, { 0.25, V.BloodWet }, { 0.6, V.BloodDeep }, { 1, V.BloodDark } }),
 			Transparency = Kit.Seq({ { 0, 0 }, { 0.6, 0.3 }, { 1, 1 } }),
 			Size = Kit.Seq({ { 0, 1.6 }, { 1, 2.8 } }),
 			Lifetime = NumberRange.new(0.35, 0.5),
@@ -235,7 +234,14 @@ local function bodyHit(position: Vector3, direction: Vector3)
 	})
 end
 
-function Gunshot.Play(shooter: Model?, origin: Vector3, hitPosition: Vector3, normal: Vector3?, hitBody: boolean?)
+function Gunshot.Play(
+	shooter: Model?,
+	origin: Vector3,
+	hitPosition: Vector3,
+	normal: Vector3?,
+	hitBody: boolean?,
+	onImpact: (() -> ())?
+): Vector3
 	local muzzle = muzzleOf(shooter)
 	local from = if muzzle then muzzle.WorldPosition else origin
 	local path = hitPosition - from
@@ -247,7 +253,11 @@ function Gunshot.Play(shooter: Model?, origin: Vector3, hitPosition: Vector3, no
 		elseif normal then
 			surfaceHit(hitPosition, normal)
 		end
+		if onImpact then
+			onImpact()
+		end
 	end)
+	return from
 end
 
 return Gunshot

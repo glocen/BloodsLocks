@@ -8,7 +8,7 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
 
-**Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done: SMG spread, Gustave's machine pistol (Blender-built), the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade. Next: sound, the M1, Blood Blade, Light Beam; then U2. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
+**Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done: SMG spread, Gustave's machine pistol (Blender-built), the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload). Next: the M1, Blood Blade, Light Beam; then U2. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
 
 **ChatGPT (off):** left mid-way through an owner-approved Victorian art rebuild (replacement geometry, markers and Lighting; phase I dusk, II twilight, III and the final night). W1 backup: `ServerStorage.WorldBackups.PreArtRebuild_20261030`. Its handoff (`docs/victorian-art-rebuild-handoff.md`), Manor world scripts and art tools are committed as it left them (owner, 2026-10-30); the 29 MB of `.blend`, `.fbx` and `.png` art sources in `assets/manor/` stay on the owner's PC, gitignored. Don't run the old CathedralQuarter generator once the replacement is installed.
 
@@ -28,11 +28,11 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 - Code comments that still say "Bloodsworn tab" (`Net`, `ClassService`, `Theme`, `Arsenal`): the tab is "Classes".
 - IP names (owner, 2026-10-30: "I'll propose names"): bring 3–4 original names for the companions now called "Shinigami" (Bleach's core term, player-visible) and notes on the title "BloodsLocks" (near "Duskbloods" and "Deadlock"). Nothing is renamed until the owner picks.
-- The gunshot body hit's crimson mist is brighter than the VFX rule ("dark, wet and heavy, never neon"): darken it in C1's effects pass.
 - Self-test, logic tests and the world report return every PASS line. A compact default (counts and failures only, the full list on request) would cut tokens on every test run with no loss.
 
 **Waiting on the owner**
 
+- Upload the combat sound sheet: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
 - Review Q0: match screens v2, plates, Kurogane's pact site.
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 

@@ -1,9 +1,10 @@
 --!strict
 -- CombatFxController: combat feedback for every entity, read from the events CombatSim and the enemy brains write on
 -- each entity's Humanoid (EntityState.Fx): hit flashes, call-outs (Evaded, Blocked, PARRY, Guard broken, HOWL, bite
--- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gunshots (Vfx/Gunshot:
--- muzzle, tracer, impact), skill projectiles, channeled beams and charge telegraphs. Damage itself reads on the plates (PlateController: HP bars and
--- the running total of what you dealt), so hits pop no numbers.
+-- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gunshots
+-- (Vfx/Gunshot: muzzle, tracer, impact), skill projectiles, channeled beams and charge telegraphs, and their sounds
+-- (Audio/Sfx, cues named in Definitions/Sounds). Damage itself reads on the plates (PlateController: HP bars and the
+-- running total of what you dealt), so hits pop no numbers.
 
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
@@ -13,6 +14,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local EntityState = require(Shared.Simulation.EntityState)
 local Net = require(Shared.Net)
+local Registry = require(Shared.Definitions.Registry)
+local Sfx = require(script.Parent.Parent.Parent.Audio.Sfx)
 local UI = script.Parent.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local FloatingText = require(UI.Components.FloatingText)
@@ -36,11 +39,96 @@ local num = EntityState.Number
 local HEAVY_HIT = 80
 local HEAL_COLOR = Theme.Colors.Heal
 local CALLOUT_RANGE = 35 -- studs: call-outs show for what's this close to you (or your lock)
+local BEAM_FADE = 0.12 -- seconds a beam's held sound takes to fade as it ends
+
+local SOUNDS = Registry.Sounds()
+local SHEET = Registry.SoundSheet()
 
 local CombatFxController = {}
 
 local projectiles: { [number]: Projectile.Projectile } = {}
+local projectileSounds: { [number]: any } = {} -- each flying projectile's cues (Sounds.Projectiles), for its impact
 local beams: { [Model]: LightBeam.Ray } = {}
+local beamSounds: { [Model]: { Cues: any, Loop: Sound? } } = {}
+
+-- The combat entity called `name` (hit events record the attacker's name), or nil.
+local function entityNamed(name: any): Model?
+	if type(name) ~= "string" or name == "" then
+		return nil
+	end
+	for _, model in CollectionService:GetTagged(EntityState.Tag) do
+		if model:IsA("Model") and model.Name == name then
+			return model
+		end
+	end
+	return nil
+end
+
+-- A swing's whoosh, started so it peaks as the action's hit window opens.
+local function playSwing(model: Model, id: string, action: any, startedAt: number)
+	local cues = SOUNDS.Actions[id]
+	local root = Parts.Root(model)
+	if cues and cues.Swing and action and action.Hit and root then
+		local lead = action.Hit.From - SHEET.Regions[cues.Swing].Peak
+		Sfx.Play(cues.Swing, root, lead - (time() - startedAt))
+	end
+end
+
+-- A landed melee hit: the attacker's own hit cue, else the plain body hit. (Rounds, projectiles and beams play their
+-- impacts where they land.)
+local function playMeleeHit(model: Model, fx: Instance)
+	local root = Parts.Root(model)
+	if fx:GetAttribute(A.LastHitRanged) == true or not root then
+		return
+	end
+	local attacker = entityNamed(fx:GetAttribute(A.LastHitBy))
+	local cues = if attacker then SOUNDS.Actions[(EntityState.CurrentAction(attacker))] else nil
+	Sfx.Play((cues and cues.Hit) or SOUNDS.Feedback.BodyHit, root)
+end
+
+-- A reload's sound, from the moment it starts (after a burst it starts as the burst ends).
+local function playReload(model: Model)
+	local reloadUntil = num(model, A.ReloadUntil, 0)
+	local gunId = Registry.Class(model:GetAttribute(A.ClassId)).Ranged
+	local cues = gunId and SOUNDS.Weapons[gunId]
+	local root = Parts.Root(model)
+	if reloadUntil > 0 and cues and cues.Reload and root then
+		Sfx.Play(cues.Reload, root, reloadUntil - Registry.Weapon(gunId).Reload - time())
+	end
+end
+
+-- A channeled beam's sound: the charge as it starts, the held loop once it fires, the end as it stops.
+local function updateBeamSound(model: Model, id: string, root: BasePart, firing: boolean)
+	local state = beamSounds[model]
+	if not state then
+		local cues = SOUNDS.Actions[id]
+		if not cues then
+			return
+		end
+		state = { Cues = cues, Loop = nil }
+		beamSounds[model] = state
+		if cues.Charge then
+			Sfx.Play(cues.Charge, root)
+		end
+	end
+	assert(state)
+	if firing and not state.Loop and state.Cues.Loop then
+		state.Loop = Sfx.Loop(state.Cues.Loop, root)
+	end
+end
+
+local function endBeamSound(model: Model)
+	local state = beamSounds[model]
+	if not state then
+		return
+	end
+	beamSounds[model] = nil
+	Sfx.Stop(state.Loop, BEAM_FADE)
+	local root = Parts.Root(model)
+	if state.Cues.End and root then
+		Sfx.Play(state.Cues.End, root)
+	end
+end
 
 local PROJECTILE_LOOKS: { [string]: Projectile.Look } = {
 	BloodBlade = BloodBlade,
@@ -92,7 +180,7 @@ local function updateBeams()
 	local now = time()
 	local active: { [Model]: boolean } = {}
 	for _, model in CollectionService:GetTagged(EntityState.Tag) do
-		local _, action, startedAt = EntityState.CurrentAction(model)
+		local id, action, startedAt = EntityState.CurrentAction(model)
 		local root = Parts.Root(model)
 		local beam = action and action.Beam
 		local elapsed = now - startedAt
@@ -104,12 +192,14 @@ local function updateBeams()
 			beams[model] = ray
 			local target = if hit then hit.Position else origin + direction * beam.Range
 			LightBeam.Update(ray, origin, target, math.clamp(elapsed / beam.From, 0, 1), elapsed >= beam.From, os.clock())
+			updateBeamSound(model, id, root, elapsed >= beam.From)
 		end
 	end
 	for model, ray in beams do
 		if not active[model] then
 			LightBeam.Destroy(ray)
 			beams[model] = nil
+			endBeamSound(model)
 		end
 	end
 end
@@ -135,11 +225,15 @@ local function watch(model: Instance)
 	end
 	local fx = EntityState.Fx(model)
 	model:GetAttributeChangedSignal(A.ActionStart):Connect(function()
-		local _, action = EntityState.CurrentAction(model)
+		local id, action, startedAt = EntityState.CurrentAction(model)
 		local look = action and action.Fx and ACTION_FX[action.Fx]
 		if look then
 			look.Play(model)
 		end
+		playSwing(model, id, action, startedAt)
+	end)
+	model:GetAttributeChangedSignal(A.ReloadUntil):Connect(function()
+		playReload(model)
 	end)
 	local function on(name: string, handler: () -> ())
 		fx:GetAttributeChangedSignal(A[name]):Connect(handler)
@@ -148,6 +242,7 @@ local function watch(model: Instance)
 	on("LastHitAt", function()
 		local damage = num(fx, A.LastHitDamage, 0)
 		Flash.Pulse(model, Theme.Colors.Health)
+		playMeleeHit(model, fx)
 		if isMe(model) then
 			CameraController.Shake(2.2, 12, 0.3)
 		elseif fx:GetAttribute(A.LastHitBy) == (player.Character and player.Character.Name) then
@@ -160,6 +255,10 @@ local function watch(model: Instance)
 		end
 	end)
 	on("LastBlockAt", function()
+		local root = Parts.Root(model)
+		if root then
+			Sfx.Play(SOUNDS.Feedback.Block, root)
+		end
 		if near(model) then
 			FloatingText.Pop(model, "Blocked", Theme.Colors.TextMuted)
 		end
@@ -169,6 +268,10 @@ local function watch(model: Instance)
 	end)
 	on("LastParryAt", function()
 		Flash.Pulse(model, Theme.Colors.Accent)
+		local root = Parts.Root(model)
+		if root then
+			Sfx.Play(SOUNDS.Feedback.Parry, root)
+		end
 		if near(model) then
 			FloatingText.Pop(model, "PARRY", Theme.Colors.Accent, true)
 		end
@@ -217,9 +320,26 @@ function CombatFxController.Start()
 		watch(model)
 	end
 	CollectionService:GetInstanceAddedSignal(EntityState.Tag):Connect(watch)
-	Net.Client.On("ShotFx", Gunshot.Play)
+	Sfx.Preload()
+	Net.Client.On("ShotFx", function(shooter: Model?, origin: Vector3, hitPosition: Vector3, normal: Vector3?, hitBody: boolean?)
+		local impact = if hitBody then SOUNDS.Feedback.BodyHit elseif normal then SOUNDS.Feedback.SurfaceHit else nil
+		local muzzle = Gunshot.Play(shooter, origin, hitPosition, normal, hitBody, function()
+			if impact then
+				Sfx.Play(impact, hitPosition)
+			end
+		end)
+		local cues = if shooter then SOUNDS.Actions[(EntityState.CurrentAction(shooter))] else nil
+		if cues and cues.Shot then
+			Sfx.Play(cues.Shot, muzzle)
+		end
+	end)
 	Net.Client.On("ProjectileFx", function(id: number, visual: string, origin: Vector3, direction: Vector3, speed: number, range: number)
 		projectiles[id] = Projectile.new(PROJECTILE_LOOKS[visual] or BloodBlade, origin, direction, speed, range)
+		local cues = SOUNDS.Projectiles[visual]
+		projectileSounds[id] = cues
+		if cues and cues.Cast then
+			Sfx.Play(cues.Cast, origin)
+		end
 	end)
 	Net.Client.On("ProjectileEnd", function(id: number, position: Vector3)
 		local projectile = projectiles[id]
@@ -227,11 +347,17 @@ function CombatFxController.Start()
 			Projectile.Finish(projectile, position)
 			projectiles[id] = nil
 		end
+		local cues = projectileSounds[id]
+		projectileSounds[id] = nil
+		if cues and cues.Impact then
+			Sfx.Play(cues.Impact, position)
+		end
 	end)
 	RunService.RenderStepped:Connect(function(dt)
 		for id, projectile in projectiles do
 			if not Projectile.Step(projectile, dt) then
 				projectiles[id] = nil
+				projectileSounds[id] = nil -- flew out of range: no impact to hear
 			end
 		end
 		updateBeams()

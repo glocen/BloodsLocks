@@ -87,6 +87,7 @@ local A = {
 	LastHitAt = "hitT",
 	LastHitDamage = "hitD",
 	LastHitBy = "hitB",
+	LastHitRanged = "hitR", -- the last hit was a round, a projectile or a beam (their impacts play their own sounds)
 	LastEvadedAt = "evT",
 	LastBlockAt = "blkT",
 	LastParryAt = "pryT",
@@ -123,7 +124,7 @@ EntityState.Defaults = {
 		EvadeFreeFrom = -10, GuardStart = -1, Aim = Vector3.new(0, 0, -1), Ammo = 0, ReloadUntil = 0,
 	},
 	Fx = {
-		LastHitAt = -10, LastHitDamage = 0, LastHitBy = "", LastEvadedAt = -10, LastBlockAt = -10,
+		LastHitAt = -10, LastHitDamage = 0, LastHitBy = "", LastHitRanged = false, LastEvadedAt = -10, LastBlockAt = -10,
 		LastParryAt = -10, LastHowlAt = -10, GuardBrokenAt = -10, LastBiteAt = -10, LastBiteHeal = 0, AlertAt = -10, AlertTarget = "",
 	},
 }

@@ -74,14 +74,14 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
 
 ## Progress (2026-10-30)
 
-**C1.1 done except sound.** Self-test 68/68 and logic 48/48 in the Manor.
+**C1.1 done.** Self-test 73/73 and logic 48/48 in the Manor; the sounds wait for the owner's upload.
 - **Spread:** in `Gunfire` and `BurstSMG.Spread` (Base 0.8°, Bloom 2.2°, Max 6.5°). Up close every round lands; at 30 studs 13–15 of 20 land.
 - **The gun:** Gustave's machine pistol, modelled and baked in Blender (`tools/blender/smg.py`): blued steel, aged brass, walnut grips, garnet medallions that glow (an emissive mask), and an amber crystal (a glass shell over a neon core, with a small light). Held in the left hand by `Equipment.AttachLoadout`. The owner asked for the light without sparkles.
 - **The burst:** a duelist's stance. The body blades with the gun shoulder forward, the arm snaps to shoulder height, and each round kicks a little higher with the bloom. Published as `Config.Animations.SMGBurst`.
 - **The effect** (`Vfx/Gunshot`, from `ShotFx`): a star flash and flame cone at the gun's real muzzle, a light, and gun smoke. A pale tracer flies at 700 studs/s, and the impact waits for it to land. Surfaces get sparks, dust in the surface's colour and a light. Bodies get a crimson mist plume and streaks thrown back toward the shooter (stylized, no wound). `Kit.TimeScale` slows effects for frozen review captures.
 - **Lighting** (owner's OK): the Manor's grade now has violet shadows, warm lamp bloom and a light violet haze. The old values are in `ServerStorage.WorldBackups.Lighting_PreDuskbloodsGrade_20261030`.
+- **Sound** (2026-10-30): 14 combat cues synthesized from scratch by `tools/audio/sound_sheet.py` (no samples): the shot, reload, surface and body hits, two swings, the saber hit, block, parry, the Blood Blade's cast and impact, and the Light Beam's charge, loop and end. They're packed into one sheet so a batch costs one upload. `Definitions/Sounds` says which cue plays when (Registry checks it at load); `Client.Audio.Sfx` plays them in 3D, and swings peak as their hit window opens. Silent until the owner uploads the sheet. The gunshot's body hit is now dark wet mist (the VFX rule).
 
 **Next:**
-1. SFX for the gunshot.
-2. C1.2: the M1 (knockback, hitstop, saber model and trail).
-3. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`).
+1. C1.2: the M1 (knockback, hitstop, saber model and trail).
+2. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`).
