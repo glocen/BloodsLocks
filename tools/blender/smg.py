@@ -26,10 +26,7 @@ WOOD = bc.walnut_material(across="Y")  # the grip panels lie in the YZ plane, th
 AMBER = bc.crystal_material("Crystal_Amber", tint=(1.0, 0.62, 0.22))
 AMBER.node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = (1.0, 0.55, 0.18, 1)
 AMBER.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 0.45
-GARNET = bc.crystal_material("Garnet", tint=(0.20, 0.004, 0.016))
-GARNET.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 0.0
-GARNET.node_tree.nodes["Principled BSDF"].inputs["Transmission Weight"].default_value = 0.0
-GARNET.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.08
+GARNET = bc.garnet_material()
 
 BORE_Z = 0.22  # the barrel's axis height
 HALF = 0.065  # half the frame's thickness

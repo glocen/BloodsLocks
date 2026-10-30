@@ -1,6 +1,6 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (`docs/combat-rework.md`, "Progress"); then U2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (C1.1 and C1.2 done; `docs/combat-rework.md`, "Progress"); the network-test reference study as soon as the owner's video arrives; then U2.**
 
 > Roles, ownership and the team mode: AGENTS.md. D11 and every other owner decision: [engineering-plan.md](engineering-plan.md) §3.
 
@@ -12,6 +12,15 @@ This is the working order for Claude's sessions. [engineering-plan.md](engineeri
 - Make the game first, in the order ChatGPT's brief sets. The rest comes later.
 - The world is built to the premium bar by whoever holds world art (AGENTS.md, "Who works on what"); the owner and ChatGPT's specs direct the art. **The map is vertical.**
 - Quality first. Speed comes from order and tooling, never from skipping a check.
+
+**Added 2026-10-30 (evening):**
+- **The reference study comes first, and it gets the most effort.** The owner is sending a 4K60 recording (~5 GB) of the whole Duskbloods network test, with several matches. Claude surveys all of it and writes organized notes in `docs/reference/network-test/`, with frames kept local. The notes cover:
+  - scenery by phase, region and time of day (dusk, twilight, night);
+  - gameplay, combat, movement, VFX, SFX and UI.
+
+  These notes are the foundation of full production.
+- **UI rework to Duskbloods' look,** as accurate as possible inside the IP guardrail (AGENTS.md): close, never a 1:1 copy. Our own identity comes later.
+- **Combat framework rework:** needed (the owner's Albert video), but not yet. First C1's skills, VFX, SFX and blade reach the bar. Then Claude reports, and the owner and Claude plan it together.
 
 ## 1. Status at a glance (2026-10-30)
 

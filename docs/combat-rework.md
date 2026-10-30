@@ -82,6 +82,18 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
 - **Lighting** (owner's OK): the Manor's grade now has violet shadows, warm lamp bloom and a light violet haze. The old values are in `ServerStorage.WorldBackups.Lighting_PreDuskbloodsGrade_20261030`.
 - **Sound** (2026-10-30): 14 combat cues synthesized from scratch by `tools/audio/sound_sheet.py` (no samples): the shot, reload, surface and body hits, two swings, the saber hit, block, parry, the Blood Blade's cast and impact, and the Light Beam's charge, loop and end. They're packed into one sheet so a batch costs one upload. `Definitions/Sounds` says which cue plays when (Registry checks it at load); `Client.Audio.Sfx` plays them in 3D, and swings peak as their hit window opens. Silent until the owner uploads the sheet. The gunshot's body hit is now dark wet mist (the VFX rule).
 
+**C1.2 done.** Self-test 72/72 and logic tests pass in the Manor.
+- **Knockback** (data `Hit.Knockback`, held by the movement step) and **hitstop** (client `AdjustSpeed(0)`, 0.06 s; longer for heavy blows), plus the shared `Vfx/BloodHit` at the blade's contact.
+- **The sabre**, rebuilt in Blender (`tools/blender/saber.py`) to the owner's direction (2026-10-30): "the blade should be black with some gold and jewel, use Albert as reference".
+  - **The blade:** black lacquered steel, damascened in gold (a gothic panel at the root, gold rules on the fuller's shoulders up to a finial, a gold vine in the fuller), with a polished edge.
+  - **The garnet:** at the blade's root, in a domed gold quatrefoil with four pearls.
+  - **The hilt:** a three-bar gold basket hilt; an oxblood shagreen grip bound with gold wire in a spiral groove; a garnet pommel.
+  - **Built for play:** the hilt is scaled to fill an R6 fist (a 0.9-stud grip, like the old sabre's).
+  - **Two meshes, two texture sets.** The blade's UVs are laid out by the script, at 723 texels a stud. The inlay is a mask drawn by the script and baked through the blade's material.
+  - **Points:** `Grip`, `BladeBase`, `BladeTip` and `Jewel` are named in `Equipment.Points`.
+- **The slash** (`Vfx/SlashTrail`, from each melee action's start): a dark blood smear Trail between `BladeBase` and `BladeTip`, a hot crimson hairline on the point's path, blood flung off the point and a breath of dark mist. It draws from just before the hit window to just after, and a swing cancelled first draws nothing. Heavy blows leave more. The textures are drawn by `tools/blender/vfx_sprites.py` (`slash_smear`, `slash_edge`).
+- **Reviewed:** captures in the Manor's test pad, from the player's camera and from the side, frozen mid-swing.
+
 **Next:**
-1. C1.2: the M1 (knockback, hitstop, saber model and trail).
-2. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`).
+1. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`), raised overhead the way Albert raises his (the owner's video).
+2. When C1 is at the bar: report to the owner and plan the combat framework rework together (owner, 2026-10-30).

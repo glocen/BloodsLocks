@@ -29,6 +29,10 @@ Kit.Textures = {
 	TracerStreak = "rbxassetid://109264662547912", -- pale core in a faint glow, for a Beam (white)
 	SmokePuff = "rbxassetid://140359744386400", -- lit volumetric puff, Grid4x4 one-shot (white: tint it)
 	MistBurst = "rbxassetid://88664832177801", -- fibrous plume thrown toward the top, Grid4x4 one-shot, velocity-aligned (white)
+	-- Trails run a texture's vertical axis along their length (the top is the newest edge) and its horizontal axis
+	-- from Attachment0 (left) to Attachment1 (right).
+	SlashSmear = "rbxassetid://97751459305668", -- a sabre's blood smear: blade base left, point right (grey: tint it)
+	SlashEdge = "rbxassetid://102684460045011", -- the hot hairline the point leaves, same layout (white, additive)
 	-- Creator Store art
 	Crescent = "rbxassetid://13138038111", -- slash crescent flipbook, Grid4x4
 	CrescentDark = "rbxassetid://13780268621", -- crescent arcs, Grid4x4

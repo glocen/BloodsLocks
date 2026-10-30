@@ -40,9 +40,8 @@ local function muzzleOf(shooter: Model?): Attachment?
 		return nil
 	end
 	for _, hand in HANDS do
-		local held = Equipment.Held(shooter, hand)
-		local muzzle = held and held:FindFirstChild("Muzzle", true)
-		if muzzle and muzzle:IsA("Attachment") then
+		local muzzle = Equipment.Point(Equipment.Held(shooter, hand), Equipment.Points.Muzzle)
+		if muzzle then
 			return muzzle
 		end
 	end

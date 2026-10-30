@@ -155,13 +155,18 @@ def band_along(name, path_yz, width, thickness, material=None) -> bpy.types.Obje
 
 
 def tube_along(name, points, radii, sides=16, material=None) -> bpy.types.Object:
-    """A capped tube through `points` (Vectors) with a radius per point."""
+    """A capped tube through `points` (Vectors) with a radius per point. Its rings are carried along the path without
+    twisting (parallel transport), so a bend through the vertical stays smooth."""
     bm = bmesh.new()
+    count = len(points)
+    tangents = [(points[min(i + 1, count - 1)] - points[max(i - 1, 0)]).normalized() for i in range(count)]
+    helper = Vector((0, 0, 1)) if abs(tangents[0].z) < 0.95 else Vector((1, 0, 0))
+    a = tangents[0].cross(helper).normalized()
     rings = []
-    for i, (p, r) in enumerate(zip(points, radii)):
-        tangent = (points[min(i + 1, len(points) - 1)] - points[max(i - 1, 0)]).normalized()
-        helper = Vector((0, 0, 1)) if abs(tangent.z) < 0.95 else Vector((1, 0, 0))
-        a = tangent.cross(helper).normalized()
+    for i, (p, r, tangent) in enumerate(zip(points, radii, tangents)):
+        if i:
+            a = tangents[i - 1].rotation_difference(tangent) @ a
+            a = (a - tangent * a.dot(tangent)).normalized()
         b = tangent.cross(a).normalized()
         rings.append([bm.verts.new(p + r * (a * math.cos(2 * math.pi * k / sides) + b * math.sin(2 * math.pi * k / sides)))
                       for k in range(sides)])
@@ -424,6 +429,72 @@ def walnut_material(name="Walnut_Oiled", across="Y"):
     return material
 
 
+def inlaid_steel_material(name, mask, uv_map, gold=(0.86, 0.64, 0.30)):
+    """Blackened blade steel damascened in gold. `mask` (an image read through the UV map `uv_map`) says where: red
+    where gold is inlaid (a hair proud of the steel), green where the steel is left satin (a fuller), blue where it is
+    polished bright (a sharpened edge). The black is a dark, glossy, faintly cool mirror brushed along the blade (object
+    Z), so highlights streak; in Roblox a metal's base colour is its reflectance, so it reads as black lacquered
+    steel, while the gold and the bright edge carry the silhouette."""
+    material = bpy.data.materials.new(name)
+    bsdf, nodes, links = _principled(material)
+    bsdf.inputs["Metallic"].default_value = 1.0
+    uv = nodes.new("ShaderNodeUVMap")
+    uv.uv_map = uv_map
+    texture = nodes.new("ShaderNodeTexImage")
+    texture.image = mask
+    texture.extension = "EXTEND"
+    links.new(uv.outputs["UV"], texture.inputs["Vector"])
+    channels = nodes.new("ShaderNodeSeparateColor")
+    links.new(texture.outputs["Color"], channels.inputs["Color"])
+    inlay, satin, polish = (channels.outputs[c] for c in ("Red", "Green", "Blue"))
+    coords = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (70.0, 70.0, 1.2)  # fine streaks along Z
+    links.new(coords.outputs["Object"], mapping.inputs["Vector"])
+    brushed = _noise(nodes, 1.0, 4.0, 0.5)
+    links.new(mapping.outputs["Vector"], brushed.inputs["Vector"])
+    black = _ramp(nodes, [(0.35, (0.058, 0.060, 0.074)), (0.65, (0.080, 0.082, 0.100))])
+    links.new(brushed.outputs["Fac"], black.inputs["Fac"])
+    gloss = _ramp(nodes, [(0.35, (0.16, 0.16, 0.16)), (0.65, (0.24, 0.24, 0.24))])
+    links.new(brushed.outputs["Fac"], gloss.inputs["Fac"])
+    colour = _mix_colour(nodes, links, polish, black.outputs["Color"], (0.60, 0.61, 0.63, 1))
+    colour = _mix_colour(nodes, links, inlay, colour, (*gold, 1))
+    roughness = _mix_colour(nodes, links, satin, gloss.outputs["Color"], (0.38, 0.38, 0.38, 1))
+    roughness = _mix_colour(nodes, links, polish, roughness, (0.10, 0.10, 0.10, 1))
+    roughness = _mix_colour(nodes, links, inlay, roughness, (0.26, 0.26, 0.26, 1))
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.45
+    bump.inputs["Distance"].default_value = 0.0008
+    links.new(inlay, bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    links.new(colour, bsdf.inputs["Base Color"])
+    links.new(roughness, bsdf.inputs["Roughness"])
+    return material
+
+
+def shagreen_material(name="Shagreen_Dark", shades=((0.070, 0.060, 0.058), (0.022, 0.019, 0.021)), beads=210.0):
+    """Ray-skin grip: dark (`shades`: a bead's lit crown, then the hollows), pebbled with tiny raised beads (Voronoi,
+    `beads` to a stud) that each catch a glint of light."""
+    material = bpy.data.materials.new(name)
+    bsdf, nodes, links = _principled(material)
+    coords = nodes.new("ShaderNodeTexCoord")
+    voronoi = nodes.new("ShaderNodeTexVoronoi")
+    voronoi.inputs["Scale"].default_value = beads
+    links.new(coords.outputs["Object"], voronoi.inputs["Vector"])
+    height = _ramp(nodes, [(0.0, (1, 1, 1)), (0.45, (0, 0, 0))])  # raised at each bead's centre
+    links.new(voronoi.outputs["Distance"], height.inputs["Fac"])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.7
+    bump.inputs["Distance"].default_value = 0.002
+    links.new(height.outputs["Color"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    shade = _ramp(nodes, [(0.0, shades[0]), (0.45, shades[1])])
+    links.new(voronoi.outputs["Distance"], shade.inputs["Fac"])
+    links.new(shade.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = 0.42
+    return material
+
+
 def crystal_material(name="Crystal_Light", tint=(1.0, 0.93, 0.78)):
     """A pale warm crystal with a faint inner light."""
     material = bpy.data.materials.new(name)
@@ -435,6 +506,33 @@ def crystal_material(name="Crystal_Light", tint=(1.0, 0.93, 0.78)):
     bsdf.inputs["Emission Color"].default_value = (1.0, 0.85, 0.55, 1)
     bsdf.inputs["Emission Strength"].default_value = 0.6
     return material
+
+
+def garnet_material(name="Garnet"):
+    """A deep garnet: dark blood red, opaque and glossy. Its facets do the sparkling; in game its glow comes from the
+    emissive mask (bake_pbr's `emissive`)."""
+    material = crystal_material(name, tint=(0.20, 0.004, 0.016))
+    bsdf = material.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Emission Strength"].default_value = 0.0
+    bsdf.inputs["Transmission Weight"].default_value = 0.0
+    bsdf.inputs["Roughness"].default_value = 0.08
+    return material
+
+
+def mask_image(name, rgb, path: Path) -> bpy.types.Image:
+    """A non-colour image from a (rows, cols, 3) numpy array of 0..1 values (row 0 at the bottom, the way UVs run),
+    saved as a PNG at `path` and kept loaded for materials."""
+    import numpy as np
+    rows, cols, _ = rgb.shape
+    image = bpy.data.images.new(name, cols, rows, alpha=False)
+    image.colorspace_settings.name = "Non-Color"
+    pixels = np.ones((rows, cols, 4), np.float32)
+    pixels[..., :3] = rgb
+    image.pixels.foreach_set(pixels.ravel())
+    image.filepath_raw = str(path)
+    image.file_format = "PNG"
+    image.save()
+    return image
 
 
 # --- texture baking ----------------------------------------------------------------------------------------

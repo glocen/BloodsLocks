@@ -6,6 +6,8 @@
   muzzle_cone   128x512: the side flash, for a Beam (a Beam runs its texture's vertical axis along its length)
   spark         64x256: a thin hot streak tapered at both ends, for velocity-aligned particles (white: tint it)
   tracer        64x512: a pale thin core in a faint glow, tapered at both ends, for a Beam (white: tint it)
+  slash_smear   256x512: a sabre's blood smear for a Trail (base left, point right, newest at the top; grey: tint it)
+  slash_edge    64x512: the hot hairline the point leaves, for a Trail (same layout; white, additive)
 The flipbooks run left to right, top to bottom (Roblox's Grid4x4). Volumes render in Cycles; the flat emissive
 shapes are drawn with numpy, so every sprite can be retuned and redrawn at any time.
 
@@ -132,6 +134,44 @@ def muzzle_cone(width=128, height=512, seed=11):
     intensity = body * (1 - smoothstep(0.55, 1.0, v)) * 1.3
     intensity *= smoothstep(0.0, 0.05, v)  # a soft start, so the beam's base never shows an edge
     return fire_ramp(intensity)
+
+
+def streak_noise(height, width, along, across, rng):
+    """Value noise stretched into streaks running down the image: cells `along` px tall and `across` px wide."""
+    small = value_noise((max(4, int(height * across / along)), width), across, rng)
+    ys = np.linspace(0, small.shape[0] - 1, height)
+    y0 = np.floor(ys).astype(int)
+    y1 = np.minimum(y0 + 1, small.shape[0] - 1)
+    f = (ys - y0)[:, None]
+    return small[y0] * (1 - f) + small[y1] * f
+
+
+def slash_smear(width=256, height=512, seed=23):
+    """For a Trail between a blade's base (left) and its point (right), the newest edge at the top: the blood a sabre
+    leaves in the air. A wet body thickening toward the point, a brighter rim just inside it, streaks along the
+    stroke, and a tail that tears into wisps (grey: the trail's colour tints it, the rim brightest)."""
+    rng = np.random.default_rng(seed)
+    v = np.linspace(0, 1, height)[:, None]  # 0 the head (newest) .. 1 the tail
+    u = np.linspace(0, 1, width)[None, :]  # 0 the blade's base .. 1 its point
+    streaks = streak_noise(height, width, 220, 9, rng)
+    breakup = value_noise((height, width), 36, rng)
+    body = smoothstep(0.02, 0.92, u) ** 1.5 * (1 - smoothstep(0.95, 1.0, u))
+    rim = np.exp(-((u - 0.9) / 0.04) ** 2)
+    life = (1 - v) ** 1.25 * smoothstep(0.0, 0.025, v)
+    torn = smoothstep(0.75 * v, 0.75 * v + 0.3, 0.65 * streaks + 0.35 * breakup)  # toward the tail only wisps survive
+    alpha = np.clip(1.35 * (0.8 * body * (0.55 + 0.45 * streaks) + 0.45 * rim) * life * torn, 0, 1)
+    grey = np.clip(0.42 + 0.58 * np.maximum(rim, smoothstep(0.6, 0.95, u) * 0.5), 0, 1) * np.ones_like(v)
+    return np.concatenate([np.repeat(grey[..., None], 3, axis=-1), alpha[..., None]], axis=-1)
+
+
+def slash_edge(width=64, height=512):
+    """For a Trail along a blade's last stretch, its point at the right, the newest edge at the top: a hot hairline on
+    the point's path in a soft glow, dying toward the tail (white: tint it; additive)."""
+    v = np.linspace(0, 1, height)[:, None]
+    u = np.linspace(0, 1, width)[None, :]
+    line = np.exp(-((u - 0.88) / 0.05) ** 2) + 0.3 * np.exp(-((u - 0.8) / 0.2) ** 2)
+    intensity = line * (1 - v) ** 2.2 * smoothstep(0.0, 0.02, v)
+    return np.concatenate([np.ones((height, width, 3)), np.clip(intensity, 0, 1)[..., None]], axis=-1)
 
 
 def streak(width, height, core, glow, glow_strength):
@@ -333,6 +373,8 @@ DRAWN = {
     "muzzle_cone": muzzle_cone,
     "spark": lambda: streak(64, 256, core=0.10, glow=0.35, glow_strength=0.35),
     "tracer": lambda: streak(64, 512, core=0.07, glow=0.30, glow_strength=0.25),
+    "slash_smear": slash_smear,
+    "slash_edge": slash_edge,
 }
 RENDERED = {"smoke_puff": smoke_puff, "mist_burst": mist_burst}
 

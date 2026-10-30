@@ -6,6 +6,8 @@ Receipts for everything that ships (owner's IP Safety List): who made each asset
 |---|---|---|---|---|
 | Gustave's machine pistol (SMG) | `src/shared/Assets/Weapons/SMG.rbxm` | Claude | Blender script `tools/blender/smg.py`, `tools/studio/Models/SMG.luau` | Original |
 | Gunfire sprites (muzzle, smoke, mist) | `Client.Vfx` | Claude | Blender script `tools/blender/vfx_sprites.py` | Original |
+| Gustave's sabre: black inlaid blade, gold hilt, garnets (replaces the box-part sabre) | `src/shared/Assets/Weapons/Saber.rbxm` | Claude | Blender script `tools/blender/saber.py` (the inlay drawn by the script), `tools/studio/Models/Saber.luau` | Original |
+| Slash trail textures (blood smear, hot hairline) | ids in `Client.Vfx.Kit.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy) | Original |
 | Combat sound sheet (14 cues: gun, impacts, saber, guard, parry, Blood Blade, Light Beam) | id in `Definitions/SoundSheet`; file `build/audio/bl_combat_sounds.wav` | Claude | Synthesized from scratch by `tools/audio/sound_sheet.py` (filters, modal metal, reverb; no samples) | Original |
 | VFX textures (blood crescent, glows, beam bands, glint) | ids in `Client.Vfx.Kit.Textures` | Claude | `tools/vfx_textures.py` | Original |
 | Menu images (Hunt card, ritual circle) | ids in `Theme.Images` | Claude | `tools/ui_textures.py` | Original |

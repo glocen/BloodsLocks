@@ -42,6 +42,18 @@ Research for BloodsLocks design decisions. Sources are network-test and preview 
   - Blood Blade is officially "a blade formed of the wielder's blood", a forward projectile that can be charged for extra damage and stagger.
   - Light of Hayern (the beam) charges a crystal on his weapon, then "shines forth a beam of light". It staggers targets even mid-skill, and guides say to save it for enemy skill activations.
   - No frame-level visual breakdown was found. We follow the FromSoftware blood look (dark, wet, viscous; Bloodborne lineage) and a warm golden light.
+- **Armament:** "Lorrik's Jeweled Saber & SMG", "a pair of weapons inlaid with ebony jewels" (Fextralife). No close-up image found. The owner's direction (2026-10-30): the blade is **black, with some gold and a jewel**.
+
+### Albert in motion (the owner's video, 2026-10-30)
+
+A 480p clip of the final "Grail Battle", playing Albert (`C:\Users\gloce\Videos\hqqXe55ZlnZNd6P.mov`; higher-quality clips are coming). What it shows:
+- **Look:** white shirt, a dark coat with a short shoulder cape, gold buttons and embroidery, white hair. The sabre reads as a thin black curved blade at play distance; the SMG is in the left hand.
+- **Light of Hayern:** he raises the gun overhead, one arm straight up. A white star flare lights at the crystal, then a white vertical beam.
+- **Bite:** he grabs the target. A bright red plume shoots up from the bite, white smoke ribbons spiral around both bodies, then a big red plume rises as the victim drops.
+- **Guard:** a translucent red sphere surrounds the guarding body. A parry gives a white-gold flash.
+- **Hits:** thick red bursts with a pink-red mist. Red spatter stays on the floor (decals).
+- **Kin:** a spectral wolf made of blue-grey smoke wisps leaps and fights beside him.
+- **Arena:** round raised blood basins, gothic iron railings, black columns, a red sky with a dripping blood moon. The clip opens on a "GRAIL BATTLE" banner and ends on "You are the Victor of this Dusk".
 
 ## Match structure
 

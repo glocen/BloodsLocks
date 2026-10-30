@@ -8,7 +8,16 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
 
-**Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done: SMG spread, Gustave's machine pistol (Blender-built), the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload). Next: the M1, Blood Blade, Light Beam; then U2. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
+**Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done:
+- C1.1: SMG spread, the Blender-built machine pistol, the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload).
+- C1.2, the M1: knockback, hitstop, the black-and-gold sabre, the slash trail.
+
+Next:
+- Blood Blade and Light Beam.
+- The network-test reference study, as soon as the owner's video lands: the biggest task, notes in `docs/reference/network-test/`.
+- Then U2.
+
+The combat framework rework waits until C1 is at the bar, then gets planned with the owner. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
 
 **ChatGPT (off):** left mid-way through an owner-approved Victorian art rebuild (replacement geometry, markers and Lighting; phase I dusk, II twilight, III and the final night). W1 backup: `ServerStorage.WorldBackups.PreArtRebuild_20261030`. Its handoff (`docs/victorian-art-rebuild-handoff.md`), Manor world scripts and art tools are committed as it left them (owner, 2026-10-30); the 29 MB of `.blend`, `.fbx` and `.png` art sources in `assets/manor/` stay on the owner's PC, gitignored. Don't run the old CathedralQuarter generator once the replacement is installed.
 
@@ -37,6 +46,14 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-30 · Claude · C1.2: the sabre and the slash
+
+- The owner's direction: the blade is black with gold and a jewel, after Albert. Study frames from the owner's Albert video and the findings are in `docs/duskbloods-reference.md`.
+- The sabre is two meshes from `tools/blender/saber.py`: a gold hilt, and a black blade with a gold inlay drawn by the script. The recipe is `tools/studio/Models/Saber.luau`.
+- Weapon models name their points in `Equipment.Points` (Grip, Muzzle, CrystalTip, BladeBase, BladeTip, Jewel). `Vfx/SlashTrail` and `Vfx/BloodCharge` read them.
+- Trail textures run like beams: up the image is along the trail (newest at the top), left to right is Attachment0 to Attachment1 (`.claude/rules/vfx.md`).
+- `blcommon.tube_along` now carries its rings without twisting: re-running `smg.py` would smooth its tubes too.
 
 ### 2026-10-30 · Claude · Foundation v2 applied
 

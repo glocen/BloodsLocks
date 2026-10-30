@@ -4,8 +4,11 @@
 -- at the feet, all growing with the charge. When the blow is armed (it can be released), a sharp glint on the blade
 -- tip. On release, a crimson flare off the blade; abandoned (dodged out), it just drains away.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Kit = require(script.Parent.Kit)
 local Theme = require(script.Parent.Parent.UI.Theme)
+local Equipment = require(ReplicatedStorage.Shared.Simulation.Equipment)
 
 local T = Kit.Textures
 local P = Theme.Vfx
@@ -46,9 +49,12 @@ function BloodCharge.Spawn(model: Model): Visual
 	local blade = weapon and weapon:FindFirstChild("Blade") :: BasePart?
 	local bands, base, tip = {}, nil, nil
 	if blade then
+		-- the glow runs between the blade's own base and tip points, or its ends on a model without them
+		local from = Equipment.Point(weapon :: Model, Equipment.Points.BladeBase)
+		local to = Equipment.Point(weapon :: Model, Equipment.Points.BladeTip)
 		local half = blade.Size.Y / 2
-		base = attachment(blade, Vector3.new(0, -half, 0))
-		tip = attachment(blade, Vector3.new(0, half, 0))
+		base = attachment(blade, if from then blade.CFrame:PointToObjectSpace(from.WorldPosition) else Vector3.new(0, -half, 0))
+		tip = attachment(blade, if to then blade.CFrame:PointToObjectSpace(to.WorldPosition) else Vector3.new(0, half, 0))
 		for _, band in BANDS do
 			local beam = Instance.new("Beam")
 			beam.Attachment0, beam.Attachment1 = base, tip

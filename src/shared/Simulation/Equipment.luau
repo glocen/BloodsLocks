@@ -20,6 +20,22 @@ local DEFAULT_GRIP_C0 = CFrame.new(0, -1, 0)
 
 local Equipment = {}
 
+-- The points weapon models carry, as Attachments (tools/studio/Models builds them).
+Equipment.Points = table.freeze({
+	Grip = "Grip", -- where the hand closes
+	Muzzle = "Muzzle", -- a gun's bore exit
+	CrystalTip = "CrystalTip", -- the tip of the gun's crystal: the Light Beam's source
+	BladeBase = "BladeBase", -- a blade's middle just above the guard...
+	BladeTip = "BladeTip", -- ...and its point: the slash trail and the charge glow run between them
+	Jewel = "Jewel", -- the garnet at a blade's root, where skill flares start
+})
+
+-- The point `name` (Equipment.Points) on a held model, if it has one.
+function Equipment.Point(held: Model?, name: string): Attachment?
+	local found = held and held:FindFirstChild(name, true)
+	return if found and found:IsA("Attachment") then found else nil
+end
+
 local function holdingPart(model: Model): BasePart?
 	return model.PrimaryPart or model:FindFirstChild("Body") :: BasePart?
 end
@@ -48,7 +64,7 @@ local function attach(character: Model, weaponId: string)
 	local weld = Instance.new("Weld")
 	weld.Part0 = arm
 	weld.Part1 = part
-	local grip = part:FindFirstChild("Grip")
+	local grip = part:FindFirstChild(Equipment.Points.Grip)
 	if grip and grip:IsA("Attachment") then
 		weld.C0 = HAND_FRAME
 		weld.C1 = grip.CFrame
