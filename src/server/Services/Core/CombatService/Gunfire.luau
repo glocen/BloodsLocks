@@ -1,7 +1,8 @@
 --!strict
--- Gunfire: hitscan actions. A gun's Shots list fires one bullet per entry (random spread, a tracer per shot); a
--- Beam fires a tick every Interval between From and To along the current aim (the beam visual is drawn by
--- clients from the shooter's state, so ticks send nothing).
+-- Gunfire: hitscan actions. A gun's Shots list fires one bullet per entry, each in its own cone of the action's
+-- Spread (it blooms through the burst), and tells every client where it went (ShotFx: the muzzle, where it stopped,
+-- the surface's facing, whether it hit a body). A Beam fires a tick every Interval between From and To along the
+-- current aim (the beam visual is drawn by clients from the shooter's state, so ticks send nothing).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -39,12 +40,22 @@ local function schedule(action: any): { number }
 	return cached
 end
 
-local function fire(model: Model, root: BasePart, action: any, onHit: OnHit)
+-- `direction` turned by a point picked uniformly over a cone of `degrees` around it.
+local function scatter(direction: Vector3, degrees: number): Vector3
+	if degrees <= 0 then
+		return direction
+	end
+	local turn = random:NextNumber(0, 2 * math.pi)
+	local radius = math.rad(degrees) * math.sqrt(random:NextNumber()) -- the square root spreads points evenly over the disc
+	return (CFrame.lookAt(Vector3.zero, direction) * CFrame.Angles(radius * math.sin(turn), radius * math.cos(turn), 0)).LookVector
+end
+
+-- Fires shot number `shot` (1-based) of the action, or one beam tick.
+local function fire(model: Model, root: BasePart, action: any, shot: number, onHit: OnHit)
 	local origin, direction = Muzzle.Get(root, model:GetAttribute(EntityState.Attr.Aim))
-	local spread = math.rad(action.Spread or 0)
-	if spread > 0 then
-		direction = (CFrame.lookAt(Vector3.zero, direction)
-			* CFrame.Angles(random:NextNumber(-spread, spread), random:NextNumber(-spread, spread), 0)).LookVector
+	local spread = action.Spread
+	if spread then
+		direction = scatter(direction, math.min(spread.Base + (shot - 1) * spread.Bloom, spread.Max))
 	end
 	local range = if action.Beam then action.Beam.Range else action.Range
 	local result = Hitscan.Cast(origin, direction, range, 0, { model }, EntityState.Tag)
@@ -52,7 +63,7 @@ local function fire(model: Model, root: BasePart, action: any, onHit: OnHit)
 		onHit(model, result.Entity, action.Hit)
 	end
 	if not action.Beam then
-		Net.Server.FireAll("ShotFx", model, origin, result.Position)
+		Net.Server.FireAll("ShotFx", model, origin, result.Position, result.Normal, result.Entity ~= nil)
 	end
 end
 
@@ -67,7 +78,7 @@ function Gunfire.Update(model: Model, action: any, startedAt: number, now: numbe
 	end
 	while root and record.Count < #times and now - startedAt >= times[record.Count + 1] do
 		record.Count += 1
-		fire(model, root, action, onHit)
+		fire(model, root, action, record.Count, onHit)
 	end
 end
 

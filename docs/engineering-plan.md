@@ -567,7 +567,16 @@ Also fixed: the saber template's `WeldConstraint`s didn't hold under Server Auth
 - **Camera:** settles 2 frames after the mouse locks.
 - **Verified:** self-test 70/70 (Victorian) and 69/69 (Manor), logic 48/48, `MatchSmoke` 34/34, world report clean, capture walk with every critique item fixed or assigned.
 
-**Next (owner, 2026-10-30): C1, the combat rework** (SMG bullets and spread, M1, Light Beam, Blood Blade), **then U2**. |
+**Next (owner, 2026-10-30): C1, the combat rework** (SMG bullets and spread, M1, Light Beam, Blood Blade), **then U2**. **C1 started 2026-10-30** (`docs/combat-rework.md`, "Progress"):
+- **SMG spread:** done.
+- **Gustave's machine pistol:** Blender-built and in hand.
+- **Duelist burst:** published.
+- **`Vfx/Gunshot`:** muzzle, tracer and impacts, from rendered sprites.
+- **Manor lighting:** Duskbloods grade.
+- **Pipeline:** `tools/blender` and `tools/studio` (→ `ServerStorage.BL_Tools`).
+- **Verified:** self-test 68/68 and logic 48/48 in the Manor.
+
+Sound, the M1, the Blood Blade and the Light Beam follow. |
 | 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | **NPC system v1 done 2026-10-29** (Wretch, Butcher, spawn markers, credit, refill; commit 8459443). Vertical navigation, bosses and minions: production-plan.md N1, B2–B3, X1. |
 | 13 | Rewards + skin purchases | Bloodgems granted once per match; purchases persist | — |
 | 14 | Victorian world map | Streaming, regions, spawn areas | — |

@@ -71,8 +71,9 @@ local function standAt(offset: Vector3): Vector3
 	return Vector3.new(PAD_CENTER.X, floorTop() + STAND_HEIGHT, PAD_CENTER.Z) + offset
 end
 
--- The pad's dummy, rebuilt at full health with no stagger. Nil if the place has no dummy template.
-local function freshDummy(pad: Instance, facing: Vector3): Model?
+-- The pad's dummy, rebuilt at full health with no stagger, `distance` studs in front of the player's spot (default
+-- DUMMY_DISTANCE). Nil if the place has no dummy template.
+local function freshDummy(pad: Instance, facing: Vector3, distance: number?): Model?
 	local template = Shared.Assets:FindFirstChild("TrainingDummy") :: Model?
 	local old = pad:FindFirstChild("Dummy")
 	if old then
@@ -81,7 +82,7 @@ local function freshDummy(pad: Instance, facing: Vector3): Model?
 	if not template then
 		return nil
 	end
-	local position = standAt(Vector3.new(0, 0, -DUMMY_DISTANCE))
+	local position = standAt(Vector3.new(0, 0, -(distance or DUMMY_DISTANCE)))
 	return EntityService.MakeEntity(template, "Dummy", CFrame.lookAt(position, facing), DUMMY_HEALTH, pad)
 end
 
@@ -232,6 +233,12 @@ function SelfTestService.Init()
 		return
 	end
 	DebugService.Register("TestPad", testPad)
+	-- Stands a fresh pad dummy `distance` studs in front of the pad spot (ranged checks: spread).
+	DebugService.Register("TestDummyAt", function(_who: any, distance: any)
+		local pad = workspace:FindFirstChild(PAD_NAME)
+		local dummy = pad and freshDummy(pad, standAt(Vector3.zero), tonumber(distance))
+		return dummy and dummy.Name
+	end)
 	DebugService.Register("TestHitAfter", testHitAfter)
 	DebugService.Register("TestPadClear", testPadClear)
 	DebugService.Register("TestEnemy", testEnemy)

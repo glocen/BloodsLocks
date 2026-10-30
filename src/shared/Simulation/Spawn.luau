@@ -46,7 +46,7 @@ local function applyClass(character: Model, player: Player, classId: string, lev
 	character:SetAttribute(A.Level, level)
 	ActionSim.ResetLoadout(character)
 	if RunService:IsServer() then
-		Equipment.AttachMelee(character)
+		Equipment.AttachLoadout(character)
 	end
 end
 

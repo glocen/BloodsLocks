@@ -28,7 +28,9 @@
     },
 
     "ServerStorage": {
-      "BLInput": { "$path": "src/storage/BLInput" }
+      "BLInput": { "$path": "src/storage/BLInput" },
+      "BL_Import": { "$path": "build/import" },
+      "BL_Tools": { "$path": "tools/studio" }
     },
 
     "StarterPlayer": {

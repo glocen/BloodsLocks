@@ -1,8 +1,8 @@
 --!strict
 -- CombatFxController: combat feedback for every entity, read from the events CombatSim and the enemy brains write on
 -- each entity's Humanoid (EntityState.Fx): hit flashes, call-outs (Evaded, Blocked, PARRY, Guard broken, HOWL, bite
--- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gun tracers, skill
--- projectiles, channeled beams and charge telegraphs. Damage itself reads on the plates (PlateController: HP bars and
+-- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gunshots (Vfx/Gunshot:
+-- muzzle, tracer, impact), skill projectiles, channeled beams and charge telegraphs. Damage itself reads on the plates (PlateController: HP bars and
 -- the running total of what you dealt), so hits pop no numbers.
 
 local CollectionService = game:GetService("CollectionService")
@@ -17,8 +17,8 @@ local UI = script.Parent.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local FloatingText = require(UI.Components.FloatingText)
 local Flash = require(UI.Components.Flash)
-local Tracer = require(UI.Components.Tracer)
 local Vfx = script.Parent.Parent.Parent.Vfx
+local Gunshot = require(Vfx.Gunshot)
 local Projectile = require(Vfx.Projectile)
 local BloodBlade = require(Vfx.BloodBlade)
 local LightBeam = require(Vfx.LightBeam)
@@ -217,9 +217,7 @@ function CombatFxController.Start()
 		watch(model)
 	end
 	CollectionService:GetInstanceAddedSignal(EntityState.Tag):Connect(watch)
-	Net.Client.On("ShotFx", function(_shooter: Model, origin: Vector3, hitPosition: Vector3)
-		Tracer.Draw(origin, hitPosition, Theme.Colors.Warm)
-	end)
+	Net.Client.On("ShotFx", Gunshot.Play)
 	Net.Client.On("ProjectileFx", function(id: number, visual: string, origin: Vector3, direction: Vector3, speed: number, range: number)
 		projectiles[id] = Projectile.new(PROJECTILE_LOOKS[visual] or BloodBlade, origin, direction, speed, range)
 	end)

@@ -10,6 +10,7 @@ local MAX_PASS_THROUGH = 6
 
 export type Result = {
 	Position: Vector3,
+	Normal: Vector3?, -- the surface it stopped on faces this way (nil when nothing stopped it)
 	Entity: Model?, -- the entity hit, if any
 	Blocked: boolean, -- stopped by solid geometry or an entity
 }
@@ -38,9 +39,9 @@ function Hitscan.Cast(origin: Vector3, direction: Vector3, distance: number, rad
 		end
 		local entity = entityOf(result.Instance, tag)
 		if entity then
-			return { Position = result.Position, Entity = entity, Blocked = true }
+			return { Position = result.Position, Normal = result.Normal, Entity = entity, Blocked = true }
 		elseif result.Instance.CanCollide then
-			return { Position = result.Position, Entity = nil, Blocked = true }
+			return { Position = result.Position, Normal = result.Normal, Entity = nil, Blocked = true }
 		end
 		table.insert(ignoreList, result.Instance)
 		local traveled = (result.Position - from).Magnitude
@@ -50,7 +51,7 @@ function Hitscan.Cast(origin: Vector3, direction: Vector3, distance: number, rad
 			break
 		end
 	end
-	return { Position = origin + direction * distance, Entity = nil, Blocked = false }
+	return { Position = origin + direction * distance, Normal = nil, Entity = nil, Blocked = false }
 end
 
 return Hitscan

@@ -9,6 +9,10 @@ export type Spec = { [string]: any }
 
 local Kit = {}
 
+-- Review aid: slows every effect started after it is set (tween clocks and particle time), 1 = real time. Captures of
+-- fast effects set it on their own copy of this module from the Client context; the game never changes it.
+Kit.TimeScale = 1
+
 -- Texture ids for the effect library (harvested Creator Store art).
 Kit.Textures = {
 	-- Drawn for BloodsLocks (tools/vfx_textures.py)
@@ -18,19 +22,24 @@ Kit.Textures = {
 	BeamEnergy = "rbxassetid://125771507708728", -- energy strands, tileable along the beam (white)
 	Glint = "rbxassetid://101126423932013", -- four-point glint (white)
 	SoftGlow = "rbxassetid://75560931237584", -- round soft glow (white)
+	-- Rendered for BloodsLocks in Blender (tools/blender/vfx_sprites.py)
+	MuzzleFlash = "rbxassetid://124670609876463", -- four star-flash variants, Grid2x2 (coloured: use white)
+	MuzzleCone = "rbxassetid://94054541399503", -- side flame for a Beam, muzzle end at the bottom (coloured)
+	Spark = "rbxassetid://91483215993987", -- thin hot streak, for velocity-aligned particles (white)
+	TracerStreak = "rbxassetid://109264662547912", -- pale core in a faint glow, for a Beam (white)
+	SmokePuff = "rbxassetid://140359744386400", -- lit volumetric puff, Grid4x4 one-shot (white: tint it)
+	MistBurst = "rbxassetid://88664832177801", -- fibrous plume thrown toward the top, Grid4x4 one-shot, velocity-aligned (white)
 	-- Creator Store art
 	Crescent = "rbxassetid://13138038111", -- slash crescent flipbook, Grid4x4
 	CrescentDark = "rbxassetid://13780268621", -- crescent arcs, Grid4x4
 	Smoke = "rbxassetid://18369727963", -- smoke wisps flipbook, Grid4x4
 	Drop = "rbxassetid://14480500149", -- teardrop
 	Dot = "rbxassetid://11197917329", -- soft dot
-	Star = "rbxassetid://17062426399", -- 4-point sparkle flipbook, Grid4x4
 	Wisp = "rbxassetid://15253860988", -- wispy energy column
 	Splat = "rbxassetid://16668936898", -- blood splatter flipbook, Grid4x4
 	Fire = "rbxassetid://16850891267", -- fire flipbook, Grid4x4
 	SplatWide = "rbxassetid://16669046762", -- blood splatter flipbook, Grid4x4
 	Glow = "rbxassetid://1075864321", -- soft radial glow
-	Streak = "rbxassetid://12781821406", -- lightning streak
 }
 
 -- NumberSequence from a single value, two values, or a list of {time, value[, envelope]} keypoints.
@@ -63,6 +72,7 @@ function Kit.Emitter(parent: Instance, spec: Spec): ParticleEmitter
 	emitter.Rate = 0
 	emitter.LightInfluence = 0
 	emitter.Speed = NumberRange.new(0)
+	emitter.TimeScale = Kit.TimeScale
 	for key, value in spec do
 		if key ~= "Count" then
 			(emitter :: any)[key] = value
@@ -94,7 +104,7 @@ function Kit.Burst(cframe: CFrame, specs: { Spec }, size: Vector3?)
 		emitter:Emit(spec.Count or 1)
 		longest = math.max(longest, emitter.Lifetime.Max)
 	end
-	Debris:AddItem(anchor, longest + 0.1)
+	Debris:AddItem(anchor, longest / Kit.TimeScale + 0.1)
 end
 
 -- A light that pops to full brightness and fades out.
@@ -115,7 +125,7 @@ function Kit.Tween(duration: number, step: (number) -> (), done: (() -> ())?)
 	local elapsed = 0
 	local connection: RBXScriptConnection
 	connection = RunService.RenderStepped:Connect(function(dt)
-		elapsed += dt
+		elapsed += dt * Kit.TimeScale
 		local alpha = math.min(elapsed / duration, 1)
 		step(alpha)
 		if alpha >= 1 then

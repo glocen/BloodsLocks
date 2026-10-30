@@ -2,7 +2,8 @@
 -- Animation ids. Every class uses Default unless its entry in Classes overrides an animation by name,
 -- so a class with a special dodge (for example) only lists that one animation.
 -- A character's class comes from its class attribute (EntityState.Attr.ClassId) (set by the class system; nil = Default only).
--- Source KeyframeSequences for the BL_* animations live in ServerStorage.RBX_ANIMSAVES.R6.
+-- Source KeyframeSequences for the BL_* animations live in ServerStorage.RBX_ANIMSAVES.R6; the kit's are authored from
+-- tools/studio/Animations (Author.Save, then Author.Publish gives the id).
 -- Every id must be published ("rbxassetid://..."): under Server Authority the server plays these too and
 -- can't load temporary Studio ids.
 
@@ -26,9 +27,9 @@ return {
 		SaberCharge = "rbxassetid://138331377243744",
 		SaberCharged = "rbxassetid://128599242014306",
 		-- Kit: "" until published
-		Howl = "",
-		Bite = "",
-		SMGBurst = "",
+		Howl = "rbxassetid://139673450689337", -- published 2026-10-30 (AssetService:CreateAssetAsync from Studio)
+		Bite = "rbxassetid://88243077439906", -- published 2026-10-30
+		SMGBurst = "rbxassetid://128345868550616", -- the duelist burst, published 2026-10-30
 		BloodBlade = "",
 		LightBeam = "rbxassetid://135123828939357", -- Gustave: published 2026-10-29
 	},

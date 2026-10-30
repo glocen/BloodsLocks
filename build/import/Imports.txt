@@ -1,0 +1,1 @@
+Temporary mesh imports for tools/studio/ModelAssembly (blcommon.export_mesh_json output, one .txt per mesh). Empty this folder after publishing: everything here is synced into the open place.

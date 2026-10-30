@@ -33,6 +33,7 @@ local function playerNum(attribute: string): number
 	return if type(value) == "number" then value else 0
 end
 local TEST_ENEMY = "Wretch"
+local SPREAD_RANGE = 30 -- studs: the SMG spread check's distance
 local class = Registry.Class(Registry.DefaultClass)
 local saber = Registry.Weapon(class.Melee)
 local gun = Registry.Weapon(class.Ranged)
@@ -290,7 +291,28 @@ return {
 			t.Press("Ranged")
 			t.Wait(burst.Duration + 0.4)
 			t.Check("spends one burst of ammo", t.Num(A.Ammo) == gun.Magazine - #burst.Shots, `ammo {t.Num(A.Ammo)}`)
-			t.Near("damage of every shot", before - t.DummyHp(), #burst.Shots * burst.Hit.Damage, 0)
+			t.Near("up close every round lands", before - t.DummyHp(), #burst.Shots * burst.Hit.Damage, 0)
+		end,
+	},
+	{
+		Name = "SMG spread",
+		Run = function(t)
+			-- the burst blooms: at range some rounds miss, but a burst still lands (docs/combat-rework.md)
+			local burst = Registry.Action(gun.Burst)
+			local bursts = math.min(5, math.floor(gun.Magazine / #burst.Shots))
+			t.Server("TestDummyAt", SPREAD_RANGE)
+			t.Wait(0.3)
+			t.Lock()
+			local before = t.DummyHp()
+			for _ = 1, bursts do
+				t.Press("Ranged")
+				t.Wait(burst.Duration + 0.15)
+			end
+			t.Wait(0.4)
+			local landed = math.floor((before - t.DummyHp()) / burst.Hit.Damage + 0.5)
+			local fired = bursts * #burst.Shots
+			t.Check(`at {SPREAD_RANGE} studs some rounds miss`, landed < fired, `{landed} of {fired} landed`)
+			t.Check("but the bursts still land", landed >= fired * 0.25, `{landed} of {fired} landed`)
 		end,
 	},
 	{

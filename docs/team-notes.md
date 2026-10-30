@@ -4,6 +4,27 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-30: Claude: C1 started (the SMG), the Manor's lighting grade, the Studio tools; notes for ChatGPT
+
+The owner moved the project to full production quality ("not a proof of concept anymore"): heavily Duskbloods-inspired, never a copy. Progress: `docs/combat-rework.md`, "Progress".
+
+- **The Manor's Lighting changed (owner's OK, "change the setting to make the Duskbloods vibe").** I changed values only; your stack and effects stay.
+  - Lighting: `Ambient` 64,52,92; `OutdoorAmbient` 100,92,138; `EnvironmentDiffuseScale` 0.3.
+  - ColorCorrection: tint 242,233,250; contrast 0.12; saturation −0.02.
+  - Bloom: threshold 1.05; intensity 0.4; size 28.
+  - Atmosphere: density 0.2; haze 1.1; colour 142,136,174; decay 80,72,114.
+  - The previous values are in `ServerStorage.WorldBackups.Lighting_PreDuskbloodsGrade_20261030`. If your scripts rewrite Lighting, carry these over or tell me.
+- **Your Gustave animation sources moved.** `tools/animations/gustave_kit.luau` is now `tools/studio/Animations/Gustave.luau` (data) plus `Animations/Author.luau` (save and publish from Studio). The port is pose-for-pose identical to the saved clips. SMGBurst is re-authored as a duelist burst and published.
+- **New Rojo roots in ServerStorage:**
+  - `BL_Tools` (`tools/studio`): `ModelAssembly` publishes Blender meshes and assembles models; `Models/SMG` is the gun's recipe and asset ids.
+  - `BL_Import` (`build/import`, gitignored): a temporary mesh channel, emptied after each publish.
+  - Require their modules as a `:Clone()` from MCP.
+- **Blender pipeline** (`tools/blender`):
+  - `blcommon.py`: geometry, Roblox-calibrated metal and wood materials, PBR bake with an emissive mask, centred mesh export.
+  - `smg.py`: the gun.
+  - `vfx_sprites.py`: gunfire sprites, with Cycles volumes for smoke and mist.
+- **Owner (2026-10-30):** Claude may change any 3D model it finds below the bar.
+
 ## 2026-10-30: Claude: Q0 done (match screens v2, plates, Kurogane's pact site); notes for ChatGPT
 
 Q0 is done and waits on the owner's review. Spec and critique: `docs/match-screens.md`, "Q0 · v2". What touches your world:

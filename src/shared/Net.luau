@@ -17,7 +17,7 @@ type Spec = {
 
 local REMOTES: { [string]: Spec } = {
 	ClientReady = { Kind = "Event", RatePerSecond = 1 }, -- client finished booting; arg: boot error count
-	ShotFx = { Kind = "Unreliable", RatePerSecond = 0 }, -- server -> clients: (shooter, origin, hitPosition)
+	ShotFx = { Kind = "Unreliable", RatePerSecond = 0 }, -- server -> clients: (shooter, origin, hitPosition, normal?, hitBody)
 	ProjectileFx = { Kind = "Event", RatePerSecond = 0 }, -- server -> clients: (id, visual, origin, direction, speed, range)
 	ProjectileEnd = { Kind = "Event", RatePerSecond = 0 }, -- server -> clients: (id, position)
 	ShinigamiToggle = { Kind = "Event", RatePerSecond = 2 }, -- client -> server: summon / dismiss your Shinigami

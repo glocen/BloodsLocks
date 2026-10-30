@@ -194,6 +194,9 @@ return {
 		FireCore = Color3.fromRGB(255, 220, 150),
 		Smoke = Color3.fromRGB(70, 40, 35),
 		SmokeDark = Color3.fromRGB(25, 18, 18),
+		Tracer = Color3.fromRGB(255, 234, 204), -- a round in flight: pale, warm
+		GunSmoke = Color3.fromRGB(150, 146, 152),
+		Dust = Color3.fromRGB(122, 112, 104), -- stone dust a round kicks up (blended toward the surface's colour)
 	},
 
 	-- Class portraits (Blood Table, Bloodsworn tab): ViewportFrame lighting and card shading.
