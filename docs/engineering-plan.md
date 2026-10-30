@@ -1,10 +1,10 @@
 # BloodsLocks engineering plan
 
-Locked 2026-10-28. This file is the source of truth. Locked decisions change only with the owner's OK. Values marked *(tune)* are starting points to adjust by feel.
+Locked 2026-10-28. This file is the source of truth. Locked decisions change only with the owner's OK. Values marked *(tune)* are starting points to adjust by feel. `Config` is the truth for numbers: the design tables below show the original design values.
 
 ## 1. The game
 
-BloodsLocks is a PvPvE action game. Players gather in a castle hub, pick a class, and enter 8-player matches on large, vertical maps (first world: Victorian gothic; later worlds from other eras). A match runs four phases scored by Virtue. The lowest-Virtue players are culled at the end of phases 2 and 3, and the last three fight a 2-life battle royale. Every match pays out Bloodgems, which buy class skins in the castle.
+BloodsLocks is a PvPvE action game. Players gather in the Manor hub, pick a class, and enter 8-player matches on large, vertical maps (first world: Victorian gothic; later worlds from other eras). A match runs four phases scored by Renown (design name: Virtue; D7). The lowest-Virtue players are culled at the end of phases 2 and 3, and the last three fight a 2-life battle royale. Every match pays out Bloodgems, which buy class skins in the Manor.
 
 Inspiration: FromSoftware's The Duskbloods (movement, combat, match structure, hub). Names, characters, lore and art are original.
 
@@ -13,7 +13,7 @@ Inspiration: FromSoftware's The Duskbloods (movement, combat, match structure, h
 | # | Decision | Notes |
 |---|---|---|
 | 1 | Movement and combat run in shared simulation code under Roblox Server Authority | `Workspace.AuthorityMode = Server` (the owner sets it in Properties; MCP scripts can't). If the movement step fails its checks, fallback is client authority + server validation using the same step code. |
-| 2 | Separate places, one codebase | Castle = this place (ROLOCK). One Match place per world map. Studio-first; the code layout mirrors a Rojo project, so a later switch is a one-time export. Choose Rojo or Roblox Packages for cross-place code sharing when the first Match place is created. |
+| 2 | Separate places, one codebase | The Manor = the hub place (ROLOCK). One Match place per world map. Every place takes the same code from this repo through Rojo (§7 "Framework archive"; chosen by the owner on 2026-10-29 over Roblox Packages and copying code by hand). |
 | 3 | The waiting room lives inside the reserved match server | MemoryStore registry with atomic slot reservations; the server delists itself when it locks. |
 | 4 | One entity pipeline | Players, NPCs, bosses and Shinigami share Entity → Action → Hit → Damage. An allegiance model decides who can hit whom. |
 | 5 | Data-driven content | Classes, weapons, actions, abilities, passives, Shinigami, skins, NPCs and modes are definition modules validated at boot. |
@@ -23,20 +23,20 @@ Inspiration: FromSoftware's The Duskbloods (movement, combat, match structure, h
 | 9 | The owner's ProfileStore system stays the data layer | `ServerScriptService.Data` (DataInit, PlayerHandlerData, ProfileTemplate, ProductManager). No second ProfileStore. New fields go in ProfileTemplate (`Reconcile` fills old saves); new mutations go in PlayerHandlerData in its style. |
 | 10 | PvPvE | Fodder, elites, roaming bosses, minions, Shinigami companions. |
 | 11 | Free aim + lock-on auto-aim | Crosshair aim by default; while locked on, ranged attacks aim at the target. |
-| 12 | Class choice only in the castle | |
+| 12 | Class choice only in the Manor | |
 | 13 | Parties and private lobbies ship in v1 | |
 | 14 | Budget is 0 € until the game earns revenue (owner, 2026-10-29) | Everything is custom and free. Always ask before using anything that could cost money, credits or quota. The owner is the director; the vision is the priority. |
 | 15 | Companions are named **Shinigami** (owner, 2026-10-29) | They work exactly like Duskbloods' Kin (pact circles, roles, levelling, recall). The rename is game-facing; code ids use `Shinigami` too. |
-| 16 | Team roles (owner, 2026-10-29) | Claude: engineering (systems, infrastructure, UI code, quality). ChatGPT: likely 3D world building in Blender (via the Blender MCP). Both coordinate through the GitHub repo docs. |
+| 16 | Team roles (owner) | Current roles and the team mode live in AGENTS.md ("Who works on what"). History: 2026-10-29, Claude engineering and ChatGPT 3D world art; 2026-10-30, Claudius named lead designer, and ChatGPT off until the owner switches it on. Everyone coordinates through the GitHub repo docs. |
 | 17 | First match map: Victorian era | It's its own place in the experience. The hub launches matches there and returns players afterwards. |
 
 ## 3. Match rules
 
 ### Lobby (inside the match server)
 
-- Max 8 players, min 2. *(tune)*
-- A 30s countdown starts at 2+ players, cancels if the count drops below 2, and shortens to 10s when the lobby is full.
-- Joins close at T-5s, when the server removes its registry entry (it disappears from the castle list). Late arrivals go back to the castle.
+- Max 8 players; the minimum is D11 (1 real player for the proof of concept, AI hunters fill the rest). *(tune)*
+- A 30s countdown starts once the minimum is in, cancels if the count drops below it, and shortens to 10s when the lobby is full.
+- Joins close at T-5s, when the server removes its registry entry (it disappears from the Manor's list). Late arrivals go back to the Manor.
 
 ### Phases
 
@@ -50,9 +50,9 @@ Inspiration: FromSoftware's The Duskbloods (movement, combat, match structure, h
 - Cull counts: `finalists = min(3, players)` and `cut = players - finalists`. The end of phase 2 culls `floor(cut / 2)` and the end of phase 3 culls the rest. With 8 players: 2, then 3.
 - Ties go to whoever reached the score first.
 - Respawns in phases 1–3 are unlimited after a 5s delay *(tune)*: pick a map region, land at a random spot in it. Time spent dead is Virtue not earned; that's the only death penalty.
-- Culled players spectate or return to the castle; they still get rewards.
+- Culled players spectate or return to the Manor; they still get rewards.
 
-### Match flow, start to finish: design v1 (2026-10-29, awaiting owner sign-off)
+### Match flow, start to finish: design v1 (2026-10-29; built in L1, U1 and Q0)
 
 Heavily based on Duskbloods' Dusk Battle (research in docs/duskbloods-reference.md, "How a match starts and runs"). Duskbloods shows no lobby or intro, so those two states are our own. The owner will cut what they don't like later.
 
@@ -82,14 +82,14 @@ One server state machine, `MatchService` (Match role only), with every duration 
 
 **Build order (Step 10 then 11):** Waiting/Countdown + matchmaking → Intro → Intermission + regions + spawn → phase clock + phase end → culling → final → results. Each piece is verified in play before the next. The Victorian world is a test layout of tagged region parts until the real map arrives from Blender.
 
-### Virtue (score)
+### Renown, the score (design name: Virtue; D7)
 
 | Source | Virtue *(tune)* |
 |---|---|
 | Fodder kill | 5 |
 | Elite kill | 20 |
 | Roaming boss kill | 120, split by damage share |
-| Player kill | 30 |
+| Player kill | 30 (superseded by D4: Renown only inside ritual sites) |
 | Relic pickup | 25 |
 | Throne corpse (one-time, first come first served) | 60 |
 | Capture points, map events | Later |
@@ -103,7 +103,7 @@ One server state machine, `MatchService` (Match role only), with every duration 
 ### Passives
 
 - **Innate passive:** one per class, always on.
-- **Aspect:** pick 1 of the class's 2–3 aspects in the castle before queueing.
+- **Aspect:** pick 1 of the class's 2–3 aspects in the Manor before queueing.
 - **Blood boons:** bosses offer a choice of 1 of 3 random boons for the rest of the match (damage, element enchant, skill cooldown, extra flask…).
 
 ### Flasks
@@ -126,7 +126,7 @@ Biting a staggered fodder enemy converts it into a temporary minion (its allegia
 
 - Paid at match end to every participant (culled players included), before the teleport back.
 - Formula *(tune)*: 15 participation + placement (1st 60, 2nd 40, 3rd 30, others 15) + `floor(virtueEarned / 50)` + 2 per player kill, capped at 150.
-- Saved as `Bloodgems` in the profile and spent on class skins in the castle shop.
+- Saved as `Bloodgems` in the profile and spent on class skins in the Manor's shop.
 
 ### Owner decisions, 2026-10-29 (confirmed with docs/production-plan.md section 6)
 
@@ -148,40 +148,9 @@ All of these are data (`Definitions/Rules`, `Config`), so a later change is chea
 | A-1 | Approved: `ProfileTemplate.MatchAwards` and `PlayerHandlerData.SettleMatch` (additions only; DataInit untouched). |
 | A-2 | Approved: MemoryStore, reserved servers, PathfindingService and image uploads (free; Roblox quotas only). |
 
-## 3b. Game roadmap: from framework to the full Duskbloods loop (2026-10-29)
+## 3b. NPC system v1
 
-> **2026-10-29:** the working order from here is [production-plan.md](production-plan.md) (milestones M1–M7), built on ChatGPT's [whole-game brief](duskbloods-gameplay-breakdown.md). Steps 1 and 2 below are done.
-
-Owner, 2026-10-29: "we're far from v1; work on the actual game; big inspiration from Duskbloods, creative freedom." Research: duskbloods-reference.md ("PvE and the minute-to-minute match"). ChatGPT is asked for a timestamped video breakdown to refine this.
-
-**Every system a match needs, and where we are:**
-
-| Area | Duskbloods | BloodsLocks today |
-|---|---|---|
-| Movement + combat kit | multi-jump, air dash, guard/parry/howl, bite, skills, gun | ✅ built (self-test covers it) |
-| Companions | Kin: melee / ranged / support, level with you | 🟡 Shinigami core (melee only) |
-| **PvE enemies** | mobs, cavalry, hefty brutes, crystal lizards, blood sac swarms | ❌ only training dummies |
-| **Bosses** | phase-2 bosses, roaming **Trespassers** (co-op prompt) | ❌ |
-| Minions | bite a staggered weak foe → spellbound | ❌ (bite exists) |
-| In-match growth | XP/levels (HP, attack, stamina, 2nd ability), Blood Roses (passives), forges (affinities), bloodsacs (skill upgrades) | ❌ (level attribute only) |
-| Healing | Goldblood stake (2–4 uses, gauge from kills) | ❌ |
-| Items | pickups, chests, 6 quick items | ❌ |
-| Score | Virtue: Sword, Pledge, Repulsion, Flame, Commendation, Other | ❌ |
-| Match flow | lobby, region pick, 4 phases + clock, culling, final arena, results | 📝 designed (section 3), not built |
-| Map | regions, regional features, instant travel, compass, area names, ritual sites, events (starfall) | ❌ (Victorian is an empty baseplate) |
-| Social | alliances, sigils, duos | ❌ (later) |
-
-**Build order.** Each step is a playable slice, verified with the self-test plus new checks:
-1. **NPC system v1** (below): enemies that patrol, aggro, attack through the same combat pipeline, die, give XP, and respawn. First roster: a fodder mob and a hefty brute. The dummy and Shinigami AIs move onto the same shared base.
-2. **In-match XP + levels + Virtue (Repulsion)**, with the HUD medallion showing the number. This is what makes killing NPCs matter.
-3. **Match flow skeleton** in the Victorian place on a graybox of tagged regions: waiting → intro → region pick → phases + clock → culling → final → results.
-4. **Heal stake + pickups + Flame lanterns** (the phase-1 exploration loop).
-5. **Bosses + Trespassers + Blood Roses** (the phase-2 loop).
-6. **Ritual sites** (Sword/Pledge, boundary drain) + commendations (the phase-3 loop).
-7. **Forges, bloodsacs, minions, random events.**
-8. **Alliances, sigils**, then the owner backlog (menu redesign, VFX upgrades).
-
-In parallel (ChatGPT): the Victorian map in Blender carrying our tags, Gustave's look, enemy models.
+The 2026-10-29 game roadmap that stood here is archived in [archive/roadmap-3b-2026-10-29.md](archive/roadmap-3b-2026-10-29.md); the working order is [production-plan.md](production-plan.md).
 
 ### NPC system v1: design (2026-10-29)
 
@@ -291,16 +260,16 @@ The melee saber has a 4-hit light chain, a strong attack and a charged attack, a
 
 ## 6. Universe and matchmaking
 
-- **Castle:** public servers; this place.
+- **Manor:** public servers (ROLOCK).
 - **Match:** reserved servers only, one place per world.
-- **Create:** the castle calls `TeleportService:ReserveServer(matchPlaceId)`, writes a MemoryStore HashMap record (access code, map, mode, max players, visibility, private code), then teleports the creator (and party) with `TeleportOptions.ReservedServerAccessCode`.
+- **Create:** the Manor calls `TeleportService:ReserveServer(matchPlaceId)`, writes a MemoryStore HashMap record (access code, map, mode, max players, visibility, private code), then teleports the creator (and party) with `TeleportOptions.ReservedServerAccessCode`.
 - **Listing:** the match server finds its record through `game.PrivateServerId`. While Waiting or Countdown it refreshes the record every 5s with a 30s TTL, so dead servers disappear on their own.
 - **Join:** `UpdateAsync` atomically reserves slots (a whole party at once). Then `TeleportAsync`, retrying with backoff if it fails and freeing the slots on failure.
 - **Countdown:** the end time is replicated as `workspace:GetServerTimeNow() + 30`.
-- **Arrival:** the server checks for a reservation; anyone without one goes back to the castle. The class and loadout come from the profile, never from TeleportData.
+- **Arrival:** the server checks for a reservation; anyone without one goes back to the Manor. The class and loadout come from the profile, never from TeleportData.
 - **Private lobbies:** a 6-character code maps to the match record. Private matches never show in the public list.
-- **Parties:** the leader invites players in the same castle server, queues for everyone, and all members teleport in one call.
-- **Shutdown:** `BindToClose` on a match server teleports everyone back to the castle.
+- **Parties:** the leader invites players in the same Manor server, queues for everyone, and all members teleport in one call.
+- **Shutdown:** `BindToClose` on a match server teleports everyone back to the Manor.
 
 ## 7. Code architecture
 
@@ -309,56 +278,61 @@ There are three layers:
 - **Presentation:** client only. Camera, VFX, sound, UI and hitstop, all tolerant of mispredictions.
 - **Meta:** server only. Matchmaking, match lifecycle, data, scoring and AI decisions.
 
-Layout as built (refactored 2026-10-29):
+Layout as built (checked against `src/` and `default.project.json`, 2026-10-30):
 
 ```
+ReplicatedFirst
+└─ BL_First/          ThemeBase (palette, fonts, images, fit formulas), Passage (our loading and teleport screen), Loading
 ReplicatedStorage
-├─ Shared
-│  ├─ Config/         Game, Movement, Stamina, Camera, Combat, Animations (every tunable number)
-│  ├─ Definitions/    Registry (lookup + load-time validation), Common (howl, bite), Classes/, Weapons/
-│  ├─ Simulation/     runs inside BindToSimulation on server and client:
-│  │                    Runner (the one step pipeline), Rigs (which characters), Input (presses/releases,
-│  │                    Face/Aim feed), Spawn (first-step setup), Equipment (welded weapons),
-│  │                    Locomotion (movement kit), ActionSim (attacks/guard/howl/bite/gun), Facing,
-│  │                    Stamina, CombatSim (damage pipeline), AnimationSim, EntityState (attribute schema)
-│  ├─ Assets/         Weapons/ (Saber), TrainingDummy
+├─ Shared/
+│  ├─ Config/         Game, Match, Movement, Stamina, Camera, Combat, Animations, Npc, Progression, Score
+│  ├─ Definitions/    Registry (lookup + load-time validation), Common, RuleDefaults, Rules/, Classes/, Weapons/,
+│  │                    Skills/, Shinigami/, Enemies/, Maps/, Objectives, Tips
+│  ├─ Simulation/     runs inside BindToSimulation on server and client: Runner (the one step pipeline), Rigs, Input,
+│  │                    Spawn, Equipment, Locomotion, ActionSim, Facing, Stamina, CombatSim, AnimationSim, EntityState
+│  │                    (attribute schema), PlayerState, Leveling, ShinigamiBody
+│  ├─ Match/          MatchState, Ledger, Culling, Regions, Rewards
+│  ├─ World/          Tags (the world contract), Markers, Sightline
+│  ├─ Assets/         Weapons/ (Saber, SMG), Vfx/ (Crescent), TrainingDummy
 │  ├─ Net             declarative remotes + rate limits
-│  └─ Util/           Loader, Log, Signal, Vector, Parts, Raycast
-└─ Modules/           the owner's modules: SharedModules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D), Combat Agent placeholder, WeaponRarities, Tween list
+│  └─ Util/           Loader, Log, Signal, Vector, Parts, Raycast, Hitscan, Muzzle, Numerals, PlaceRole, Zones
+├─ Modules/           the owner's modules: SharedModules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule,
+│                       screen3D), Combat Agent placeholder, WeaponRarities, Tween list
+└─ Events/            the owner's remotes
 ServerScriptService
 ├─ Server/
 │  ├─ Boot            the only server entry script
+│  ├─ Npc/            NpcActor (the actor base the dummy, Shinigami and enemies share)
 │  └─ Services/
-│     ├─ Core/        PlayerService, DataService, DebugService, InputService, SimulationService,
-│     │               EntityService (entity tag, deaths), CombatService (+ Melee, Gunfire)
-│     └─ Castle/      TrainingService (+ DummyBrain)
-├─ Data/              the owner's ProfileStore system (DataInit, PlayerHandlerData, ProfileTemplate, ProductManager)
+│     ├─ Core/        PlayerService, DataService, DebugService, InputService, SimulationService, EntityService,
+│     │               CombatService (+ Melee, Gunfire, Projectiles), ClassService, NpcService (+ EnemyBrain),
+│     │               ShinigamiService (+ ShinigamiBrain), ProgressionService, ScoreService, StageService,
+│     │               TravelService, WorldService, LogicTestService, SelfTestService
+│     ├─ Manor/       TrainingService (+ DummyBrain)
+│     └─ Match/       MatchService (+ Atlas, Settlement, Smoke, Spawning), ParticipantService
+├─ Data/              the owner's ProfileStore system (DataInit, PlayerHandlerData, ProfileTemplate, ProductManager,
+│                       LeaderboardData)
 └─ Libraries/         ProfileStore, RockModuleServer
+ServerStorage
+├─ BLInput            the input context
+├─ BL_Tools           tools/studio: ModelAssembly, Models/, Animations/ (Edit-mode art tools)
+└─ BL_Import          build/import: the temporary mesh channel
 StarterPlayer.StarterPlayerScripts
 └─ Client/
    ├─ Boot            the only client entry script
-   ├─ Controllers/Core/  SimulationController, LockOnController, CameraController, HudController, CombatFxController
-   └─ UI/             Theme, Components/ (Bar, Crosshair, FloatingText, Flash, Tracer)
+   ├─ Controllers/    Core/ (Simulation, Camera, LockOn, Hud, CombatFx, Menu, Prompt, Plate, PactSite, Passage,
+   │                    Shinigami, SelfTest), Match/ (Match, Arrival, Return)
+   ├─ UI/             Theme, Core/ (Layers, Motion, State, Create, Focus, Stage), Kit/, Hud/, Match/, Menu/, World/,
+   │                    Components/
+   ├─ Vfx/            Kit, Projectile, BloodBlade, LightBeam, BloodCharge, FireNova, Gunshot, Arrival
+   └─ Util/           Budget
 ```
 
 Simulation step order (Runner): server applies queued hits / client feeds Face+Aim, then per character: Spawn → Input → Locomotion.Sense → ActionSim → Locomotion.Step → Facing → Stamina → stagger drain → AnimationSim.
 
 ### Code standards
 
-- One job per module. When a module grows a second job, split it. Helpers that only one service uses are child ModuleScripts of that service (the Loader ignores modules nested in modules), e.g. `CombatService.Melee`.
-- No duplicated helpers: direction math goes in `Util.Vector`, model lookups in `Util.Parts`, raycast/overlap params in `Util.Raycast`. Attribute reads use `EntityState.Number` / `EntityState.Set` / `EntityState.CurrentAction`.
-- No magic strings: attribute names come from `EntityState.Attr`, the entity tag from `EntityState.Tag`, input names from `Input`. Tunable numbers live in `Config`, content in `Definitions`.
-- Defaults are data: spawn state is the `EntityState.Defaults` tables applied with `EntityState.Apply`, not lists of SetAttribute calls.
-- UI is built from `UI/Components` styled by `Theme`; controllers don't hand-build widgets.
-- Names never depend on child order (e.g. dummies take their number from their spot's name).
-- Every module starts with `--!strict` and a header comment saying what it does and where it runs.
-
-- `Data`, `Libraries` and `ReplicatedStorage.Modules` are the owner's keep list. Adding to them is fine; replacing or removing anything there needs the owner's OK.
-- Hit detection uses the owner's MuchachoHitbox (the `--!strict` copy in `Modules.SharedModules`) behind a small wrapper, provided it runs cleanly under Server Authority. If it doesn't, ask the owner before swapping it. Camera effects use CameraShaker.
-
-- **Boot:** the Loader requires every module in Services (or Controllers), validates its shape, calls `Init()` on all in order (no cross-calls), then `Start()` on all.
-- **Dependency rules:** Definitions require nothing. Simulation requires only Config and Definitions. Server and Client code require Shared, never each other.
-- **Place role:** a Workspace attribute `PlaceRole` ("Castle" / "Match") decides which role-specific services boot.
+They live in `.claude/rules/code-standards.md` (Claude loads it when editing code; Codex reads it before editing `src/`). The owner's keep list is in AGENTS.md.
 
 ### Framework archive on GitHub: Rojo (locked by the owner, 2026-10-29)
 
@@ -389,13 +363,13 @@ The owner wants the perfected framework kept on GitHub as an archive: each world
   - `Stats` (Matches, Wins, Finals, PlayerKills, Deaths, VirtueEarned), `ClassStats`, `Settings`
   - `DataVersion`, for migrations
 - **Never saved:** in-match values (HP, stamina, level, Virtue). Those come from definitions and match state.
-- **Found during the audit (not fixed yet):**
+- **Found during the audit; all four fixed with the owner's OK on 2026-10-29 (commit d55e801). The purchase flow still needs a test in the published game with a real dev product:**
   - `ProductManager`'s `IsPurchaseSaved` searches for `purchaseIdCache` instead of `purchaseID`, so it's always false and receipts never return PurchaseGranted.
   - `productId` is undefined in one warn.
   - `DataInit.Initialize` sets MaxHealth from the profile's `Health` (2000) while the legacy `Initilization` used 200.
   - `ServerStorage.WeaponsFLD` doesn't exist, so `AddWeapon` errors for non-empty inventories.
 
-## 9. Castle hub
+## 9. Manor hub (called the castle hub until 2026-10-29)
 
 - **Areas:**
   - Arrival hall.
@@ -404,28 +378,26 @@ The owner wants the perfected framework kept on GitHub as an archive: each world
   - Training yard: dummies, damage numbers, hitbox debug.
   - The gate: server browser with Quick Join / Join / Create / private code.
   - Party system.
-- Runs the Core + Castle services. PvP is off outside the training yard.
+- Runs the Core + Manor services. PvP is off outside the training yard.
 
 ## 10. UI
 
-- Every color, font, stroke, corner radius and spacing value comes from one Theme module, so a restyle is a one-file change.
+- The Theme rule and the UI bar: `.claude/rules/ui.md` and [ui-quality-standard.md](ui-quality-standard.md).
 - Palette: deep red/purple base with blue and orange accents, matching the owner's lighting.
 - Screens are built from a small component kit (Panel, Button, Bar, List, Modal, Tooltip) so they stay coherent.
 
 ## 11. Art direction
 
-- Keep the owner's lighting stack (Atmosphere, Bloom, DepthOfField, SunRays, ColorCorrection).
-- Realistic Victorian gothic, with a red/purple mood and blue and orange light sources.
+- Mood, lighting stack and the premium bar: AGENTS.md ("How the owner wants work done").
 - More worlds later (pre-modern era, …).
 - Weapon and gun models come later from Blender. VFX and skills are built in Studio (particles, beams, trails).
 
 ## 11a. World-building standard (owner, 2026-10-29)
 
-- Every space must have its own atmosphere and read as premium: realistic Victorian gothic, red/purple mood, blue and orange light sources, the owner's lighting stack as the base.
-- Process for every build: sketch (layout, landmarks, lighting, sightlines, player flow), write the sketch here, critique it harshly against the vision, implement only what passes.
-- Next world piece once the Duelist's kit is done: the castle hub, a Roundtable-style keep sized to need, with an open yard (training ground).
+- The standard (atmosphere, premium bar, sketch → write → critique → build) lives in AGENTS.md ("How the owner wants work done").
+- After the Duelist's kit came the castle hub, now the Manor: a Roundtable-style keep sized to need, with an open yard (training ground).
 
-### Castle hub "The Vigil": design v2 (2026-10-29, awaiting owner sign-off)
+### Manor hub "The Vigil": design v2 (2026-10-29, owner-approved as a prototype)
 
 **References.**
 - **Nightreign's Roundtable Hold:** a central hall with the expedition table, wings holding the facilities (shop, journal, codex, character choice), and an outdoor Sparring Grounds with practice dummies and tents.
@@ -492,22 +464,16 @@ The owner wants the perfected framework kept on GitHub as an archive: each world
 
 ## 11c. VFX standard and layout
 
-- **Bar:** as good as Duskbloods. FromSoftware look: blood is dark, wet and heavy (near-black body, a thin hot edge, drips and splatter), not neon. Light is warm gold, not white. Review every effect from the player's own camera (behind the shooter) before calling it done.
+- **The bar and the lessons learned** (beam textures, additive glows, crescents, uploads): `.claude/rules/vfx.md`.
 - **Code:** `StarterPlayerScripts.Client.Vfx`:
   - `Kit`: texture ids, emitter-from-spec, `Burst`, `Flash`, `Tween`, `Release` (stop emitting, let particles die, then destroy).
   - One module per effect (`BloodBlade`, `LightBeam`).
   - `Projectile`: generic client flight. Each projectile look exposes `Spawn(cframe)`, `Move(visual, cframe)` and `Impact(visual, position, direction)`.
   - Colors come from `Theme.Vfx`. Meshes live in `ReplicatedStorage.Shared.Assets.Vfx`.
   - `CombatFxController` maps the server's `ProjectileFx` visual name to a look through `PROJECTILE_LOOKS`.
-- **Lessons learned:**
-  - Most glow textures have a black background, so use them only with LightEmission 1 (additive). Otherwise they render as black slabs.
-  - **Beam textures:** Roblox runs a Beam texture's **vertical** axis along the beam's length. Draw beam art tall: the band runs down the image, tileable top to bottom. A horizontal band shows up as a row of beads.
-  - Crescents must face the camera (perpendicular to travel). A flat crescent in the travel plane is edge-on from behind and vanishes.
-  - Additive dark red disappears against the bright red sky. Darkness has to come from alpha-textured particles or opaque/glass meshes.
 - **Owner review 2026-10-29:** "alright" but **not yet up to our standard**. The slash is now upright (vertical) at the owner's request. The "a little buggy" was most likely the saber falling apart, now fixed.
 - **Drawn textures, 2026-10-29:**
   - **The textures:** our own art, drawn by `tools/vfx_textures.py` (pure Python; `py tools/vfx_textures.py <out_dir> --preview`). The sandboxed shell can't write into Documents, so the script draws into a scratch folder.
-  - **Uploading:** serve the folder with `py -m http.server 8765 --bind 127.0.0.1 --directory <out_dir>` and pass the `http://127.0.0.1:8765/<file>.png` URLs to the MCP `upload_image`. The ids go in `Kit.Textures`.
   - **Blood Blade:** now a drawn crescent sprite (hot rim, wet gloss, near-black body, needle tips) plus a rim halo, as unlit SurfaceGuis on both faces of a thin plane (replaces the glass mesh).
   - **Light Beam:** the drawn soft band (core, mid, haze) plus drawn energy strands, replacing the onion bands. The beam is now continuous and soft-edged.
   - **Glints:** the charge "armed" glint and the beam flares use the drawn four-point glint.
@@ -516,69 +482,4 @@ The owner wants the perfected framework kept on GitHub as an archive: each world
 
 ## 12. Build steps
 
-One puzzle piece at a time. A step starts only after the previous one passes its checks.
-
-| Step | Piece | Checks | Status |
-|---|---|---|---|
-| 0 | Housekeeping + framework skeleton: old jump/M1/block/HUD prototype removed (owner keeps a copy); Shared/Server/Client boot; Loader, Log, Signal, Net, Config; Studio debug bridge | A playtest boots with zero errors; boot logs list every service and controller | Done 2026-10-28: server and client boot with 0 errors; bridge answers; rate limiter dropped 18 of 20 spam calls with one warning |
-| 1 | Data adapter on the owner's ProfileStore | Profile loads in Studio; new fields reconcile; the DataVersion migration runs once; Bloodgems add/remove round-trips and persists across a rejoin | Done 2026-10-28: existing fields untouched; v0 → v1 once; 0 → 25 → 15; invalid amounts rejected with warnings; 15 survived a rejoin; client got both BloodgemsEVENTs; test gems removed afterwards |
-| 2 | Server Authority on (the owner flips AuthorityMode) | Default movement works; no errors; own character reports predicted | Done 2026-10-28: character `Predicted`; walked 36 studs with identical client/server positions; 0 errors |
-| 3 | Input contexts + entity state + stamina | Inputs read the same on client and server; stamina spend/regen matches config | Done 2026-10-28: `BLGameplay` context (Space/Q/LeftShift, priority 2000, sink) cloned into each player; 23 `BL_` attributes on the character; spend/regen exact (−12 per air jump, −20 per dodge/dash, 0.45s delay, 50/s) |
-| 4 | Movement kit | Each feature verified with scripted input; the owner signs off on feel | Mechanics verified 2026-10-28: tap jump 8.5 studs, 4 jumps then refused, charged high jump 24.7 studs, sprint 30 studs/s and auto-off, dodge/backstep 13.1 studs at 55 peak, air dash 70 studs/s once per airtime, client = server position. **Waiting on the owner's feel test.** Dodge needed `Humanoid:Move` + WalkSpeed during the dodge, otherwise the walk controller brakes it. |
-| 5 | Camera: mouse-locked third person, crosshair, lock-on | Target switching works; aim ray correct | Done 2026-10-28 (owner feel test pending): `CameraController` + `Config.Camera`; Tab/middle mouse locks; facing goes through the `Face` input action (Scriptable binding) so the server turns the character too: 0.0° standing, ≤5° while strafing; unlock restores free cam. Line of sight and camera collision ignore non-colliding VFX parts. Flick-switching is written but untested (only one dummy in range). Aim ray comes with the gun in Step 8. |
-| 6 | Animation layer manager + R6 animation set | ≤8 tracks; authored KeyframeSequences published by the owner | Done 2026-10-28: owner published all 7; verified in play (charge loops while held, launch on release, flip per air jump, dash, 1 dodge = 1 play, backstep, land); peak 5 tracks. `Config.Animations` = Default set + per-class overrides (`Classes.<id>`, read from the character's `BL_ClassId`). Root-level ReplicatedStorage legacy removed (VFX Handler, Animations, Attachment, VFX). More movement animations (owner noted some missing) come later. Earlier notes: `AnimationSim` plays movement animations from simulation state (rollback-safe, no cached tracks); `Config.Animations` holds ids. 7 KeyframeSequences authored in code in `ServerStorage.RBX_ANIMSAVES.R6` (ChargeCrouch, HighJumpLaunch, AirFlip, AirDash, Dodge, Backstep, Land); Sprint uses the owner's published anim. Pipeline proven with a published id (2 dodges → 2 plays, server runs it too, max 3 tracks). Temporary Studio ids don't play under Server Authority, so publishing is required. |
-| 7 | Combat core + training dummy | Frame data honored; hitbox visualizer; no double hits | Core done 2026-10-28; **4 saber swing animations waiting on the owner to publish** (`BL_SaberLight1-4` in RBX_ANIMSAVES.R6 → `Config.Animations.Default.SaberLight1-4`). Built: `Definitions` (Registry with load-time validation, class `Duelist`, weapon `Saber` 4-hit chain with frame data), `ActionSim` (in the simulation: buffering, chaining, lunge, tracking then commit, dodge/jump cancel, hitstun lockout), `CombatService` (MuchachoHitbox per hit window, server-side), `CombatSim` (damage pipeline applied inside the server simulation: allegiance, i-frames, damage, stagger meter, hitstun/stagger, knockback; no PvP in the castle), `TrainingService` (2 dummies, regen/revive), `CombatFxController` (damage numbers, flash, "Evaded", CameraShaker shakes), HP bar, saber model built from parts and welded inside the simulation. Verified: full chain L1→L4 at human click speed (55/60/65/95 damage), one hit per swing, stagger meter fills and triggers STAGGERED at 100, evasion cancel free inside the window (0.32s) and 20 stamina outside (0.48s), early dodge refused (0.10s). Not yet testable: i-frames vs incoming attacks (nothing attacks the player until enemies exist, Step 12). |
-| 8 | Class 1 full kit (guard, parry, howl, bite included) | 1v1 duel test | Mechanics done 2026-10-28 (verified vs an attacking training dummy, since there's no second player): guard F (block = 20% chip + 0.4×damage stamina, guard break at 0), perfect guard ≤0.15s = parry (attacker 0.9s hitstun), howl = guard + R (stamina 15; melee hit in window staggers the attacker 1.6s), bite E (only on staggered targets: 180 dmg, heals 12% max HP, ends stagger), burst SMG RMB (4 shots × 14 dmg, +5 stagger each, 24 mag, auto-reload 1.6s, free aim at the crosshair or the lock target, tracers), dodge i-frames verified (hit 0.10s in → Evaded, 0.35s → hit), input buffer (last 0.25s of an action). Attacking dummy (`DummySpot1`, `Aggressive` attribute) flashes orange before swinging. Skills done 2026-10-29: skills are actions with charges that recharge one at a time (`Definitions/Skills/<Class>`, slots 1 and 2, unlocked by in-match level; everything unlocked in the castle). Blood Blade (key 1): server-simulated projectile (110 studs/s, 70 dmg, +14 stagger, 2 charges, 5s recharge). Light Beam (key 2, level 5): 1.2s channel, immobile, 10 ticks × 9 dmg every 0.12s, 1 charge, 12s recharge. Verified: charges/refusal/recharge timing exact, projectile and beam hits, client visuals, HUD skill slots. Server: `CombatService.Projectiles`, `Gunfire` handles beams, shared `Util.Hitscan` and `Util.Muzzle`. VFX overhaul done 2026-10-29 (owner rejected the placeholders): new `Client.Vfx` folder (see 11c). Blood Blade = dark wet crescent with a hot crimson edge, facing the camera, drips/splatter/mist, cast flare, splatter impact. Light Beam = muzzle charge (converging motes), onion-layered gold beam with scrolling energy, motes, impact flare, collapse on release. Verified in real casts: hits land, 0 errors, 0 leaked parts. Strong/charged attacks done 2026-10-29 (R; Guard + R stays Howl):
-- **Data-driven:** new action fields `Button` (which press chains it), `Charge` (still holding at `At`, before the hit, switches into a hold stance), `Hold` (release after `Min` or reach `Duration` → `Release`) and `Hit.GuardDrain` (blocked-hit stamina multiplier). Registry validates them.
-- **Saber moves:** Strong1 (110 dmg, +28 stagger, heavy, ×1.6 guard drain) chains to Strong2 (120/+30). Holding past 0.3s enters the charge stance (immobile, can turn, dodge cancels it); releasing after 0.35s or holding to 1.1s fires the Charged blow (190 dmg, +55 stagger, ×2.5 guard drain).
-- **Verified with scripted input:** tap 110; charged 190; max hold auto-release 190; chain 110 → 120; dodge abandons the charge; Light1 buffers into Strong1.
-- **Not yet tested:** guard drain vs a guarding target (dummies don't guard).
-- **Animations:** `BL_SaberStrong1/2`, `BL_SaberCharge` (looped wind-up), `BL_SaberCharged` are in RBX_ANIMSAVES.R6, retimed from the light swings; they wait for the owner to publish.
-
-Charge telegraph done 2026-10-29 (`Client.Vfx.BloodCharge`, named by `Hold.Fx`, run by `CombatFxController.updateCharges` for every entity):
-- **While charging (ramps with charge time):** blood and embers drawn in from around the body, a crimson glow along the blade, dark red mist at the feet, a red light.
-- **Armed (Min reached):** a glint on the blade tip.
-- **Release:** a flare off the blade; a dodge-abandoned charge drains away instead.
-- **Verified in play:** 0 errors, 0 leaked parts.
-
-Also fixed: the saber template's `WeldConstraint`s didn't hold under Server Authority, so the blade, guard, tip, jewel and pommel sat at the world origin with only the handle in hand. They are now plain `Weld`s with explicit C0.
-
-**Still to do in Step 8:** the ultimate (level 12, needs Step 11 leveling); animations for guard/howl/bite/SMG/saber (owner publishes in one batch); 1v1 duel test needs two players. |
-| 9 | Castle: Theme + UI kit, HUD, class altar, skin shop shell, training yard | Class choice saves; UI coherent | — |
-| 9a | **UI research + UI kit v2** (owner priority 2026-10-29): research Roblox UI practice and premium game UI, then build the Theme v2 + component kit and restyle the HUD | Research written to docs/ui-research.md; the kit is reviewed in play by the owner | — |
-| 10 | Match place + matchmaking + parties + private lobbies: the Blood Table menu launches a match in the Victorian place and returns players to the hub | 2 players go castle → match → castle in a live dev test (TeleportService needs a published dev copy) | **Started 2026-10-29.** The Victorian place exists: **placeId 112559855790294**, same universe (10772800943), in `Config.Game.MatchMaps.Victorian`. The code-sharing decision (locked decision 2) is **copy the code over**: the owner opens the Victorian place, and Claude copies Shared, Server and Client from the hub through MCP (two Studios open). Packages and Rojo stay options for later. Next: the copy, then `PlaceRole = "Match"` on the Victorian workspace, MatchmakingService (MemoryStore registry, ReserveServer, waiting room 2 min / 30 s countdown, delist at T-5), and return to the hub. **Update 2026-10-29:** the Victorian place is open in Studio and empty (baseplate + spawn). The match flow is designed (section 3, "Match flow, start to finish"). The owner wants a fix pass on the framework, then a GitHub archive of it (section 7, "Framework archive"); the method (Rojo or copy-paste) waits on the owner. **Framework in the Victorian place, done 2026-10-29 via Rojo:**
-- `PlaceRole = "Match"`, gravity 145.
-- Boots `Server/Match` with 8 modules and the client with 7, 0 errors. The profile loads, the input context is cloned, and the scripted jump measures 8.50 studs.
-- The hub was renamed Castle → Manor at the same time (`Services/Manor`, `Util.PlaceRole`). The Manor boots 10 + 7 modules with 0 errors.
-- Next: the owner's framework issue list (fix pass → tag `framework-v1`), then MatchService per the match flow v1. |
-| 10a | **Shinigami** (pulled forward from Step 12, owner 2026-10-29): pact circles, roles (melee/ranged/support), levelling, recall and cooldown, as in Duskbloods. Built and tested first at the hub yard's circle | Pact, follow, fight, recall and death cooldown verified against dummies | **Core done 2026-10-29** (melee "Kurogane"). Verified: pact at the yard circle (G), summon/dismiss (T), follows its master, engages enemies in a fight with its master (or with itself), alternates two slashes (40/50), death means dismissed plus a 30 s cooldown with resummon refused, regen while dismissed (2%/s), it never hurts its own master (allegiance via `own` attribute), no leftover models. **To do:** ranged and support types, levelling with its master (Step 11), a real model (Blender), animations. |
-| 11 | Match rules: phases, Virtue, culling, respawn, final arena, leveling, flasks | A full match loop with 2–3 players | **Started.** In-match XP, levels (cap 20) and the Renown ledger done 2026-10-29 (commit 66119ed, self-test 44/44). The rest follows production-plan.md M1–M5. Session 0 (2026-10-29): ChatGPT's 5680db7 pulled, both places match `src/` (136 scripts), self-test 44/44 in Manor and Victorian, owner decisions recorded in section 3. **F1 done 2026-10-29:** match rules as data (`Definitions/Rules` over `RuleDefaults`, validated and frozen by `Registry`; the Hunt tab and `TravelService` read them; Bound is sealed), `Config.Match` (waiting room, Studio fast profile), `Shared.Match.Culling` and `.Rewards` (pure math), the world contract `Shared.World.Tags` with `WorldService` (boot check + `WorldReport`), the four D8 regions in `Maps/Victorian`, and `LogicTestService` (`LogicTests`). Verified in both places: logic tests 30/30, self-test 44/44, 0 boot errors, world report clean (Victorian lists the 5 sites W1 will build). **F2 done 2026-10-29:** `Shared.Match.Ledger` (pure: one-time event keys, revokes, standings by total → first to reach → id), `ScoreService` keyed by participant id (UserId, or negative for AI hunters; books outlive leavers; phase tags; `Changed`), `EntityService.PlayerDied` (once per death; credit by attacker side, so a Shinigami's kill is its master's), `Shared.Match.MatchState` (replicated schema) and `Services/Match/ParticipantService` (records, AI hunters filling seats up to 8 per D11, kills/deaths, kill log). Verified: logic 41/41 in both places, self-test 49/49 in both places (new: player kill credit), 0 boot errors; Victorian fills 1 player + 7 AI hunters. **W1 done 2026-10-29:** the Cathedral Quarter blockout from ChatGPT's spec (generator `worlds/Victorian/WorldTools/CathedralQuarter`, 913 parts, dusk lighting per spec section 9), every gameplay marker in place, route probe 1,970 points / 0 problems, real R6 walks on every flight, world report clean, self-test 49/49; plus `Shared.World.Markers` (only markers inside workspace are live). Notes: `worlds/Victorian/CathedralQuarter/w1-blockout.md`. **World art now belongs to ChatGPT (owner).** **L1 done 2026-10-29:** `Services/Match/MatchService` (+ `Spawning`, `Settlement`, `Smoke`). States: Waiting (Antechamber) → Countdown (lock at T−5) → AI hunters fill the field → Intro → RegionChoice (`ChooseRegion` remote, `Shared.Match.Regions` capacity and overflow) → Phase → PhaseResolve (culls, D1) → FinalSetup (lives, Renown HP bonus, D2) → Final (sudden death, simultaneous last deaths to the higher Renown) → Results (Bloodgems once: `PlayerHandlerData.SettleMatch` + `ProfileTemplate.MatchAwards`, leavers settled in `OnLastSave`) → Return. No damage to entrants between phases and 3 s spawn protection that ends on attack (`CombatSim.SetGuard`); revival after the rule's delay; AI hunter bodies (`EntityService.Watch`/`BodyDied`); the HP bonus reaches max HP through `Spawn`. Studio waits for `MatchStart`. Verified: `MatchSmoke` 33/33 (a whole 8-entrant fast match in 20 s), guard, region choice and spawn protection checked in play, logic 48/48 and self-test 49/49 in both places. Not testable in Studio: real countdown cancel with 2+ players, a real disconnect's settlement (A1's published session). **U1 done 2026-10-30** (match screens, spec `docs/match-screens.md`): the HUD clock (phase numeral, time, ritual mark, red under 10 s), the Antechamber panel (status, seats AI will take, roster), the intro (title, world, rule, the field revealed one by one), the region map (relief from above, outlines, standings with the cut, revival choice while dead), banners (phases, final, entering a region). Every screen that takes input goes through `UI.Core.Focus`; text never renders under 16 px (`Text.Legible`). Server side: `MatchService/Atlas` publishes regions and relief. D11 amended: **1 real player minimum** for the proof of concept (`Config.Match.Lobby.MinPlayers`). Verified: self-test 49/49 and logic 48/48 in both places, `MatchSmoke` 33/33 with the screens up, the Blood Table menu still frees and restores the cursor. Not checked: a real 1366×768 capture (MCP can't resize Studio; the owner can use the Device Emulator). **Q0 done 2026-10-30** (U1 finished properly after the owner's review; spec and critique in `docs/match-screens.md`, "Q0 · v2"):
-- **Jumps:** tap 61 / air 56 / high 70–108.
-- **Text kit:** shadows mirror every text property; labels start empty, never "Label".
-- **UI lint** (shadow, fit, size, screen, placeholder).
-- **ReplicatedFirst `BL_First`:** ThemeBase, the Passage, our loading screen.
-- **`UI.Core.Stage`:** the Blood Table and the Antechamber screen.
-- **Intermission v2:** `Intermission`, `MapView`, `PhaseStrip`, `Standings`, `RegionInfo`; Choose, Rise and Browse.
-- **Spawning:** spawns face their best `Shared.World.Sightline`; the arrival reveal and the protection outline (`ArrivalController`); falls dissolve into mist.
-- **Plates and call-outs** projected in the World layer (`PlateController`, `UI/World`).
-- **Death band, objectives, the themed prompt.**
-- **Pact sites:** `PactSiteController` dresses every `BL_PactCircle`. `Simulation/ShinigamiBody` is one look for the summoned and the waiting Shinigami. A Shinigami's lines live in its definition, shown with `UI/Hud/Subtitle`.
-- **AI hunters:** no bodies in the phases (`Config.Match.AiBodies`).
-- **Camera:** settles 2 frames after the mouse locks.
-- **Verified:** self-test 70/70 (Victorian) and 69/69 (Manor), logic 48/48, `MatchSmoke` 34/34, world report clean, capture walk with every critique item fixed or assigned.
-
-**Next (owner, 2026-10-30): C1, the combat rework** (SMG bullets and spread, M1, Light Beam, Blood Blade), **then U2**. **C1 started 2026-10-30** (`docs/combat-rework.md`, "Progress"):
-- **SMG spread:** done.
-- **Gustave's machine pistol:** Blender-built and in hand.
-- **Duelist burst:** published.
-- **`Vfx/Gunshot`:** muzzle, tracer and impacts, from rendered sprites.
-- **Manor lighting:** Duskbloods grade.
-- **Pipeline:** `tools/blender` and `tools/studio` (→ `ServerStorage.BL_Tools`).
-- **Verified:** self-test 68/68 and logic 48/48 in the Manor.
-
-Sound, the M1, the Blood Blade and the Light Beam follow. |
-| 12 | PvE: fodder, elites, boss, minions, Shinigami | Shinigami AI and conversions work | **NPC system v1 done 2026-10-29** (Wretch, Butcher, spawn markers, credit, refill; commit 8459443). Vertical navigation, bosses and minions: production-plan.md N1, B2–B3, X1. |
-| 13 | Rewards + skin purchases | Bloodgems granted once per match; purchases persist | — |
-| 14 | Victorian world map | Streaming, regions, spawn areas | — |
-| 15 | Class 2 | Added with zero core edits | — |
-| 16 | Polish, performance, anti-exploit pass | Server frame-time budget met; exploit checklist passes | — |
+Steps 0–12 (2026-10-28 and 29) built the framework. Their table, with every check and status, is archived in [archive/build-log-2026-10.md](archive/build-log-2026-10.md). From M1 on, the working order and status live in [production-plan.md](production-plan.md), which also carries the table's open items (class 2, untested leftovers).

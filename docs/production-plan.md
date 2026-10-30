@@ -1,10 +1,8 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). Next, by the owner's order (2026-10-30): C1, the combat rework; then U2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (`docs/combat-rework.md`, "Progress"); then U2.**
 
-> **World ownership (owner, 2026-10-29):** after W1, ChatGPT owns the 3D world (W2 art proof of concept, W3, the final garden's art, all Victorian world art). Claude does the code and keeps the world contract, `WorldService`, the route probe and the lighting rig's code working for ChatGPT.
->
-> **D11 (owner, 2026-10-29; amended 2026-10-30):** 1 real player minimum for the proof of concept (was 2); AI hunters fill the field to 8. They are real participants from F2 on; their bodies arrive with L1 and their movement and judgement in a later AI slice.
+> Roles, ownership and the team mode: AGENTS.md. D11 and every other owner decision: [engineering-plan.md](engineering-plan.md) §3.
 
 This is the working order for Claude's sessions. [engineering-plan.md](engineering-plan.md) stays the source of truth for locked rules and specs. ChatGPT's [whole-game brief](duskbloods-gameplay-breakdown.md) is the behaviour spec each slice implements, and the [UI quality standard](ui-quality-standard.md) is the bar every screen passes.
 
@@ -12,61 +10,29 @@ This is the working order for Claude's sessions. [engineering-plan.md](engineeri
 
 - Claude is the coding north star: back end, HUD and VFX, no excuses.
 - Make the game first, in the order ChatGPT's brief sets. The rest comes later.
-- Claude builds the Victorian world as a proof of concept, to the premium bar. Claude isn't the art director: the owner and ChatGPT's specs direct the art. **The map is vertical.**
+- The world is built to the premium bar by whoever holds world art (AGENTS.md, "Who works on what"); the owner and ChatGPT's specs direct the art. **The map is vertical.**
 - Quality first. Speed comes from order and tooling, never from skipping a check.
 
-**Read for this plan:** the whole-game brief, the UI standard, both evidence files and the archived draft, the Cathedral Quarter spec with its four sketches and layout data, the Manor depth notes and renders, the engineering plan, team notes, the Duskbloods reference and manual summary, UI research, north star, framework audit, the Manor art docs, ChatGPT's art skill, GitHub issues #1 and #2, and every file in `src/`.
+## 1. Status at a glance (2026-10-30)
 
-## 1. Where the code stands (checked in `src/`)
+| Milestone | Done | Now | Open |
+|---|---|---|---|
+| M1 Foundations | F1, F2 | | |
+| M2 First complete match | W1 (blockout), L1, U1, Q0 (awaits the owner's review) | C1 | U2, S1, UI-R, U3, A1 |
+| M3 Phase one | | | N1, AI hunters v1, SH1, E1, E2, E3, W2 |
+| M4 Bosses | | | B1, B2, B3 |
+| M5 Competitive loop | | | R1, R2, W3 |
+| M6–M7 | | | X1–X8, Q1–Q7 |
 
-| Area | Built | Still missing for the game |
-|---|---|---|
-| Player kit | Gustave: saber chain, strong/charged, guard/parry/howl, bite, burst SMG, Blood Blade, Light Beam, movement, lock-on | Ultimate; four unpublished animations (Howl, Bite, SMGBurst, BloodBlade); two-player checks |
-| NPCs | `NpcService`, `EnemyBrain`, `NpcActor`; Wretch and Butcher; `BL_EnemySpawn` markers, kill credit, refill | Vertical navigation (today: flat distance and direct `MoveTo`); bosses; minions; real models |
-| Shinigami | Kurogane: pact, summon, AI, death cooldown, regen, level mirror, Gōka | Pact-level rule; ranged/support roles; model and VFX to the bar |
-| Growth | `ProgressionService` + `Leveling` (cap 20, XP separate from score) | Level-up feedback; healing; upgrades |
-| Score | `ScoreService` ledger ("Renown"), enemy kills only | Ranking by match participant; keeping leavers; event ids; revocable entries |
-| Menu / travel | Blood Table v2, class saving, public-server travel, hold Backspace to return | Reserved servers, match registry, parties, private codes |
-| Match | Nothing yet: there is no `Services/Match` folder | The whole lifecycle |
-| World | Victorian test enemy layout; `Victorian.Zones = {}` | The Cathedral Quarter, regions, spawns, sites |
-| HUD | Vitals, Shinigami card, arsenal, posture, crosshair | Clock, map screens, phase/cull/final/results screens, heal stake, items, boss bar, compass, target info |
-| Tests | `BL_SelfTest`: 19 cases, 44 checks | Rule-math tests, bot entrants, a fast match |
-
-**Found in the code beyond the brief:**
-1. A player at 0 HP gets Roblox's own respawn (`EntityService` zeroes `Humanoid.Health`). There's no revival control and no player-kill credit yet.
-2. `ScoreService.Ranking` ranks every connected Player and deletes a leaver's book.
-3. Rule ids are magic strings, written twice (`TravelService` and `UI/Menu/Hunt`).
-4. A new pact "resets to level 1", and the next step mirrors the master's level, so the reset does nothing.
-5. The UI scale floor (0.5) can draw 18 px text at 9 px. The Shinigami card is one 250 px line that overflows.
-6. Theme's palette comment still calls Ember "stamina" (posture uses it).
-7. The build table in engineering-plan section 12 is stale: NPC v1 and XP/Renown are done.
-8. ProfileStore fires `Profile.OnLastSave` just before a session's final save. Match rewards can settle there when a player disconnects, without touching `DataInit`.
+Earlier snapshots (the 2026-10-29 code audit, Session 0, the reading list) are archived in [archive/production-plan-history-2026-10.md](archive/production-plan-history-2026-10.md).
 
 ## 2. How each slice is made
 
-1. Re-read the files the slice touches (ChatGPT works in the same folder).
-2. Design anything new first: write it into the engineering plan, critique it harshly, then build. For worlds, rule 9: sketch, critique, then build.
-3. Build to the code standards (engineering-plan section 7): one job per module, data over code, no magic strings, Theme for every UI value.
-4. Prove it:
-   - `BL_SelfTest` all PASS, plus new cases for the mechanic;
-   - rule-math tests (new, server side);
-   - a fast match with bot entrants when the slice touches the match;
-   - player-camera screenshots for anything visible: 1920×1080 and 1366×768, over a bright and a dark backdrop.
-5. Report four things separately: implemented, tested, visually reviewed, owner-accepted.
-6. Close: build table, a team-notes entry, then commit my own paths and push once the owner says go.
-
-One slice is verified before the next starts. A working session covers one slice or more.
+The process lives in AGENTS.md ("How the owner wants work done") and the session skills: `/bl-start` and `/bl-finish` (Claude), `bl-world-session` (ChatGPT).
 
 ## 3. Session 0: pre-flight
 
-| # | Step | Who |
-|---|---|---|
-| 1 | Pull ChatGPT's commit `5680db7`. Its paths don't collide with the uncommitted world/art files on disk (checked). A pull crashes Rojo 7.7.1, so serve with `tools/rojo-serve.ps1`, then reconnect both Studios | Claude pulls, owner reconnects |
-| 2 | Check that each place's script count matches `src/`, then run `BL_SelfTest` in the Manor and in the Victorian place (baseline 44/44) | Claude |
-| 3 | Confirm the Victorian place's `Workspace.AuthorityMode` is Server | Owner (Properties panel) |
-| 4 | Reconcile the docs: build table, Lv 20 with separate XP, "Renown" as the display name, and links to the brief and this plan from CLAUDE.md and the engineering plan | Claude |
-| 5 | Optional: two project skills, `bl-start` (pull, Rojo, find the Studios, self-test) and `bl-finish` (tests, notes, build table, commit), so every session opens and closes the same way | Claude |
-| 6 | Answer the decisions in section 6 that block M2 | Owner |
+Done 2026-10-29; archived with the snapshots above.
 
 ## 4. Contracts to lock before content
 
@@ -211,6 +177,8 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
   - Hero pieces are modelled in Blender by script, and the owner imports them.
   - A harsh written critique before the owner's review.
 
+- **SH1 · Shinigami v2** (open items carried over from the archived 2026-10-29 snapshot; the owner places it): D5's pact level (a new pact starts 3 levels below its master; today a pact simply levels with its master), and the ranged and support roles.
+
 ### M4 · Bosses
 
 - **B1 · Modifiers and Blood boons.** Contract 9; choose 1 of 3, up to 5 active, replace or decline; the effects row on the HUD.
@@ -234,7 +202,7 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
 
 ### M6 · Depth (once the loop plays well)
 
-X1 minions (spellbound fodder; cap and duration as data) · X2 forges and status effects (fire, lightning, poison buildup rules) · X3 bloodsacs and skill upgrades, random events of our own · X4 alliances, Bound duos, ally travel · X5 Atelier: skins and the Bloodgem shop · X6 Relics, after the owner's design · X7 Gustave's ultimate (Lv 12), guard counter and howl deflect (D6).
+X1 minions (spellbound fodder; cap and duration as data) · X2 forges and status effects (fire, lightning, poison buildup rules) · X3 bloodsacs and skill upgrades, random events of our own · X4 alliances, Bound duos, ally travel · X5 Atelier: skins and the Bloodgem shop · X6 Relics, after the owner's design · X7 Gustave's ultimate (Lv 12), guard counter and howl deflect (D6) · X8 class 2, added with zero core edits (carried over from the old build table).
 
 ### M7 · Quality passes (any can be pulled forward on request)
 
@@ -244,6 +212,8 @@ X1 minions (spellbound fodder; cap and duration as data) · X2 forges and status
 - **Q4 · Performance and anti-exploit:** 8 players and 60 enemies, streaming, a review of every remote.
 - **Q5 · Real models and animations:** enemies, the boss, Kurogane, Gustave's look; animation publishing in batches.
 - **Q6 · Manor:** integrate ChatGPT's art; menu polish (map image, hover/confirm sounds); honest System and Archive tabs.
+
+- **Q7 · Untested leftovers** (carried over from the old build table): lock-on flick-switching (needs two targets in range), and guard drain against a guarding target (dummies don't guard).
 
 New effects and screens are built to the bar inside their own slice, as they're made. Only the revisit of the existing skills waits for Q1.
 
@@ -299,15 +269,4 @@ Each comes with a recommendation. Whichever way it goes, it's data, so changing 
 
 ## 9. Lessons carried forward
 
-- **Evidence:** footage is not our rule. Label OBSERVED, MANUAL and DESIGN; never present a guess as a measurement.
-- **Art:** diagnose form, surface or composition before changing anything. Judge clay, grazing-light and player-camera views. Noise is not detail, and a beautiful Blender render isn't proof of how it looks in Studio.
-- **Studio:**
-  - cold-require a generator after editing it;
-  - `UpdateSourceAsync` callbacks return one string;
-  - attribute string values stay under 50 characters;
-  - FBX imports use scale 0.01 and a Y 180° correction;
-  - Escape cancels the importer;
-  - re-enumerate the Studios every session;
-  - restart a playtest after a Rojo edit.
-- **Testing:** run the self-test after every change; measure input delay in timed tests; ask the owner to step away during them.
-- **Honesty:** implemented, tested, visually reviewed and owner-accepted are four different facts.
+They live where they're used now: AGENTS.md (evidence labels, honesty, quality, git), CLAUDE.md and `.claude/rules/` (Studio and Roblox facts), and the skills (testing, assets, environment art).

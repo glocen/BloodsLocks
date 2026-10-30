@@ -42,23 +42,24 @@ If `git pull` reports a **conflict**, ask Claude "resolve the git conflict". Not
 
 **Don't push raw chat transcripts.** The repo is **public**. Raw transcripts are huge, full of tool noise, and contain personal details (email, PC paths). `.gitignore` blocks `*.jsonl` so they can't slip in.
 
-**Do push session logs**: a short summary of each conversation. That's what the other AI actually needs.
+**Do push short summaries** of what each session did. That's what the other AI actually needs.
 
-- **Claude:** at the end of a session, say **"write the session log"**. Claude writes `docs/sessions/<date>-claude-<topic>.md` and adds a line to `docs/team-notes.md`.
-- **ChatGPT:** ask *"Summarize this session for the BloodsLocks repo: decisions, what changed and where, what's open. Markdown, short."* Save it as `docs/sessions/<date>-chatgpt-<topic>.md`.
+- Since 2026-10-30 the summary is a short entry in `docs/team-notes.md` plus its "Now" board (the rules are in `AGENTS.md`). The old session logs are in `docs/archive/sessions/`.
+- Claude writes it as part of `/bl-finish`; ChatGPT as part of its `bl-world-session` skill.
 - Then commit and push (Part 2).
-- **Starting a session:** tell either AI "read `CLAUDE.md`, the latest `docs/team-notes.md` entries and the newest `docs/sessions/` files first."
+- **Starting a session:** Claude runs `/bl-start`; ChatGPT runs `bl-world-session`. Both read the "Now" board, not the history.
 
 ## Part 4: folder layout
 
 | Folder | What goes there | Who writes |
 |---|---|---|
 | `docs/` | plan, research, team notes | everyone |
-| `docs/sessions/` | one log per conversation | everyone |
+| `docs/archive/` | history: old notes, session logs, finished audits | everyone |
 | `src/` | the framework code, synced into Studio by Rojo | Claude |
 | `src/owner/` | your keep list (Data, Libraries, Modules, Events) | ask before replacing |
 | `worlds/<World>/` | world-only tools and notes (Manor, Victorian, ...) | ChatGPT + Claude |
-| `tools/`, `skills/` | our own asset scripts and AI skills | everyone |
+| `tools/` | our own asset scripts | everyone |
+| `.claude/`, `.agents/skills/` | the AI rules and skills (Claude's and the shared ones) | everyone |
 | `assets/` | notes and ids for uploaded assets | everyone |
 
 ## Part 5: Rojo (the code ↔ Studio bridge)

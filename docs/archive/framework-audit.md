@@ -1,3 +1,5 @@
+> Archived 2026-10-30. Links inside point to the file's old location.
+
 # Framework audit (2026-10-29, Claude)
 
 ## Status (2026-10-29, end of the fix pass)

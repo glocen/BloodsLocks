@@ -1,101 +1,41 @@
-# BloodsLocks
+@AGENTS.md
 
-PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods is inspiration only: names, art and lore are our own. Owner: glocen.
+<!-- Claude-only layer on top of AGENTS.md. Keep it short: topic gotchas go in .claude/rules/ (they load when Claude touches matching files), procedures go in skills. Block HTML comments like this one are stripped from Claude's context, so they cost nothing. -->
 
-## Where things are
+# Claude: you build the game
 
-- **The project folder is `C:\Users\gloce\BloodsLocks`**, a git clone of https://github.com/glocen/BloodsLocks. The old `Documents\BloodsLocks - Project` folder is retired (kept only as a backup).
-- The game lives in Roblox Studio, reached through the Roblox Studio MCP. Places in universe 10772800943:
-  - **Manor** hub (the hub is called the Manor now, not the castle) = place "ROLOCK", placeId 76593217243342.
-  - **Victorian** match place = placeId 112559855790294.
-- **Code lives in `src/` and reaches Studio through Rojo** (since 2026-10-29). The files are the source of truth: edit code in files, never in Studio's script editor (Studio edits get overwritten on the next sync). How-to: [docs/github-sync-lesson.md](docs/github-sync-lesson.md), Part 5.
-  - `src/shared` → `ReplicatedStorage.Shared`: Config, Definitions, Simulation (Runner is the step pipeline), Assets, Net, Util
-  - `src/server` → `ServerScriptService.Server`: Boot + Services
-  - `src/client` → `StarterPlayer.StarterPlayerScripts.Client`: Boot + Controllers
-  - `src/owner/Data`, `src/owner/Libraries` → `ServerScriptService.Data` / `.Libraries`: the owner's data system and libraries (ProfileStore, ProductManager, RockModuleServer)
-  - `src/owner/Modules`, `src/owner/Events` → `ReplicatedStorage.Modules` / `.Events`: the owner's modules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D, Combat Agent placeholder, WeaponRarities, Tween list) and remotes
-  - `src/storage/BLInput` → `ServerStorage.BLInput` (the input context)
-  - `src/first` → `ReplicatedFirst.BL_First`: ThemeBase (palette, fonts, images, fit formulas; `UI/Theme` re-exports it) and the Passage (our loading and teleport screen, with named holds)
-  - Mapping: `default.project.json`. Tool versions: `rokit.toml` (`rokit install`).
-  - Not in Rojo (place-specific, stays in Studio): world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, the `PlaceRole` workspace attribute (`"Manor"` in ROLOCK, `"Match"` in match places; read it only through `Shared.Util.PlaceRole`).
-  - Rojo must be serving (VS Code: Rojo → Start, or `rojo serve` in the repo) and the place connected (Studio: Plugins → Rojo → Connect) for file edits to reach Studio. Before trusting a Studio test, check that the place's script count matches `src/`.
-  - The old jump/M1/block/HUD prototype was deleted on 2026-10-28 at the owner's request (they keep their own copy).
-- Source of truth for every decision, spec and build step: [docs/engineering-plan.md](docs/engineering-plan.md)
-- **Working order (owner-approved 2026-10-29): [docs/production-plan.md](docs/production-plan.md)**, milestones M1–M7. Behaviour spec per slice: ChatGPT's [whole-game brief](docs/duskbloods-gameplay-breakdown.md); every screen passes the [UI quality standard](docs/ui-quality-standard.md); the first Victorian zone is the [Cathedral Quarter spec](worlds/Victorian/CathedralQuarter/cathedral-quarter-spec.md).
-- Duskbloods research notes: [docs/duskbloods-reference.md](docs/duskbloods-reference.md)
+Code, Studio integration, tests and tooling, and, while the team mode is "Claude only" (AGENTS.md), world art too. Repo: github.com/glocen/BloodsLocks, cloned at `C:\Users\gloce\BloodsLocks`.
 
-## Working rules (from the owner)
+## Places
 
-1. Step by step, like a puzzle. Finish and verify each piece before starting the next. No half-built pieces, no rush.
-2. Locked decisions in the plan change only with the owner's OK.
-3. ProfileStore compatibility is the top priority. Never create a second ProfileStore. Read profiles through `PlayerHandlerData.Profiles` / `PlayerHandlerData.WaitForProfile`, add fields to `ProfileTemplate`, and add mutations to `PlayerHandlerData` in its existing style.
-4. When unsure how a mechanic should work, research Duskbloods (previews, wikis, gameplay write-ups) before deciding, and record findings in docs/duskbloods-reference.md.
-5. UI must look coherent and well made. The style will change often, so every color, font and stroke comes from the Theme module.
-6. `ServerScriptService.Data`, `ServerScriptService.Libraries` and `ReplicatedStorage.Modules` are the owner's keep list: adding to them is fine, but ask before replacing or removing anything in them. Everything else may be reorganized.
-7. Keep the build-step table in docs/engineering-plan.md current.
-9. World building is held to a premium, artistic standard (owner, 2026-10-29): every 3D space needs its own atmosphere (red/purple mood with blue and orange light, realistic Victorian gothic; keep the owner's lighting stack). No slop, no placeholder-looking builds. Process: sketch the design first (layout, landmarks, lighting, sightlines), write it into the plan, critique it harshly against the vision, and implement only if it passes. The same premium bar applies to VFX (owner, 2026-10-29: "as good as Duskbloods, nothing less"): effects are layered (textured beams/trails, particles, light, impact bursts), never single neon parts; review them visually before calling them done. Next world piece after the Duelist's kit: the castle hub (Roundtable-style, as big as it needs, with an open yard).
-11. **The owner does not pay for anything** (owner, 2026-10-29). Always ask before using any tool, service, API, plugin or asset that could cost money, credits or quota, and say whether it might cost something. Stay fully custom: free tools, our own models, scripts and textures.
-10. No Roblox AI generation for art (owner, 2026-10-29): don't use Studio's `generate_mesh` / `generate_material` / `generate_procedural_model`. We make our own: meshes are modeled in Blender (via the Blender MCP in `.mcp.json`, once connected), textures are drawn by our own scripts (`tools/`).
-8. Pro-quality, modular code (owner, 2026-10-29): one job per module, no duplicated helpers, no magic strings, data over code. Follow "Code standards" in docs/engineering-plan.md section 7, and re-run the regression checks after any refactor.
+- Universe 10772800943. The Manor hub is place "ROLOCK" (76593217243342); call it the Manor, never the castle. The Victorian match place is 112559855790294.
+- Every place runs the same code. The `PlaceRole` workspace attribute (`"Manor"` / `"Match"`) splits role services; read it only through `Shared.Util.PlaceRole`.
 
-## Studio facts that bite
+## Rojo and Studio, every session
 
-- `Workspace.AuthorityMode` can't be read or set from MCP scripts (needs RobloxScript capability). Ask the owner to set it in the Properties panel.
-- TeleportService doesn't work in Studio; teleports get tested in a published dev copy.
-- Server Authority: custom state goes in attributes (first 64 per instance, names and string values ≤50 chars), written only inside `RunService:BindToSimulation`; time comes from `time()`; at most 8 playing tracks per Animator; Tools aren't fully supported (weld weapon models instead); RemoteEvents aren't on the simulation timeline.
-- Studio sessions use the "Test" ProfileStore; live servers use "Live".
-- MCP `execute_luau` code runs as a plugin with its own module instances, so it can't see live game state through `require`. During playtests, use the Studio-only bridge from the Server context: `game.ServerStorage.BL_Debug:Invoke("Commands")` lists what's available (Ping, NetDropped, GetData, AddBloodgems, RemoveBloodgems, ...). Services add commands with `DebugService.Register`.
-- Known output noise to ignore: the ZonitoVisuals plugin's HTTP warning and `rbxassetid://203785492 ... Asset type does not match` (it's not in the place's instances or scripts).
-- Workspace gravity in this place is 145.
-- Roblox's own `StarterPlayer.PlayerModule.ControlModule.InputReplication` calls `Humanoid:Move` and resets `Humanoid.AutoRotate` every simulation step. Don't rely on AutoRotate staying false; set the root CFrame (lock-on facing) or velocity (dodge) yourself each step.
-- `InputBinding:Fire()` only works when the binding's `Type` is `Scriptable`.
-- Animations: temporary ids from `KeyframeSequenceProvider:RegisterKeyframeSequence` load in client/plugin code but NOT inside the Server Authority simulation (the server can't load them). New animations must be published by the owner (Animation Editor on `workspace.R6` → Load from RBX_ANIMSAVES.R6 → Publish) before they play in tests.
-- Studio `screen_capture` is blank in edit mode but works in play mode, a moment late; capture frozen or slowed effects (spawn the `Client.Vfx` module from the Client context) instead of racing a fast projectile.
-- Teammates: the owner also works with ChatGPT. Leave handoff notes in [docs/team-notes.md](docs/team-notes.md).
-- Attributes: max 1024 bytes in total per instance (names count), not just 64 attributes. Stored names are 2-4 letter codes; always go through `EntityState.Attr`.
-- **Logic tests and world report (Studio, Server context, during a playtest):** `game.ServerStorage.BL_Debug:Invoke("LogicTests")` checks the rule math (culls, rewards, rules, world contract; cases in `src/server/Services/Core/LogicTestService/Cases.luau`). `BL_Debug:Invoke("WorldReport")` checks the place's tagged markers against `Shared.World.Tags`; WorldService also logs a one-line summary at boot. Run both with the self-test after a change; add a logic case with every new rule.
-- World tags are never written as literals: read them from `Shared.World.Tags` (the world contract). Match rules are `Definitions/Rules/<Id>` over `Definitions/RuleDefaults`, read with `Registry.Rule(id)` / `Registry.Rules()`. The waiting room and the Studio fast profile are `Config.Match`.
-- Match participants are keyed by id: a player's UserId, or a negative id for an AI hunter (owner decision D11: 1 real player minimum for the proof of concept, AI hunters fill to 8). Scores go through `ScoreService` by id; clients read entrants from `ReplicatedStorage.MatchState.Participants` (`Shared.Match.MatchState`). Debug: `Participants`, `FillWithAi`, `AiScore`. Studio test helpers `TestLethalHit(side)` / `TestLastDeath` check player-kill credit.
-- **The match (Victorian place):** in Studio it stays Idle until `BL_Debug:Invoke("MatchStart")` (fast lengths), so a plain playtest keeps the self-test environment; live match servers start at once. `MatchSkip` ends the current wait, `MatchState` shows the standings, `MatchKill(id)` kills an entrant, `MatchSmoke` runs a whole checked match (then restart the playtest: it ends in Return). Lifecycle code: `src/server/Services/Match/MatchService`.
-- **The game respects the Roblox Terms of Use** (owner, 2026-10-30): no gore. Blood stays stylized (dark-red mist, sparks, light), with no wounds, severed parts or gore pools.
-- Match screens (`src/client/UI/Match`, driven by `Controllers/Match/MatchController`): any screen that takes the input pushes onto `UI.Core.Focus` and releases it on close. Never set MouseBehavior or toggle BLGameplay/HUD directly.
-- MCP `user_mouse_input` / `user_keyboard_input` add ~0.3s per action, too slow for combo timing. For exact-timing tests, fire the Scriptable test bindings from the Client context: `LocalPlayer.BLGameplay.<Jump|Dodge|Attack|Guard|Strong|Ranged|Bite|Face|Aim>.Script:Fire(state)`.
-- Combat feedback events (hit, evaded, blocked, parry, howl, guard broken, bite) are attributes on the entity's Humanoid (`EntityState.Fx`), so they don't count against the character's 1024 bytes.
-- **Regression self-test (run it after every code change, in any place):** during a playtest, from the Client context run `game.ReplicatedStorage.BL_SelfTest:Invoke()` (or `:Invoke("Dodge")` for the checks whose name contains it). It builds a test pad at y=3000 with its own dummy, runs every movement and combat check against Config/definition numbers, cleans up, and returns a PASS/FAIL report. Checks live in `src/client/Controllers/Core/SelfTestController/Cases.luau`; add one with every new mechanic. Server helpers (SelfTestService, Studio only): `TestPad`, `TestHitAfter(who, "Now"|"Dodge"|"Guard", delay, actionId?)`, `TestPadClear`, `HitAfterNextDodge(who, delay)`.
-- A playtest runs the code it started with: Rojo edits reach the edit copy only, so restart the playtest after changing code.
-- Rojo 7.7.1 crashes (`change_processor.rs`, file not found) when files vanish for a moment: a whole-file rewrite, and every git pull/rebase. Serve with `tools/rojo-serve.ps1` (restarts Rojo by itself) in a visible terminal tab. After any git pull or crash, the owner reconnects each Studio (Plugins → Rojo → Connect); then check that Studio has your latest edit before trusting a test (e.g. search a script's Source for a new line).
-- ChatGPT works in this same folder and keeps uncommitted world/art files here. **Stage only your own paths** (`git add src docs/... CLAUDE.md`), never `git add -A` on the whole repo, and never delete or restore its files. Before `git pull --rebase`, compare any blocking local file with `origin/main` and only remove copies that are identical.
-- Enemies fight for `EntityState.HostileSide` (OwnerId 0) so they never hurt each other; side-less entities (training dummies) can be hit by anyone.
-- Test enemies: spawn markers (parts tagged `BL_EnemySpawn` with `Enemy`, optional `Count`, `Radius`, `Respawn`) are world content in each place. The Victorian place has a test layout in `workspace.BL_EnemySpawns`. Debug: `BL_Debug:Invoke("Enemies")` lists enemies, kills and the last kill; `SpawnEnemy(who, id, distance)`.
-- Anything that sets a character's velocity on the ground (dodge, lunge) must also raise `Humanoid.WalkSpeed` to that speed, or Roblox's walk controller brakes it (the saber lunge moved 0.6 studs instead of 2.4 until 2026-10-29).
-- If the owner is playing in Studio during a test, their inputs show up in the logs; ask them to step away for timed tests.
-- Scripts open in Studio editor tabs keep their own document text: after writing `.Source`, sync open tabs with `ScriptEditorService:UpdateSourceAsync` (or edit through it) so a stale tab can't overwrite the new code.
-- The Studio MCP `studio_id` changes when Studio restarts; call `list_roblox_studios` first.
-- Input-to-server delay varies between Studio sessions; timed tests (parry) should measure the delay rather than assume one.
-- `Enum.Font.Garamond`'s family is `rbxasset://fonts/families/Guru.json`; build weights with `Font.new(Font.fromEnum(...).Family, weight)`.
-- Tab is also the player-list key, so `InputBegan` reports it as processed; skip keys only while a TextBox is focused.
-- Client context scripts can't see `ServerStorage`; put VFX templates in `ReplicatedStorage.Shared.Assets.Vfx`.
-- Beam textures run their **vertical** image axis along the beam's length; draw beam art tall (see engineering-plan 11c).
-- Windows **Controlled Folder Access** is on: git, Rojo, Python and PowerShell can't write anywhere under Documents (only the file Write/Edit tools can). That's why the project lives in `C:\Users\gloce\BloodsLocks`. Don't change the Windows setting. Git and Rojo commands there need the Bash sandbox disabled. Draw generated assets into the scratchpad; upload images by serving that folder with `py -m http.server` on 127.0.0.1 and calling MCP `upload_image` with the URLs. Use `py`, not `python` (the latter is the Store shim).
-- Weapon models: `WeldConstraint`s inside a cloned model don't hold under Server Authority (parts stay at the template's origin). Join parts with `Weld` + explicit C0.
-- To place a player for a test, set the root CFrame from the Server context; client-side CFrame writes are overridden under Server Authority.
-- **Capturing match screens:** the fast profile runs phases in seconds (protection lasts 3 s), faster than MCP calls. For captures, start with `BL_Debug:Invoke("MatchStart", nil, false)` (the rule's real lengths) and advance with `MatchSkip`. `screen_capture`'s camera parameters don't move the play camera (our CameraController drives it every frame).
-- **UI text:** `Text.new` labels start empty, never Roblox's "Label". The self-test's "UI lint" fails on:
-  - placeholder text;
-  - text overrunning its box by more than 2 px;
-  - text under its legible size;
-  - labels off screen.
+- `src/` is the source of truth. Rojo must be serving and each Studio connected (Plugins → Rojo → Connect), or edits never reach Studio. Tool versions: `rokit.toml` (`rokit install`).
+- Mapping (`default.project.json`): `src/shared` → `ReplicatedStorage.Shared` (Config, Definitions, Simulation with `Runner` as the step pipeline, Assets, Net, Util, World, Match); `src/server` → `ServerScriptService.Server`; `src/client` → `StarterPlayer.StarterPlayerScripts.Client`; `src/first` → `ReplicatedFirst.BL_First`; `src/owner/Data` and `Libraries` → `ServerScriptService.Data` / `.Libraries`; `src/owner/Modules` and `Events` → `ReplicatedStorage.Modules` / `.Events`; `src/storage/BLInput` → `ServerStorage.BLInput`; `tools/studio` → `ServerStorage.BL_Tools`; `build/import` → `ServerStorage.BL_Import`.
+- Rojo 7.7.1 crashes (`change_processor.rs`, file not found) when files vanish for a moment: whole-file rewrites and every pull or rebase. Serve with `tools/rojo-serve.ps1` in a visible terminal; after a pull or a crash the owner reconnects each Studio.
+- Before trusting a test, check that Studio has your latest edit (search a script's `Source` for the new line). A playtest runs the code it started with: restart it after changing code.
+- Not in Rojo, stays in each place: world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, `PlaceRole`.
+- The Studio MCP `studio_id` changes when Studio restarts: call `list_roblox_studios` first. Load `/bl-studio-test` before any playtest, self-test, capture or `BL_Debug` call.
 
-  Plates and call-outs are drawn in the World layer (projected every frame), not BillboardGuis: `screen_capture` doesn't draw BillboardGuis.
-- **Pact circles:** `BL_PactCircle` markers are dressed by the client (`PactSiteController`): the moonlight shaft, the sigil, the light and the waiting Shinigami. A Shinigami's look is `Simulation/ShinigamiBody` plus the definition's `Look`. What it says is the definition's `Lines`, shown with `UI/Hud/Subtitle`.
-- **AI hunters have no bodies in the phases** (`Config.Match.AiBodies`), so `MatchKill` on one returns false. The final gives them bodies.
-- A textured Beam draws as a solid band until its texture loads: preload it (`ContentProvider:PreloadAsync`) before enabling it.
-- **Art pipeline (C1):**
-  - **Models:** Blender scripts in `tools/blender` (headless: `blender.exe -b --factory-startup --python <script> -- <out_dir>`, Blender 5.2 in Steam's folder) model, bake and export centred mesh JSON. Copy it into `build/import/<Name>.txt` (it syncs to `ServerStorage.BL_Import`). In Edit mode, `require(ServerStorage.BL_Tools.ModelAssembly:Clone())` publishes it (`PublishMesh`); upload the maps with MCP `upload_image` (serve the scratchpad with `py -m http.server`). The model's recipe in `tools/studio/Models/<Name>` builds it, and `Assembly.Serialize` gives base64. Write that to a file, decode it with `py`, and check its adler32 against Studio's before installing the .rbxm in `src/shared/Assets`. Then empty `build/import` (it bloats the place).
-  - **Mesh origin:** a published mesh keeps its vertex origin, so exports are centred and the part sits at the recorded centre.
-  - **Animations:** sources live in `tools/studio/Animations/<Kit>`. `Author.Save` then `Author.Publish` (Edit mode) give the id for `Config.Animations`.
-  - **Metals:** in Roblox a metal's base colour is its reflectance. Blued steel needs about 15–20 % (linear), or it renders flat black in dusk lighting. `SurfaceAppearance` supports `EmissiveMaskContent` / `EmissiveStrength`.
-- HttpService is disabled for MCP plugin code too (the game setting), so data reaches Studio only through Rojo (`BL_Import`) and leaves only through MCP output.
-- Combat works in the Manor only inside `BL_CombatZone` volumes (`Shared.Util.Zones`); the hall is a safe zone. For combat or VFX tests use `BL_Debug:Invoke("TestPad", player)`. The test pad is far away, so the Studio `R6` animation rig streams out on the client: clone the character for a posed preview instead.
-- Under Server Authority the simulation's animation tracks don't show in the server's `GetPlayingAnimationTracks`; the client lists them. A client-only rig's Animator doesn't step, so preview poses by setting `Motor6D.Transform`.
-- To capture fast effects frozen, require the client's `Vfx` modules from the Client context, set `Kit.TimeScale` (that copy only), play the effect, then set it to 0 and every emitter's `TimeScale` to 0.
+## This Windows machine
+
+- Windows Controlled Folder Access is on; don't change it. Git, Rojo, Python and PowerShell can't write under Documents, which is why the project lives in `C:\Users\gloce\BloodsLocks`. The old `Documents\BloodsLocks - Project` folder is a retired backup: never work there. Git and Rojo commands need the Bash sandbox disabled. Use `py`, not `python` (the Store shim). Draw generated assets into the scratchpad.
+
+## Done means
+
+- `BL_SelfTest` and the logic tests pass after every code change, and every new mechanic or rule adds a case. Anything players see gets a player-camera review. Then run `/bl-finish`.
+
+## Context
+
+- Start a session with `/bl-start`. A session can cover one slice or more; `/clear` between unrelated slices so old context doesn't ride along.
+- Topic rules load from `.claude/rules/` when you touch matching files: code standards, server authority, UI, VFX, match and world.
+- Skills: `/bl-start`, `/bl-finish`, `/bl-studio-test`, `/bl-asset-pipeline` (models, maps, animations), `/bloodlocks-environment-art` (environment art method), `/bl-reference-study` (learning from the reference footage). The last four are shared with ChatGPT: their text lives in `.agents/skills/`.
+- Read big files by section, never whole: search for the heading, then read that range. Libraries (`ProfileStore.luau`, MuchachoHitbox) only by search.
+- Use the Explore subagent for broad searches and log digging, so only the conclusion lands in the main context.
+
+# Compact instructions
+
+When compacting, keep: the current slice and its acceptance checks, files changed, test results, decisions the owner made this session, open questions, and any teammate's work in progress.
