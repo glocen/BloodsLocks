@@ -1,5 +1,5 @@
 --!strict
--- Layers: one ScreenGui per UI layer (HUD, Menus, Overlay, Toasts, Transition), created on first use, ordered by
+-- Layers: one ScreenGui per UI layer (World, HUD, Menus, Overlay, Toasts, Transition), created on first use, ordered by
 -- Theme.Layers and fitted to the screen by a UIScale: everything is authored at Theme.ReferenceResolution and
 -- scales uniformly, so offsets, strokes and paddings stay proportional on every screen.
 
@@ -9,9 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Theme = require(script.Parent.Parent.Theme)
 local Signal = require(ReplicatedStorage.Shared.Util.Signal)
 
-export type LayerName = "HUD" | "Menus" | "Overlay" | "Toasts" | "Transition"
-
-local MIN_SCALE, MAX_SCALE = 0.5, 1.5
+export type LayerName = "World" | "HUD" | "Menus" | "Overlay" | "Toasts" | "Transition"
 
 local Layers = {}
 
@@ -27,9 +25,7 @@ local function fit()
 	if not camera then
 		return
 	end
-	local viewport = camera.ViewportSize
-	local reference = Theme.ReferenceResolution
-	local scale = math.clamp(math.min(viewport.X / reference.X, viewport.Y / reference.Y), MIN_SCALE, MAX_SCALE)
+	local scale = Theme.FitScale(camera.ViewportSize)
 	for _, uiScale in scales do
 		uiScale.Scale = scale
 	end

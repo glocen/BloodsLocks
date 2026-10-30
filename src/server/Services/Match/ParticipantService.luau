@@ -4,7 +4,8 @@
 -- the player leaving (standings, culls and settlement still need it). Records are replicated under
 -- ReplicatedStorage.MatchState.Participants (Shared.Match.MatchState) for every screen.
 --   Players join on arrival. AI hunters fill the empty seats up to Config.Match.Lobby.MaxPlayers (owner decision D11);
---   MatchService calls FillWithAi when the countdown ends. They have no body or judgement yet.
+--   MatchService calls FillWithAi when the countdown ends. They have no judgement yet, so they get a body only where
+--   Config.Match.AiBodies says (the final, for now).
 --   Deaths: EntityService.PlayerDied (players) and BodyDied (AI hunter bodies, which carry their id as OwnerId) count
 --   the victim's death and the killer's kill (a Shinigami's kill is its master's), log it, then fire Died for
 --   MatchService. Player kills pay Renown only inside ritual sites (D4), from R1.
@@ -43,6 +44,9 @@ export type Participant = {
 	Deaths: number,
 	Placement: number,
 	RevivalAt: number,
+	FellAt: Vector3, -- where the body fell last (the revival map marks it)
+	Moved: boolean, -- the region asked for was full this phase, so the entrant started elsewhere
+	ProtectedUntil: number, -- time() spawn protection ends (0: not protected)
 	JoinedAt: number,
 	LeftAt: number?,
 }
@@ -98,6 +102,9 @@ local function add(id: number, name: string, ai: boolean, class: string): Partic
 		Deaths = 0,
 		Placement = 0,
 		RevivalAt = 0,
+		FellAt = Vector3.zero,
+		Moved = false,
+		ProtectedUntil = 0,
 		JoinedAt = time(),
 		LeftAt = nil,
 	}

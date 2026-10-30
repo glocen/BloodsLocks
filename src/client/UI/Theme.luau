@@ -3,32 +3,14 @@
 -- whole game here; screens never hold literals. Design notes: docs/ui-research.md section 4.
 -- Palette = raw colours. Colors = what they mean (screens use these). The older flat keys (BarWidth, Corner, ...)
 -- stay as aliases so existing components keep working while they're ported.
+-- The raw palette, font families, images, text sizes and fit formulas live in ReplicatedFirst.BL_First.ThemeBase so
+-- the loading screen can use them before the game loads; this module re-exports them.
 
-local Palette = {
-	Ink = Color3.fromRGB(11, 8, 14), -- near-black violet: backgrounds
-	InkSoft = Color3.fromRGB(22, 15, 27),
-	Velvet = Color3.fromRGB(34, 20, 38), -- panel body
-	Bone = Color3.fromRGB(232, 222, 205), -- primary text, parchment
-	Ash = Color3.fromRGB(150, 138, 140), -- secondary text
-	Gold = Color3.fromRGB(201, 164, 98), -- hairlines, focus, rarity
-	GoldDim = Color3.fromRGB(110, 86, 52),
-	Blood = Color3.fromRGB(176, 22, 44), -- danger, health, primary action
-	BloodDeep = Color3.fromRGB(88, 8, 24),
-	BloodMuted = Color3.fromRGB(142, 34, 40), -- HP: deep, desaturated (Duskbloods-like)
-	BloodMutedDeep = Color3.fromRGB(64, 14, 20),
-	Ember = Color3.fromRGB(222, 140, 60), -- posture, warmth
-	EmberDeep = Color3.fromRGB(130, 66, 22),
-	Moon = Color3.fromRGB(110, 146, 220), -- info, cold side, ready
-	Verdant = Color3.fromRGB(120, 196, 128), -- heals
-	Moss = Color3.fromRGB(128, 178, 84), -- stamina
-	MossDeep = Color3.fromRGB(46, 84, 32),
-}
+local ThemeBase = require(game:GetService("ReplicatedFirst"):WaitForChild("BL_First"):WaitForChild("ThemeBase"))
 
-local function family(enum: Enum.Font): string
-	return Font.fromEnum(enum).Family
-end
-local DISPLAY = family(Enum.Font.Bodoni) -- Accanthis: high-contrast classical serif for titles
-local BODY = family(Enum.Font.Garamond) -- Garamond: body text, labels, numbers
+local Palette = ThemeBase.Palette
+local DISPLAY = ThemeBase.Families.Display -- Bodoni: high-contrast classical serif for titles
+local BODY = ThemeBase.Families.Body -- Garamond: body text, labels, numbers
 
 return {
 	Palette = Palette,
@@ -72,6 +54,7 @@ return {
 		Overlay = 0.35,
 		Hairline = 0.25,
 		Disabled = 0.55,
+		Scrim = 0.3, -- the soft dark under HUD text that sits over the world (at its densest edge)
 	},
 
 	Fonts = {
@@ -83,7 +66,7 @@ return {
 	},
 
 	-- MinRendered / MinCaption: the smallest text may ever render on screen, after scaling (UI standard section 2)
-	TextSize = { Caption = 14, Body = 18, Label = 20, Title = 30, Display = 48, MinRendered = 16, MinCaption = 14 },
+	TextSize = ThemeBase.TextSize,
 
 	Space = { XS = 4, S = 8, M = 12, L = 20, XL = 32, XXL = 48 },
 
@@ -100,26 +83,69 @@ return {
 		Direction = Enum.EasingDirection.Out,
 	},
 
-	-- ScreenGui layers (DisplayOrder). Higher draws on top.
-	Layers = { HUD = 10, Menus = 20, Overlay = 30, Toasts = 40, Transition = 100 },
+	-- ScreenGui layers (DisplayOrder). Higher draws on top. World: labels pinned to things in the world (plates over
+	-- enemies and hunters, call-outs), drawn under the HUD.
+	Layers = { World = 5, HUD = 10, Menus = 20, Overlay = 30, Toasts = 40, Transition = 100 },
 
-	-- Everything is authored at this resolution; one UIScale per layer fits it to the screen.
-	ReferenceResolution = Vector2.new(1920, 1080),
-
-	-- Our own drawn UI images (tools/vfx_textures.py).
-	Images = {
-		Ring = "rbxassetid://126930541164453", -- white ring, swept into radial gauges
-		BloodCrescent = "rbxassetid://114481905428903", -- Blood Blade emblem
-		Glint = "rbxassetid://101126423932013", -- Light Beam emblem, lock-on glint
-		Medallion = "rbxassetid://130555865843448", -- engraved bezel (light grey, tint it)
-		Bullet = "rbxassetid://103235686741303", -- cartridge icon
-		SoftGlow = "rbxassetid://75560931237584", -- round soft glow
-		-- tools/ui_textures.py
-		HuntCard = "rbxassetid://115279579388284", -- the Hunt tab's mode card: Victorian skyline at blood dusk
-		RitualCircle = "rbxassetid://115419381323676", -- the blood circle under the character in the Blood Table menu
-		Ribbon = "rbxassetid://134502622812389", -- brushed paint grain (grey; tinted), tiles 512x64
-		TabFlourish = "rbxassetid://136447657638231", -- gold filigree for the active tab, 9-slice (72 px ends, 512x48)
+	-- The intermission map (UI/Match/MapView): the district seen from above, coloured by height like an engraved
+	-- survey (low → high), lit warm, with gold regions and these marks for what's inside them.
+	Map = {
+		Bands = {
+			Color3.fromRGB(38, 28, 33),
+			Color3.fromRGB(74, 58, 56),
+			Color3.fromRGB(118, 98, 86),
+			Color3.fromRGB(166, 146, 122),
+			Color3.fromRGB(190, 172, 148), -- the spires: light, but not so light a lone one reads as a mark
+		},
+		EdgeFade = 0.1, -- how far in from its edges the relief fades into the backdrop (of its width / height)
+		Ambient = Color3.fromRGB(150, 132, 120),
+		Light = Color3.fromRGB(255, 226, 196),
+		Region = Palette.Gold,
+		Ring = { Thickness = 1.5, Chosen = 2.5, Idle = 0.55, Lit = 0.1 }, -- region rings: widths (px), transparencies
+		Fill = { Hover = 0.8, Chosen = 0.7 }, -- the warm glow inside a hovered / chosen ring (transparency)
+		Pulse = 1.2, -- the chosen ring's one pulse swells to this × its size
+		Marks = {
+			Pact = Palette.Moon,
+			Ritual = Palette.Gold,
+			Fodder = Palette.Ember,
+			Heavy = Palette.Blood,
+			You = Palette.Gold,
+		},
 	},
+
+	-- Pact circles (Controllers/Core/PactSiteController), in the layers of Duskbloods' Kin circles: from afar a soft
+	-- shaft of moonlight with motes drifting in it; close up the blood sigil turning on the ground, a cold pool of light,
+	-- and the Shinigami waiting in it. Studs, seconds; Spin in degrees a second.
+	Pact = {
+		Moonlight = Color3.fromRGB(176, 196, 240),
+		Sigil = { Size = 14, Spin = 5, Transparency = 0, Brightness = 3, Flare = 7, FlareTime = 1.2 },
+		Shaft = { Height = 60, Width = 16, Transparency = 0.5 }, -- a soft glow stretched from Height below the floor to Height above
+		Motes = { Rate = 5, Height = 12, Radius = 5 },
+		Light = { Height = 28, Angle = 36, Brightness = 2.4 },
+		Bow = 14, -- degrees the waiting Shinigami's head is bowed
+		Fade = 0.5, -- seconds it takes to break into mist when your pact is made
+	},
+
+	-- Plates over enemies, hunters and companions (UI/World/Plate), at the reference resolution.
+	Plate = {
+		Width = 120, -- fodder, hunters, companions
+		WideWidth = 168, -- heavies and elites, and whatever you've locked
+		HpHeight = 5,
+		PostureHeight = 3,
+		Gap = 2,
+		NameSize = 17,
+		TotalSize = 17,
+		Rise = 14, -- pixels above the head's top the bars sit
+	},
+
+	-- Everything is authored at this resolution; one UIScale per layer fits it to the screen (FitScale), and labels
+	-- keep a legible rendered size when it shrinks (LegibleSize).
+	ReferenceResolution = ThemeBase.ReferenceResolution,
+	FitScale = ThemeBase.FitScale,
+	LegibleSize = ThemeBase.LegibleSize,
+
+	-- Our own drawn UI images (tools/vfx_textures.py, tools/ui_textures.py).
+	Images = ThemeBase.Images,
 
 	-- The Blood Table menu (sizes at the reference resolution; text never under 20 so it stays crisp when scaled).
 	Menu = {

@@ -15,6 +15,7 @@ return {
 	Places = {
 		Manor = 76593217243342, -- ROLOCK: the hub
 	},
+	HubName = "The Manor", -- the hub's name on screen (passage, menus)
 	-- Match maps (their places, zones and enemies) are definitions: Definitions/Maps. Match rules: Definitions/Rules;
 	-- the waiting room and the Studio fast profile: Config.Match.
 }

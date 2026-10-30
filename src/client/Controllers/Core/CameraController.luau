@@ -28,6 +28,25 @@ local yaw, pitch = 0, math.rad(-10)
 local distance = Config.Distance
 local focus: Vector3? = nil
 local shaker: any = nil
+-- When the mouse locks again (a menu screen closed), the cursor's jump back to the centre is reported as movement and
+-- would fling the camera to a pitch limit: the movement of the first SETTLE frames after that, or after a spawn
+-- snap, is dropped.
+local SETTLE = 2
+local settle = 0
+local wasCursor = true
+
+-- Swings the camera behind the character looking along `direction` (a spawn: you see where you face), and snaps the
+-- follow point to the character so the camera doesn't sweep across the map from where it was.
+function CameraController.Face(direction: Vector3)
+	local flat = Vector3.new(direction.X, 0, direction.Z)
+	if flat.Magnitude < 1e-3 then
+		return
+	end
+	yaw = math.atan2(-flat.X, -flat.Z)
+	pitch = math.rad(-10)
+	focus = nil
+	settle = SETTLE
+end
 
 -- Short camera shake for hit feedback.
 function CameraController.Shake(magnitude: number, roughness: number, fadeOut: number)
@@ -56,6 +75,12 @@ local function update(dt: number)
 	local cursor = GuiService.MenuIsOpen or Focus.CursorFree()
 	UserInputService.MouseBehavior = if cursor then Enum.MouseBehavior.Default else Enum.MouseBehavior.LockCenter
 	UserInputService.MouseIconEnabled = cursor
+	if wasCursor and not cursor then
+		settle = SETTLE
+	end
+	wasCursor = cursor
+	local still = cursor or settle > 0 -- no mouse movement counts this frame
+	settle = math.max(0, settle - 1)
 
 	local wantedFocus = root.Position + Vector3.new(0, Config.FocusHeight, 0)
 	focus = if focus then focus:Lerp(wantedFocus, Vector.Smooth(Config.FollowSharpness, dt)) else wantedFocus
@@ -69,7 +94,7 @@ local function update(dt: number)
 		local wantedPitch = math.clamp(math.asin(toTarget.Y) + Config.LockPitchBias, Config.PitchMin, Config.PitchMax)
 		pitch += (wantedPitch - pitch) * alpha
 	else
-		local delta = if cursor then Vector2.zero else UserInputService:GetMouseDelta()
+		local delta = if still then Vector2.zero else UserInputService:GetMouseDelta()
 		yaw -= delta.X * Config.Sensitivity
 		pitch = math.clamp(pitch - delta.Y * Config.Sensitivity, Config.PitchMin, Config.PitchMax)
 	end

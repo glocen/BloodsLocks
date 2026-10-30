@@ -29,6 +29,7 @@ local CombatSim = require(Shared.Simulation.CombatSim)
 local Net = require(Shared.Net)
 local Signal = require(Shared.Util.Signal)
 local Log = require(Shared.Util.Log)
+local Parts = require(Shared.Util.Parts)
 local Core = script.Parent.Parent.Core
 local DebugService = require(Core.DebugService)
 local ScoreService = require(Core.ScoreService)
@@ -63,7 +64,7 @@ local MatchService = {}
 MatchService.StateChanged = Signal.new() :: Signal.Signal<string, number>
 
 local root: Folder
-local rule = Registry.Rule("Standard") -- (the reserved server's record will name the rule, A1)
+local rule = Registry.DefaultRuleDef() -- (the reserved server's record will name the rule, A1)
 local fast = false
 local state = S.Idle
 local phase = 0
@@ -129,9 +130,24 @@ local function lengths(): Lengths
 	return cachedLengths :: Lengths
 end
 
+-- The region choice so far, for the map's "2 / 3" (Atlas).
+local function publishChoices()
+	local live: { [number]: string } = {}
+	for id, region in choices do
+		local entrant = ParticipantService.Get(id)
+		if entrant and entrant.Eligible then
+			live[id] = region
+		end
+	end
+	Atlas.SetChoices(root, live, Regions.Capacity(#ParticipantService.Eligible(), #Spawning.Regions()))
+end
+
 local function enter(newState: string, length: number?)
 	state = newState
 	deadline = if length then time() + length else 0
+	if state == S.RegionChoice then
+		publishChoices()
+	end
 	root:SetAttribute(M.State, state)
 	root:SetAttribute(M.Phase, phase)
 	root:SetAttribute(M.StartedAt, time())
@@ -156,14 +172,18 @@ local function others(exceptId: number): { Vector3 }
 	return list
 end
 
--- A body for an entrant at `cframe`, alive and briefly protected.
-local function spawnEntrant(id: number, cframe: CFrame)
+-- An entrant alive at `cframe` and briefly protected, with a body there (an AI hunter only where MatchConfig.AiBodies
+-- gives it one: `final` is the final arena).
+local function spawnEntrant(id: number, cframe: CFrame, final: boolean)
 	protectedUntil[id] = time() + rule.Revival.Protection
-	ParticipantService.Update(id, { Alive = true, RevivalAt = 0 })
+	ParticipantService.Update(id, { Alive = true, RevivalAt = 0, ProtectedUntil = protectedUntil[id] })
 	if id < 0 then
 		Spawning.RemoveHunter(id)
-		local entrant = record(id)
-		Spawning.MakeHunter(id, entrant.Name, entrant.Class, cframe, hunterBonus[id] or 0)
+		local embodied = if final then MatchConfig.AiBodies.Final else MatchConfig.AiBodies.Phases
+		if embodied then
+			local entrant = record(id)
+			Spawning.MakeHunter(id, entrant.Name, entrant.Class, cframe, hunterBonus[id] or 0)
+		end
 	else
 		local player = Players:GetPlayerByUserId(id)
 		if player then
@@ -180,7 +200,7 @@ local function spawnInRegion(id: number, region: string)
 	end
 	regionOf[id] = region
 	ParticipantService.Update(id, { Region = region })
-	spawnEntrant(id, cframe)
+	spawnEntrant(id, cframe, false)
 end
 
 local function removeBody(id: number)
@@ -207,6 +227,7 @@ local function beginPhase()
 	local assignment = Regions.Allocate(ids, choices, Spawning.Regions(), random)
 	table.clear(choices)
 	for _, id in ids do
+		ParticipantService.Update(id, { Moved = assignment[id].Moved })
 		spawnInRegion(id, assignment[id].Region)
 	end
 	ScoreService.SetPhase(phase)
@@ -269,7 +290,7 @@ local function setupFinal()
 	for _, id in finalists do
 		local cframe = Spawning.InFinal(others(id), rule.Revival.Separation)
 		if cframe then
-			spawnEntrant(id, cframe)
+			spawnEntrant(id, cframe, true)
 		end
 	end
 	enter(S.FinalSetup, lengths().FinalSetup)
@@ -324,7 +345,7 @@ local function revive(now: number)
 			if state == S.Final then
 				local cframe = Spawning.InFinal(others(id), rule.Revival.Separation)
 				if cframe then
-					spawnEntrant(id, cframe)
+					spawnEntrant(id, cframe, true)
 				end
 			else
 				local regions = Spawning.Regions()
@@ -444,6 +465,11 @@ local function tick()
 end
 
 local function onDied(victim: number, _killer: number?)
+	local body: Model? = if victim < 0 then Spawning.HunterBody(victim) else (Players:GetPlayerByUserId(victim) and (Players:GetPlayerByUserId(victim) :: Player).Character)
+	local fell = Parts.Root(body)
+	if fell then
+		ParticipantService.Update(victim, { FellAt = fell.Position })
+	end
 	if state == S.Phase then
 		ParticipantService.Update(victim, { RevivalAt = time() + rule.Revival.Delay })
 		if victim < 0 then
@@ -463,8 +489,11 @@ end
 local function watchAttacks(player: Player, character: Model)
 	character:GetAttributeChangedSignal(A.ActionStart):Connect(function()
 		local _, action = EntityState.CurrentAction(character)
-		if action and (action.Hit or action.Shots or action.Beam or action.Projectile) then
+		if action and (action.Hit or action.Shots or action.Beam or action.Projectile) and (protectedUntil[player.UserId] or 0) > 0 then
 			protectedUntil[player.UserId] = 0
+			if record(player.UserId) then
+				ParticipantService.Update(player.UserId, { ProtectedUntil = 0 })
+			end
 		end
 	end)
 end
@@ -554,6 +583,7 @@ function MatchService.Start()
 	root = ReplicatedStorage:WaitForChild(MatchState.FolderName) :: Folder
 	root:SetAttribute(M.Rule, rule.Id)
 	root:SetAttribute(M.State, state)
+	root:SetAttribute(M.Dressed, Spawning.AntechamberDressed())
 	Atlas.Publish(root)
 	CombatSim.SetGuard(function(target: Model, now: number): boolean
 		if state == S.Idle then
@@ -576,6 +606,9 @@ function MatchService.Start()
 		end
 		if state == S.RegionChoice or (state == S.Phase and not entrant.Alive) then
 			choices[player.UserId] = region
+			if state == S.RegionChoice then
+				publishChoices()
+			end
 		end
 	end)
 	local function watch(player: Player)

@@ -1,7 +1,9 @@
 --!strict
 -- Cases: the self-test's checks, in run order. Each starts from a fresh test pad (SelfTestController's Reset: on the
--- pad, facing the dummy, idle, full stamina). Expected numbers come from Config and the definitions, never from
--- literals, so retuning a value doesn't break a check; tolerances cover simulation-step and network timing.
+-- pad, facing the dummy, idle, full stamina), except Stay cases, which check the screen as it is: "UI lint" runs
+-- first, on whatever is open, so `Invoke("UI lint")` with a menu up lints that menu. Expected numbers come from
+-- Config and the definitions, never from literals, so retuning a value doesn't break a check; tolerances cover
+-- simulation-step and network timing.
 -- Not covered yet: sprint (its input has no Scriptable binding), bite, howl, the charged attack, Light Beam, enemy
 -- leashing and the two-attackers limit. "Player kill credit" kills the player, so it stays last.
 
@@ -16,6 +18,12 @@ local EntityState = require(Shared.Simulation.EntityState)
 local PlayerState = require(Shared.Simulation.PlayerState)
 local Leveling = require(Shared.Simulation.Leveling)
 local Players = game:GetService("Players")
+local WorldTags = require(Shared.World.Tags)
+local Markers = require(Shared.World.Markers)
+local UiLint = require(script.Parent.UiLint)
+local PlateController = require(script.Parent.Parent.PlateController)
+local PactSiteController = require(script.Parent.Parent.PactSiteController)
+local Budget = require(script.Parent.Parent.Parent.Parent.Util.Budget)
 
 local A = EntityState.Attr
 local P = PlayerState.Attr
@@ -74,6 +82,44 @@ end
 
 return {
 	{
+		Name = "UI lint",
+		Stay = true,
+		Run = function(t)
+			local report = UiLint.Run()
+			t.Check("shadows match their labels", #report.Shadow == 0, UiLint.Detail(report.Shadow, report.Checked))
+			t.Check("text fits its box", #report.Fit == 0, UiLint.Detail(report.Fit, report.Checked))
+			t.Check("rendered text at least its minimum", #report.Size == 0, UiLint.Detail(report.Size, report.Checked))
+			t.Check("text inside the screen", #report.Screen == 0, UiLint.Detail(report.Screen, report.Checked))
+			t.Check("no placeholder text", #report.Placeholder == 0, UiLint.Detail(report.Placeholder, report.Checked))
+		end,
+	},
+	{
+		Name = "Pact sites",
+		Stay = true,
+		Run = function(t)
+			-- every pact circle is dressed: its Shinigami waits there (with no plate: it isn't a combatant) unless your
+			-- pact is with it, and only while it waits does the circle offer a pact
+			local sites = PactSiteController.Snapshot()
+			local plates = PlateController.Snapshot()
+			local circles, dressed = 0, 0
+			for _, marker in Markers.All(WorldTags.PactCircle.Tag) do
+				local def = Registry.Shinigami(marker:GetAttribute("Shinigami"))
+				local site = sites[marker]
+				if def then
+					circles += 1
+				end
+				if def and site then
+					dressed += 1
+					local waits = Players.LocalPlayer:GetAttribute(P.ShinigamiId) ~= def.Id
+					t.Check(`{def.Id} waits at its circle unless it's with you`, (site.Figure ~= nil) == waits, if site.Figure then "waiting" else "not there")
+					t.Check(`the {def.Id} circle offers a pact only while it waits`, site.Offers == waits)
+					t.Check(`the waiting {def.Id} has no plate`, site.Figure == nil or plates[site.Figure :: Model] == nil)
+				end
+			end
+			t.Check("every pact circle is dressed", dressed == circles, `{dressed} of {circles}`)
+		end,
+	},
+	{
 		Name = "Tap jump",
 		Run = function(t)
 			local rise = peakRise(t, function()
@@ -85,9 +131,11 @@ return {
 	{
 		Name = "High jump",
 		Run = function(t)
+			-- held well past a full charge: input delay can shorten the hold the server sees, and extra holding can't
+			-- raise the jump past MaxVelocity
 			local rise = peakRise(t, function()
-				t.Press("Jump", Movement.HighJump.FullCharge + 0.1)
-			end, 2)
+				t.Press("Jump", Movement.HighJump.FullCharge + 0.3)
+			end, 2.4)
 			t.Near("full-charge height", rise, jumpHeight(Movement.HighJump.MaxVelocity), 1)
 		end,
 	},
@@ -104,6 +152,21 @@ return {
 			t.Press("Jump")
 			t.Wait(0.1)
 			t.Check("one more jump is refused", t.Num(A.JumpsUsed) == Movement.MaxJumps)
+		end,
+	},
+	{
+		Name = "Air jump height",
+		Run = function(t)
+			-- from the top of a tap jump, one air jump rises its own full height (launch sets the vertical speed)
+			local root = t.Root()
+			t.Press("Jump")
+			t.Check("reached the apex", waitFor(function()
+				return root.AssemblyLinearVelocity.Y <= 0 and t.Num(A.JumpsUsed) == 1
+			end, 1.5))
+			local rise = peakRise(t, function()
+				t.Press("Jump")
+			end, 0.9)
+			t.Near("air jump rise", rise, jumpHeight(Movement.AirJumpVelocity), 0.8)
 		end,
 	},
 	{
@@ -143,6 +206,54 @@ return {
 			end
 			t.Wait(1)
 			t.Near("damage of the full chain", before - t.DummyHp(), total, 0)
+		end,
+	},
+	{
+		Name = "Plates",
+		Run = function(t)
+			local dummy = t.Dummy() :: Model
+			local shown = waitFor(function()
+				local plate = PlateController.Snapshot()[dummy]
+				return plate ~= nil and plate.Shown
+			end, 1.5)
+			t.Check("a target in front of you gets a plate", shown)
+			local lint = UiLint.Run() -- an unnamed plate before any hit: no name line, no total, no stray text
+			t.Check("the plate shows no placeholder text", #lint.Placeholder == 0, UiLint.Detail(lint.Placeholder, lint.Checked))
+			t.Lock()
+			local before = t.DummyHp()
+			t.Press("Attack")
+			t.Check("the hit lands", waitFor(function()
+				return t.DummyHp() < before
+			end, 1.5))
+			t.Wait(0.2)
+			local plate = PlateController.Snapshot()[dummy]
+			t.Near("its running total is the damage you dealt", plate and plate.Total or 0, before - t.DummyHp(), 0)
+			t.Near("its HP bar follows the HP", plate and plate.Hp or 0, t.DummyHp() / EntityState.Number(dummy, A.HPMax, 1), 0.01)
+			local numbers = 0
+			local world = Players.LocalPlayer.PlayerGui:FindFirstChild("BL_World")
+			for _, label in if world then world:GetChildren() else {} do
+				if label:IsA("TextLabel") and label.Name == "Pop" and tonumber(label.Text) then
+					numbers += 1
+				end
+			end
+			t.Check("hits pop no damage numbers (the plate shows them)", numbers == 0, `{numbers}`)
+		end,
+	},
+	{
+		Name = "Frame budget",
+		Run = function(t)
+			-- the per-frame updaters (Util/Budget) average under their limits; plates are up on the pad by now
+			t.Wait(1)
+			local report = Budget.Report()
+			local measured = 0
+			for name, limit in Budget.Limits do
+				local average = report[name]
+				if average then
+					measured += 1
+					t.Check(`{name} under {limit} ms a frame`, average <= limit, string.format("%.3f ms", average))
+				end
+			end
+			t.Check("something was measured", measured > 0, `{measured} updaters`)
 		end,
 	},
 	{
@@ -257,6 +368,8 @@ return {
 				attackDamage[Registry.Action(attack.Action).Hit.Damage] = true
 			end
 			t.Check("for one of its attacks' damage", attackDamage[hp - t.Num(A.HP)] == true, `lost {hp - t.Num(A.HP)}`)
+			local noticed = enemy and EntityState.Fx(enemy):GetAttribute(A.AlertTarget)
+			t.Check("it flagged noticing you (the glint)", noticed == t.Character().Name, tostring(noticed))
 		end,
 	},
 	{

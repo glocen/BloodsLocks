@@ -78,6 +78,11 @@ local A = {
 	Skill2RechargeAt = "s2R",
 	-- allegiance: the UserId of the player a companion (Shinigami) fights for
 	OwnerId = "own",
+	EnemyId = "eid", -- an enemy's definition id (Definitions/Enemies), for its plate
+	ShinigamiId = "shi", -- a summoned Shinigami's definition id (Definitions/Shinigami), for its plate
+	-- feedback: an enemy noticed a target (on the Humanoid, like the hit events below): when, and whom (model name)
+	AlertAt = "alT",
+	AlertTarget = "alW",
 	-- feedback events (on the Humanoid)
 	LastHitAt = "hitT",
 	LastHitDamage = "hitD",
@@ -119,7 +124,7 @@ EntityState.Defaults = {
 	},
 	Fx = {
 		LastHitAt = -10, LastHitDamage = 0, LastHitBy = "", LastEvadedAt = -10, LastBlockAt = -10,
-		LastParryAt = -10, LastHowlAt = -10, GuardBrokenAt = -10, LastBiteAt = -10, LastBiteHeal = 0,
+		LastParryAt = -10, LastHowlAt = -10, GuardBrokenAt = -10, LastBiteAt = -10, LastBiteHeal = 0, AlertAt = -10, AlertTarget = "",
 	},
 }
 

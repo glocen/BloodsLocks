@@ -1,6 +1,7 @@
 --!strict
 -- Smoke (Studio only): runs one whole fast match, solo plus AI hunters, and checks the lifecycle's rules on the way:
--- the field fills (D11), regions respect capacity, a death revives, culls follow the rule (8 → 8 → 6 → 3, lowest
+-- the field fills (D11), AI hunters stay bodiless in the phases (MatchConfig.AiBodies), regions respect capacity,
+-- the player's death revives, culls follow the rule (8 → 8 → 6 → 3, lowest
 -- Renown out, D1), the final gives lives and the HP bonus (D2), eliminations place in order, one winner, Bloodgems are
 -- paid once. Afterwards it restores the player's Test-store Bloodgems, Stats and match award. The match ends in Return,
 -- so restart the playtest before playing.
@@ -20,13 +21,14 @@ local PlayerHandlerData = require(ServerScriptService.Data.PlayerHandlerData)
 local Core = script.Parent.Parent.Parent.Core
 local ScoreService = require(Core.ScoreService)
 local ParticipantService = require(script.Parent.Parent.ParticipantService)
+local Spawning = require(script.Parent.Spawning)
 
 local S = MatchState.States
 
 local Smoke = {}
 
 function Smoke.Run(MatchService: any, player: Player): string
-	local rule = Registry.Rule("Standard")
+	local rule = Registry.DefaultRuleDef()
 	local lines: { string } = {}
 	local passed, failed = 0, 0
 	local function check(label: string, ok: boolean, detail: string?)
@@ -106,7 +108,8 @@ function Smoke.Run(MatchService: any, player: Player): string
 	end
 	check("everyone spawned alive", alive == #all, `{alive}/{#all}`)
 	check("regions within capacity", within, `capacity {capacity}`)
-	check("the player stands in the quarter", player.Character ~= nil and math.abs((player.Character :: Model):GetPivot().Position.Z) < 260)
+	local standsIn = if player.Character then Spawning.RegionAt((player.Character :: Model):GetPivot().Position) else nil
+	check("the player stands in their region", standsIn ~= nil and standsIn == entrant(player.UserId).Region, `{standsIn} / {entrant(player.UserId).Region}`)
 
 	-- scores: the player leads; AI hunter -i gets 10 i
 	ScoreService.Add(player, "Objective", 500, "smoke")
@@ -115,9 +118,10 @@ function Smoke.Run(MatchService: any, player: Player): string
 			ScoreService.Add(id, "Objective", 10 * -id, "smoke")
 		end
 	end
-	check("a death is recorded", killAndWait(-1))
+	check("AI hunters have no body in the phases", MatchConfig.AiBodies.Phases or MatchService.Kill(-1) == false)
+	check("a death is recorded", killAndWait(player.UserId))
 	check("and revives after the rule's delay", waitUntil(function()
-		return entrant(-1).Alive
+		return entrant(player.UserId).Alive
 	end, rule.Revival.Delay + 3))
 
 	skipTo(S.PhaseResolve, 1)

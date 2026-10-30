@@ -6,7 +6,9 @@
 --   AggroRange (how far from the master it will chase), FollowDistance, ResummonCooldown (after dying),
 --   Regen (fraction of max HP per second while dismissed or out of combat), Attacks (action ids, used in turn),
 --   Skill (its special move: Action, UnlockLevel, Cooldown, MinRange/MaxRange to the target, Telegraph seconds),
---   Actions (its own action definitions, same format as weapons).
+--   Actions (its own action definitions, same format as weapons),
+--   Look (its placeholder body until the modelled one lands: Body, Eyes and its Aura outline; Simulation/ShinigamiBody),
+--   Lines (what it says, printed as a subtitle; one at random: Pact when you bind it, Summon when it answers your call).
 
 return {
 	Id = "Kurogane",
@@ -21,6 +23,11 @@ return {
 	FollowDistance = 9,
 	ResummonCooldown = 30,
 	Regen = 0.02,
+	Look = { Body = Color3.fromRGB(26, 20, 30), Eyes = Color3.fromRGB(200, 30, 50), Aura = Color3.fromRGB(176, 22, 44) },
+	Lines = {
+		Pact = { "Your blood calls. My blade answers.", "So be it. Until the last bell, I am yours." },
+		Summon = { "Steel answers.", "I am at your side.", "Point the blade. I will follow it.", "Who falls first?" },
+	},
 	Attacks = { "Shinigami.Kurogane.Slash1", "Shinigami.Kurogane.Slash2" },
 	-- Gōka (hellfire): after a flash of red it drives its blade into the ground and a ring of fire bursts out,
 	-- hitting every enemy around it once.

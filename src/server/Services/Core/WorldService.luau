@@ -14,12 +14,14 @@ local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local WorldTags = require(Shared.World.Tags)
 local Markers = require(Shared.World.Markers)
+local Sightline = require(Shared.World.Sightline)
 local PlaceRole = require(Shared.Util.PlaceRole)
 local Raycast = require(Shared.Util.Raycast)
 local Log = require(Shared.Util.Log)
 local DebugService = require(script.Parent.DebugService)
 
 local GROUND_PROBE = 60 -- studs a grounded marker looks down for a floor
+local SPAWN_SIGHTLINE = 20 -- studs a spawn's most open view should reach
 local MAX_LOGGED = 10 -- problems printed at boot (the report has them all)
 
 export type Report = {
@@ -110,6 +112,13 @@ function WorldService.Check(): Report
 			checkAttributes(instance, spec, report.Problems)
 			if key == "EnemySpawn" and instance:GetAttribute("Enemy") == nil and instance:GetAttribute("Zone") == nil then
 				table.insert(report.Problems, `{where} ({spec.Tag}): needs an Enemy or a Zone attribute`)
+			end
+			if key == "Spawn" then
+				-- a hunter arrives facing the spawn's most open way: it should open onto real room
+				local _, reach = Sightline.Best(instance.Position - Vector3.new(0, instance.Size.Y / 2, 0), { instance })
+				if reach < SPAWN_SIGHTLINE then
+					table.insert(report.Problems, `{where} ({spec.Tag}): cramped, its most open view is {math.floor(reach)} studs (want {SPAWN_SIGHTLINE}+)`)
+				end
 			end
 			if spec.Grounded then
 				local hit = workspace:Raycast(instance.Position + Vector3.new(0, 1, 0), Vector3.new(0, -GROUND_PROBE, 0), Raycast.Exclude(exclude, true))

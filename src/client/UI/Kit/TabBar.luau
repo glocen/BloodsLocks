@@ -1,35 +1,23 @@
 --!strict
--- TabBar: the Blood Table's top ribbon. A full-width band of brushed wine-brown paint (our drawn texture, tinted) between
--- a bright gold hairline above and a dim one below; equal tabs split by thin dividers; key glyphs for the previous/next
--- keys at the ends. The active tab is a muted mauve plate under a gold filigree (a 9-sliced drawing: sword-guard
--- crosses and lozenges at its ends) that reaches a little past both sides. Calls onSelect(index) on click.
+-- TabBar: the Blood Table's top ribbon (Kit.Ribbon) with equal tabs split by thin dividers and key glyphs for the
+-- previous/next keys at the ends. The active tab is a muted mauve plate under a gold filigree (a 9-sliced drawing:
+-- sword-guard crosses and lozenges at its ends) that reaches a little past both sides. Calls onSelect(index) on click.
 
 local Theme = require(script.Parent.Parent.Theme)
 local Motion = require(script.Parent.Parent.Core.Motion)
 local Text = require(script.Parent.Text)
+local Ribbon = require(script.Parent.Ribbon)
 
 export type TabBar = { Frame: GuiObject, Select: (self: TabBar, index: number) -> () }
 
 local M = Theme.Menu
 local END_W = 72 -- room for the key glyph at each end
-local RIBBON_TILE = Vector2.new(512, 64)
 local FLOURISH_SLICE = Rect.new(72, 0, 440, 48) -- the filigree image's stretchable middle
 local FLOURISH_HEIGHT = 40
 local FLOURISH_OVERHANG = 10 -- pixels the filigree reaches past each side of the tab
 
 local TabBar = {}
 TabBar.__index = TabBar
-
-local function line(parent: Instance, props: { [string]: any }): Frame
-	local f = Instance.new("Frame")
-	f.BorderSizePixel = 0
-	f.BackgroundColor3 = Theme.Colors.Hairline
-	for k, v in props do
-		(f :: any)[k] = v
-	end
-	f.Parent = parent
-	return f
-end
 
 local function keyGlyph(parent: Instance, key: string, xScale: number, xOffset: number)
 	local box = Instance.new("Frame")
@@ -51,24 +39,7 @@ local function keyGlyph(parent: Instance, key: string, xScale: number, xOffset: 
 end
 
 function TabBar.new(parent: Instance, labels: { string }, onSelect: (number) -> ()): TabBar
-	local frame = Instance.new("ImageLabel")
-	frame.Name = "TabBar"
-	frame.Position = UDim2.fromOffset(M.Margin, M.Top)
-	frame.Size = UDim2.new(1, -2 * M.Margin, 0, M.TabHeight)
-	frame.BackgroundColor3 = Theme.Palette.Ink
-	frame.BackgroundTransparency = 0.1
-	frame.BorderSizePixel = 0
-	frame.Image = Theme.Images.Ribbon
-	frame.ImageColor3 = M.RibbonTint
-	frame.ScaleType = Enum.ScaleType.Tile
-	frame.TileSize = UDim2.fromOffset(RIBBON_TILE.X, RIBBON_TILE.Y)
-	frame.Parent = parent
-	local shade = Instance.new("UIGradient")
-	shade.Rotation = 90
-	shade.Color = ColorSequence.new(Color3.new(1, 1, 1), M.RibbonShade)
-	shade.Parent = frame
-	line(frame, { Size = UDim2.new(1, 0, 0, Theme.Stroke.Hairline), BackgroundTransparency = 0.15 })
-	line(frame, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, Theme.Stroke.Hairline), BackgroundTransparency = 0.55 })
+	local frame = Ribbon.new(parent, "TabBar")
 	keyGlyph(frame, "Q", 0, END_W / 2)
 	keyGlyph(frame, "E", 1, -END_W / 2)
 
@@ -118,7 +89,7 @@ function TabBar.new(parent: Instance, labels: { string }, onSelect: (number) -> 
 			ZIndex = 4,
 		})
 		if i > 1 then
-			line(tab, {
+			Ribbon.Divider(tab, {
 				Position = UDim2.new(0, 0, 0.24, 0),
 				Size = UDim2.new(0, Theme.Stroke.Hairline, 0.52, 0),
 				BackgroundColor3 = M.TabText,

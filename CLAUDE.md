@@ -15,6 +15,7 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
   - `src/owner/Data`, `src/owner/Libraries` → `ServerScriptService.Data` / `.Libraries`: the owner's data system and libraries (ProfileStore, ProductManager, RockModuleServer)
   - `src/owner/Modules`, `src/owner/Events` → `ReplicatedStorage.Modules` / `.Events`: the owner's modules (MuchachoHitbox, StunHandlerV2, CameraShaker, RockModule, screen3D, Combat Agent placeholder, WeaponRarities, Tween list) and remotes
   - `src/storage/BLInput` → `ServerStorage.BLInput` (the input context)
+  - `src/first` → `ReplicatedFirst.BL_First`: ThemeBase (palette, fonts, images, fit formulas; `UI/Theme` re-exports it) and the Passage (our loading and teleport screen, with named holds)
   - Mapping: `default.project.json`. Tool versions: `rokit.toml` (`rokit install`).
   - Not in Rojo (place-specific, stays in Studio): world builds, `ServerStorage.WorldTools` / `WorldAssets` / `RBX_ANIMSAVES` / backups, Lighting, the `PlaceRole` workspace attribute (`"Manor"` in ROLOCK, `"Match"` in match places; read it only through `Shared.Util.PlaceRole`).
   - Rojo must be serving (VS Code: Rojo → Start, or `rojo serve` in the repo) and the place connected (Studio: Plugins → Rojo → Connect) for file edits to reach Studio. Before trusting a Studio test, check that the place's script count matches `src/`.
@@ -78,3 +79,14 @@ PvPvE Roblox action game inspired by FromSoftware's The Duskbloods. Duskbloods i
 - Windows **Controlled Folder Access** is on: git, Rojo, Python and PowerShell can't write anywhere under Documents (only the file Write/Edit tools can). That's why the project lives in `C:\Users\gloce\BloodsLocks`. Don't change the Windows setting. Git and Rojo commands there need the Bash sandbox disabled. Draw generated assets into the scratchpad; upload images by serving that folder with `py -m http.server` on 127.0.0.1 and calling MCP `upload_image` with the URLs. Use `py`, not `python` (the latter is the Store shim).
 - Weapon models: `WeldConstraint`s inside a cloned model don't hold under Server Authority (parts stay at the template's origin). Join parts with `Weld` + explicit C0.
 - To place a player for a test, set the root CFrame from the Server context; client-side CFrame writes are overridden under Server Authority.
+- **Capturing match screens:** the fast profile runs phases in seconds (protection lasts 3 s), faster than MCP calls. For captures, start with `BL_Debug:Invoke("MatchStart", nil, false)` (the rule's real lengths) and advance with `MatchSkip`. `screen_capture`'s camera parameters don't move the play camera (our CameraController drives it every frame).
+- **UI text:** `Text.new` labels start empty, never Roblox's "Label". The self-test's "UI lint" fails on:
+  - placeholder text;
+  - text overrunning its box by more than 2 px;
+  - text under its legible size;
+  - labels off screen.
+
+  Plates and call-outs are drawn in the World layer (projected every frame), not BillboardGuis: `screen_capture` doesn't draw BillboardGuis.
+- **Pact circles:** `BL_PactCircle` markers are dressed by the client (`PactSiteController`): the moonlight shaft, the sigil, the light and the waiting Shinigami. A Shinigami's look is `Simulation/ShinigamiBody` plus the definition's `Look`. What it says is the definition's `Lines`, shown with `UI/Hud/Subtitle`.
+- **AI hunters have no bodies in the phases** (`Config.Match.AiBodies`), so `MatchKill` on one returns false. The final gives them bodies.
+- A textured Beam draws as a solid band until its texture loads: preload it (`ContentProvider:PreloadAsync`) before enabling it.

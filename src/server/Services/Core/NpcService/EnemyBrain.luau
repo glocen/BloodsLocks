@@ -214,6 +214,10 @@ function EnemyBrain.Step(self: Brain, now: number)
 		self.Target = target
 		if target then
 			self.AlertUntil = now + def.AlertTime
+			-- feedback: who it noticed (clients flash a glint over its head when it's them)
+			local fx = EntityState.Fx(model)
+			fx:SetAttribute(A.AlertTarget, target.Name)
+			fx:SetAttribute(A.AlertAt, now)
 		end
 	end
 	if not target then

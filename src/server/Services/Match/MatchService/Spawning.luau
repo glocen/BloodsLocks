@@ -11,10 +11,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local MatchConfig = require(Shared.Config.Match)
+local MatchState = require(Shared.Match.MatchState)
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local WorldTags = require(Shared.World.Tags)
 local Markers = require(Shared.World.Markers)
+local Sightline = require(Shared.World.Sightline)
 local Parts = require(Shared.Util.Parts)
 local Core = script.Parent.Parent.Parent.Core
 local EntityService = require(Core.EntityService)
@@ -24,7 +26,7 @@ local A = EntityState.Attr
 
 local Spawning = {}
 
-local HUNTER_FOLDER = "BL_Hunters"
+local HUNTER_FOLDER = MatchState.HuntersFolder
 local HUNTER_TINT = Color3.fromRGB(70, 64, 86) -- placeholder look until AI hunters get real bodies
 local ENEMY_CLEARANCE = 30 -- studs a spawn prefers to keep from a live enemy
 
@@ -66,7 +68,20 @@ local function enemyNear(position: Vector3): boolean
 	return false
 end
 
--- The best marker: the farthest from `others` (good once past `separation`), avoiding live enemies.
+-- The way each spawn marker opens up (Sightline), worked out once: markers don't move.
+local facings: { [BasePart]: Vector3 } = {}
+local function facingOf(marker: BasePart): Vector3
+	local facing = facings[marker]
+	if not facing then
+		local floor = marker.Position - Vector3.new(0, marker.Size.Y / 2, 0)
+		facing = Sightline.Best(floor, { marker })
+		facings[marker] = facing
+	end
+	return facing :: Vector3
+end
+
+-- The best marker: the farthest from `others` (good once past `separation`), avoiding live enemies. The body faces
+-- the marker's most open direction, so nobody arrives staring at a wall.
 local function pick(markers: { BasePart }, others: { Vector3 }, separation: number): CFrame?
 	local best, bestScore = nil, -math.huge
 	for _, marker in markers do
@@ -83,7 +98,8 @@ local function pick(markers: { BasePart }, others: { Vector3 }, separation: numb
 		return nil
 	end
 	local floor = best.Position.Y - best.Size.Y / 2
-	return CFrame.new(best.Position.X, floor + MatchConfig.SpawnHeight, best.Position.Z) * best.CFrame.Rotation
+	local at = Vector3.new(best.Position.X, floor + MatchConfig.SpawnHeight, best.Position.Z)
+	return CFrame.lookAt(at, at + facingOf(best))
 end
 
 function Spawning.InRegion(region: string, others: { Vector3 }, separation: number): CFrame?
@@ -94,16 +110,53 @@ function Spawning.InFinal(others: { Vector3 }, separation: number): CFrame?
 	return pick(markersFor(WorldTags.FinalSpawn.Tag, nil), others, separation)
 end
 
--- A place in the Antechamber, spread a little per arrival.
+local function inside(volume: BasePart, position: Vector3): boolean
+	local offset = volume.CFrame:PointToObjectSpace(position)
+	local half = volume.Size / 2
+	return math.abs(offset.X) <= half.X and math.abs(offset.Y) <= half.Y and math.abs(offset.Z) <= half.Z
+end
+
+-- The region whose volume holds `position` (nil outside every region).
+function Spawning.RegionAt(position: Vector3): string?
+	for _, volume in Markers.All(WorldTags.Region.Tag) do
+		local id = volume:GetAttribute("Region")
+		if volume:IsA("BasePart") and type(id) == "string" and inside(volume, position) then
+			return id
+		end
+	end
+	return nil
+end
+
+local STAGE_SPACING = 8 -- studs between hunters lined up at the Antechamber's stage marker
+
+-- Whether the Antechamber's art is finished (its volume carries Dressed = true): players may then step out of the
+-- Antechamber screen into the room.
+function Spawning.AntechamberDressed(): boolean
+	local room = markersFor(WorldTags.Antechamber.Tag, nil)[1]
+	return room ~= nil and room:GetAttribute("Dressed") == true
+end
+
+-- A place in the Antechamber, spread a little per arrival. With a BL_Stage marker in the room, arrivals line up beside
+-- it facing its way (the Antechamber screen frames each hunter there); otherwise a grid in the near half of the room,
+-- facing across it, so the screen's camera (in front of the hunter) has the room's depth instead of the near wall.
 function Spawning.InAntechamber(index: number): CFrame?
 	local room = markersFor(WorldTags.Antechamber.Tag, nil)[1]
 	if not room then
 		return nil
 	end
-	local floor = room.Position.Y - room.Size.Y / 2
+	for _, mark in markersFor(WorldTags.Stage.Tag, nil) do
+		if inside(room, mark.Position) then
+			local look = Vector3.new(mark.CFrame.LookVector.X, 0, mark.CFrame.LookVector.Z).Unit
+			local right = look:Cross(Vector3.yAxis)
+			local side = if index % 2 == 0 then 1 else -1
+			local at = Vector3.new(mark.Position.X, mark.Position.Y - mark.Size.Y / 2 + MatchConfig.SpawnHeight, mark.Position.Z)
+				+ right * (math.floor(index / 2) * STAGE_SPACING * side)
+			return CFrame.lookAt(at, at + look)
+		end
+	end
 	local column, row = (index - 1) % 4, math.floor((index - 1) / 4)
-	local offset = Vector3.new((column - 1.5) * 8, 0, (row - 0.5) * 8 - room.Size.Z / 4)
-	return CFrame.new(Vector3.new(room.Position.X, floor + MatchConfig.SpawnHeight, room.Position.Z) + offset)
+	local at = (room.CFrame * CFrame.new((column - 1.5) * 8, MatchConfig.SpawnHeight - room.Size.Y / 2, (row - 0.5) * 8 - room.Size.Z / 4)).Position
+	return CFrame.lookAt(at, at - room.CFrame.LookVector) -- the grid is on the room's look side: face back across it
 end
 
 -- Puts a player's body at `cframe`: moves a living character, or loads a new one there.

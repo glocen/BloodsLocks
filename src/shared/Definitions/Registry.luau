@@ -7,6 +7,7 @@ local Definitions = script.Parent
 local Registry = {}
 
 Registry.DefaultClass = "Gustave"
+Registry.DefaultRule = "Standard" -- the rule a match uses until its admission record names one (A1)
 Registry.SkillSlots = 2
 
 local classes: { [string]: any } = {}
@@ -64,6 +65,7 @@ for _, module in Definitions.Shinigami:GetChildren() do
 	assert(def.BaseHealth and def.Reach and def.AttackInterval and def.ResummonCooldown, `shinigami {def.Id}: missing tuning`)
 	assert(not def.Skill or (actions[def.Skill.Action] and def.Skill.UnlockLevel and def.Skill.Cooldown), `shinigami {def.Id}: skill invalid`)
 	assert(not def.Weapon or weapons[def.Weapon], `shinigami {def.Id}: weapon {def.Weapon} doesn't exist`)
+	assert(def.Look and def.Look.Body and def.Look.Eyes and def.Look.Aura, `shinigami {def.Id}: Look needs Body, Eyes and Aura`)
 	shinigami[def.Id] = def
 end
 -- Enemies are grouped in one folder per map (Enemies/<Map>/<Id>); ids are unique across every map.
@@ -154,7 +156,7 @@ end
 table.sort(ruleOrder, function(a, b)
 	return a.Order < b.Order
 end)
-assert(rules.Standard, "the Standard rule must exist")
+assert(rules[Registry.DefaultRule], `the default rule {Registry.DefaultRule} must exist`)
 
 for id, class in classes do
 	for slot, skillId in class.Skills or {} do
@@ -196,6 +198,11 @@ end
 -- A match rule by id (RuleDefaults merged in, frozen), or nil.
 function Registry.Rule(id: string?): any
 	return if id then rules[id] else nil
+end
+
+-- The rule a match plays when none is named (Registry.DefaultRule).
+function Registry.DefaultRuleDef(): any
+	return rules[Registry.DefaultRule]
 end
 
 -- Every match rule in display order.

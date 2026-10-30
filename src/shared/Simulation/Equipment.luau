@@ -10,7 +10,8 @@ local WEAPON_NAME = "BL_Weapon"
 
 local Equipment = {}
 
--- Server only: welds a melee weapon to the right arm, replacing the weapon it held before (class change).
+-- Welds a melee weapon to the right arm, replacing the weapon it held before (class change). The server does it for
+-- every networked body; a client may for a body only it shows (a Shinigami waiting at its pact circle).
 -- `weaponId` defaults to the character's class's melee weapon; NPCs (Shinigami) pass their own.
 function Equipment.AttachMelee(character: Model, weaponId: string?)
 	local class = Registry.Class(character:GetAttribute(EntityState.Attr.ClassId))

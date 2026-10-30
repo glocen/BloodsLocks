@@ -27,7 +27,8 @@ local function status(player: Player, message: string, done: boolean?)
 	Net.Server.Fire("HuntStatus", player, message, done)
 end
 
-local function send(player: Player, placeId: number, data: { [string]: any }, arriving: string)
+-- Teleports `player` to `placeId`; `destination` is the place's name on screen (the client's Passage shows it).
+local function send(player: Player, placeId: number, data: { [string]: any }, destination: string, arriving: string)
 	if travelling[player] then
 		return
 	end
@@ -37,6 +38,7 @@ local function send(player: Player, placeId: number, data: { [string]: any }, ar
 	end
 	travelling[player] = true
 	status(player, arriving)
+	Net.Server.Fire("Travelling", player, destination)
 	local options = Instance.new("TeleportOptions")
 	options:SetTeleportData(data)
 	local ok, err = pcall(function()
@@ -52,7 +54,7 @@ end
 -- Sends players back to the Manor (match places: after the results, or a culled player choosing to leave).
 function TravelService.ReturnToManor(players: { Player })
 	for _, player in players do
-		task.spawn(send, player, GameConfig.Places.Manor, {}, "Returning to the Manor…")
+		task.spawn(send, player, GameConfig.Places.Manor, {}, GameConfig.HubName, `Returning to {GameConfig.HubName}…`)
 	end
 end
 
@@ -78,7 +80,7 @@ function TravelService.Start()
 				return
 			end
 			-- TeleportData is a hint only (it can be forged): class and loadout always come from the profile
-			send(player, map.PlaceId, { Rule = ruleId }, `Setting out for {map.DisplayName}…`)
+			send(player, map.PlaceId, { Rule = ruleId }, map.DisplayName, `Setting out for {map.DisplayName}…`)
 		end)
 	else
 		Net.Server.On("ReturnToManor", function(player: Player)

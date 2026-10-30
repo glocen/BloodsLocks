@@ -1,5 +1,6 @@
 {
   "name": "BloodsLocks",
+  
   "servePort": 34872,
   "globIgnorePaths": ["**/*.md"],
   "syncbackRules": {
@@ -9,6 +10,10 @@
   },
   "tree": {
     "$className": "DataModel",
+
+    "ReplicatedFirst": {
+      "BL_First": { "$path": "src/first" }
+    },
 
     "ReplicatedStorage": {
       "Shared": { "$path": "src/shared" },

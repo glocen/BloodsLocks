@@ -1,7 +1,9 @@
 --!strict
--- CombatFxController: combat feedback for every entity, read from the events CombatSim writes on each entity's
--- Humanoid (EntityState.Fx): damage numbers and flashes, Evaded, Blocked, PARRY, Guard broken, HOWL, bite heals,
--- STAGGERED, camera shakes for you, gun tracers, skill projectiles, channeled beams and charge telegraphs.
+-- CombatFxController: combat feedback for every entity, read from the events CombatSim and the enemy brains write on
+-- each entity's Humanoid (EntityState.Fx): hit flashes, call-outs (Evaded, Blocked, PARRY, Guard broken, HOWL, bite
+-- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gun tracers, skill
+-- projectiles, channeled beams and charge telegraphs. Damage itself reads on the plates (PlateController: HP bars and
+-- the running total of what you dealt), so hits pop no numbers.
 
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
@@ -26,12 +28,14 @@ local Parts = require(Shared.Util.Parts)
 local Muzzle = require(Shared.Util.Muzzle)
 local Raycast = require(Shared.Util.Raycast)
 local CameraController = require(script.Parent.CameraController)
+local LockOnController = require(script.Parent.LockOnController)
 
 local A = EntityState.Attr
 local num = EntityState.Number
 
 local HEAVY_HIT = 80
 local HEAL_COLOR = Theme.Colors.Heal
+local CALLOUT_RANGE = 35 -- studs: call-outs show for what's this close to you (or your lock)
 
 local CombatFxController = {}
 
@@ -116,6 +120,15 @@ local function isMe(model: Model): boolean
 	return model == player.Character
 end
 
+-- Call-outs only for what concerns you: yourself, your lock, or anything within CALLOUT_RANGE.
+local function near(model: Model): boolean
+	if isMe(model) or model == LockOnController.GetTarget() then
+		return true
+	end
+	local mine, theirs = Parts.Root(player.Character), Parts.Root(model)
+	return mine ~= nil and theirs ~= nil and (mine.Position - theirs.Position).Magnitude <= CALLOUT_RANGE
+end
+
 local function watch(model: Instance)
 	if not model:IsA("Model") then
 		return
@@ -135,7 +148,6 @@ local function watch(model: Instance)
 	on("LastHitAt", function()
 		local damage = num(fx, A.LastHitDamage, 0)
 		Flash.Pulse(model, Theme.Colors.Health)
-		FloatingText.Pop(model, tostring(math.floor(damage)), Theme.Colors.Text, damage >= HEAVY_HIT)
 		if isMe(model) then
 			CameraController.Shake(2.2, 12, 0.3)
 		elseif fx:GetAttribute(A.LastHitBy) == (player.Character and player.Character.Name) then
@@ -143,41 +155,58 @@ local function watch(model: Instance)
 		end
 	end)
 	on("LastEvadedAt", function()
-		FloatingText.Pop(model, "Evaded", Theme.Colors.Accent)
+		if near(model) then
+			FloatingText.Pop(model, "Evaded", Theme.Colors.Accent)
+		end
 	end)
 	on("LastBlockAt", function()
-		FloatingText.Pop(model, "Blocked", Theme.Colors.TextMuted)
+		if near(model) then
+			FloatingText.Pop(model, "Blocked", Theme.Colors.TextMuted)
+		end
 		if isMe(model) then
 			CameraController.Shake(0.8, 16, 0.12)
 		end
 	end)
 	on("LastParryAt", function()
 		Flash.Pulse(model, Theme.Colors.Accent)
-		FloatingText.Pop(model, "PARRY", Theme.Colors.Accent, true)
+		if near(model) then
+			FloatingText.Pop(model, "PARRY", Theme.Colors.Accent, true)
+		end
 		if isMe(model) then
 			CameraController.Shake(1.4, 18, 0.2)
 		end
 	end)
 	on("LastHowlAt", function()
-		FloatingText.Pop(model, "HOWL", Theme.Colors.Warm, true)
+		if near(model) then
+			FloatingText.Pop(model, "HOWL", Theme.Colors.Warm, true)
+		end
 		if isMe(model) then
 			CameraController.Shake(1.8, 8, 0.35)
 		end
 	end)
 	on("GuardBrokenAt", function()
-		FloatingText.Pop(model, "Guard broken", Theme.Colors.Health, true)
+		if near(model) then
+			FloatingText.Pop(model, "Guard broken", Theme.Colors.Health, true)
+		end
 	end)
 	on("LastBiteAt", function()
-		FloatingText.Pop(model, `+{num(fx, A.LastBiteHeal, 0)}`, HEAL_COLOR, true)
+		if near(model) then
+			FloatingText.Pop(model, `+{num(fx, A.LastBiteHeal, 0)}`, HEAL_COLOR, true)
+		end
 		if isMe(model) then
 			CameraController.Shake(2, 10, 0.3)
+		end
+	end)
+	on("AlertAt", function()
+		if player.Character and fx:GetAttribute(A.AlertTarget) == player.Character.Name then
+			FloatingText.Glint(model)
 		end
 	end)
 	-- A stagger starts when StaggerUntil jumps well past the last hit/howl (simulation times). A bite ending
 	-- the stagger sets it back to the hit time, which doesn't count.
 	model:GetAttributeChangedSignal(A.StaggerUntil):Connect(function()
 		local latest = math.max(num(fx, A.LastHitAt, 0), num(fx, A.LastHowlAt, 0))
-		if num(model, A.StaggerUntil, 0) > latest + 0.5 then
+		if num(model, A.StaggerUntil, 0) > latest + 0.5 and near(model) then
 			FloatingText.Pop(model, "STAGGERED", Theme.Colors.Warm, true)
 		end
 	end)

@@ -4,6 +4,7 @@
 -- Run it from the MCP Client context or the client command bar:
 --   game.ReplicatedStorage.BL_SelfTest:Invoke()          -- every check
 --   game.ReplicatedStorage.BL_SelfTest:Invoke("Dodge")   -- only checks whose name contains "Dodge"
+--   game.ReplicatedStorage.BL_SelfTest:Invoke("UI lint") -- the labels on the screen that's open now (it stays put)
 -- It returns the report as text. Leave the keyboard alone while it runs: real input would mix with the test's.
 
 local Players = game:GetService("Players")
@@ -143,7 +144,9 @@ local function run(filter: string?): string
 		if filter == nil or string.find(case.Name, filter, 1, true) then
 			current = case.Name
 			local ok, err = pcall(function()
-				t.Reset()
+				if not case.Stay then -- Stay: the case checks the screen as it is (UI lint)
+					t.Reset()
+				end
 				case.Run(t)
 			end)
 			if not ok then

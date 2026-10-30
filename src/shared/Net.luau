@@ -24,8 +24,10 @@ local REMOTES: { [string]: Spec } = {
 	SelectClass = { Kind = "Event", RatePerSecond = 2 }, -- client -> server: (classId) pick your Bloodsworn at the Blood Table
 	SeekHunt = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: (mapId, ruleId) send me to a hunt (Manor)
 	HuntStatus = { Kind = "Event", RatePerSecond = 0 }, -- server -> client: (message, done?) how seeking a hunt is going
+	Travelling = { Kind = "Event", RatePerSecond = 0 }, -- server -> client: (destination name) a teleport is starting (the Passage)
 	ReturnToManor = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: leave the hunt (match places)
 	ChooseRegion = { Kind = "Event", RatePerSecond = 4 }, -- client -> server: (zoneId) where to start the next phase or revive
+	TakeStage = { Kind = "Event", RatePerSecond = 1 }, -- client -> server: (facing) turn me for a full-screen menu (StageService)
 	DebugCommand = { Kind = "Function", RatePerSecond = 30 }, -- client -> server, answered only in Studio: (name, ...) runs a DebugService command (self-test)
 }
 

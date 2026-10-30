@@ -20,7 +20,7 @@ local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local PlayerState = require(Shared.Simulation.PlayerState)
 local CombatSim = require(Shared.Simulation.CombatSim)
-local Equipment = require(Shared.Simulation.Equipment)
+local ShinigamiBody = require(Shared.Simulation.ShinigamiBody)
 local Parts = require(Shared.Util.Parts)
 local Net = require(Shared.Net)
 local Log = require(Shared.Util.Log)
@@ -72,46 +72,25 @@ local function despawn(pact: Pact)
 end
 
 local function build(player: Player, def: any, pact: Pact): Model?
-	local template = Shared.Assets:FindFirstChild("TrainingDummy")
-	local character = player.Character
-	local ownerRoot = Parts.Root(character)
-	if not template or not ownerRoot then
+	local ownerRoot = Parts.Root(player.Character)
+	local model = if ownerRoot then ShinigamiBody.Make(def) else nil
+	if not model or not ownerRoot then
 		return nil
 	end
-	local model = template:Clone() :: Model
 	model.Name = `{def.DisplayName}_{player.Name}`
-	for _, d in model:GetDescendants() do
-		if d:IsA("BaseScript") then
-			d:Destroy()
-		elseif d:IsA("BasePart") then
-			d.Color = Color3.fromRGB(26, 20, 30)
-			d.Material = Enum.Material.SmoothPlastic
-		elseif d:IsA("Decal") then
-			d.Color3 = Color3.fromRGB(200, 30, 50)
-		end
-	end
 	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.MaxHealth, humanoid.Health = math.huge, math.huge
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	humanoid.WalkSpeed = def.WalkSpeed
-	local aura = Instance.new("Highlight")
-	aura.FillTransparency = 1
-	aura.OutlineColor = Color3.fromRGB(176, 22, 44)
-	aura.OutlineTransparency = 0.35
-	aura.Parent = model
-	-- placeholder look (a dark spectral swordsman) until the modelled version lands
 	local max = maxHealth(def, pact.Level)
 	EntityState.InitCombat(model, max, time())
 	model:SetAttribute(A.HP, math.max(1, math.floor(max * pact.Hp)))
 	model:SetAttribute(A.OwnerId, player.UserId)
+	model:SetAttribute(A.ShinigamiId, def.Id)
 	model:SetAttribute(A.Level, pact.Level)
 	model:PivotTo(ShinigamiBrain.FollowSpot(ownerRoot))
 	-- (no SetNetworkOwner: it throws under Server Authority; server-created NPCs are server-simulated already)
 	model.Parent = folder
-	if def.Weapon then
-		Equipment.AttachMelee(model, def.Weapon)
-	end
 	CollectionService:AddTag(model, EntityState.Tag)
 	return model
 end
@@ -232,6 +211,7 @@ local function addPrompt(circle: Instance)
 	prompt.HoldDuration = 0.6
 	prompt.MaxActivationDistance = 12
 	prompt.RequiresLineOfSight = false
+	prompt.Style = Enum.ProximityPromptStyle.Custom -- drawn by the client's PromptController in our style
 	prompt.Parent = circle
 	prompt.Triggered:Connect(function(player)
 		ShinigamiService.MakePact(player, def.Id)

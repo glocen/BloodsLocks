@@ -11,6 +11,7 @@ local MatchState = {}
 
 MatchState.FolderName = "MatchState"
 MatchState.ParticipantsName = "Participants"
+MatchState.HuntersFolder = "BL_Hunters" -- workspace folder of AI hunters' bodies (each fights for its participant id)
 
 -- The match's lifecycle, in order (MatchService). "Idle": nothing running (Studio before MatchStart).
 MatchState.States = {
@@ -38,6 +39,7 @@ MatchState.Match = {
 	Locked = "Locked", -- joins closed
 	SuddenDeath = "SuddenDeath",
 	Winner = "Winner", -- participant id, once decided
+	Dressed = "Dressed", -- the Antechamber's art is finished: players may step out of its screen into the room
 }
 
 MatchState.Participant = {
@@ -55,13 +57,31 @@ MatchState.Participant = {
 	Score = "Score", -- the Renown total
 	Placement = "Placement", -- 0 until decided
 	RevivalAt = "RevivalAt", -- time() a dead entrant comes back (0 when alive or out)
+	FellAt = "FellAt", -- Vector3: where the body fell last (the revival map marks it)
+	Moved = "Moved", -- the region asked for was full this phase: the entrant started elsewhere
+	ProtectedUntil = "ProtectedUntil", -- time() spawn protection ends (0: not protected; attacking ends it early)
 }
 
--- The map's regions for screens (Atlas): MatchState.Regions.<zoneId> (attribute DisplayName) with one child per
--- volume (attributes Min, Max: Vector3). And MatchState.Relief: a light copy of the district's visible geometry.
+-- The map's regions for screens (Atlas): MatchState.Regions.<zoneId> (attributes below) with one "Box" child per
+-- volume (Min, Max: Vector3) and one "Feature" child per thing worth marking on the map (Kind, Position, Label).
+-- And MatchState.Relief: a light copy of the district's visible geometry (or the world's authored map relief).
 MatchState.RegionsName = "Regions"
 MatchState.ReliefName = "Relief"
-MatchState.Region = { DisplayName = "DisplayName", Min = "Min", Max = "Max" }
+MatchState.BoxName = "Box"
+MatchState.FeatureName = "Feature"
+MatchState.Region = {
+	DisplayName = "DisplayName",
+	Min = "Min",
+	Max = "Max",
+	Chosen = "Chosen", -- how many entrants asked for it this region choice (live)
+	Capacity = "Capacity", -- how many it takes (ceil(entrants / regions) + 1)
+	Kind = "Kind", -- a feature's kind (MatchState.Features)
+	Position = "Position", -- a feature's place in the world
+	Label = "Label", -- a feature's name ("Kurogane", "Wretch")
+	Count = "Count", -- how many (an enemy group's size)
+}
+-- What the map marks inside regions.
+MatchState.Features = { Pact = "Pact", Ritual = "Ritual", Fodder = "Fodder", Heavy = "Heavy" }
 
 -- Client: the participants folder, or nil if this place has no match (waits up to `timeout` seconds).
 function MatchState.WaitParticipants(timeout: number): Folder?

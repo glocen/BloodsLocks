@@ -1,6 +1,6 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2, W1 (blockout), L1 and U1 done; next slice: U2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals in section 6 confirmed as recommended). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). Next, by the owner's order (2026-10-30): C1, the combat rework; then U2.**
 
 > **World ownership (owner, 2026-10-29):** after W1, ChatGPT owns the 3D world (W2 art proof of concept, W3, the final garden's art, all Victorian world art). Claude does the code and keeps the world contract, `WorldService`, the route probe and the lighting rig's code working for ChatGPT.
 >
@@ -139,9 +139,36 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
 - **U1 · Match screens I.**
   - The focus owner, legible text sizes, the clock dial (top right, gold ritual dot, red end dot), the waiting/countdown roster, the intro card, region choice and revival on one relief-map system with distinct modes (deadline, confirm, explained fallback), the region name banner.
   - Proof: every gate in the UI standard, section 6.
+- **Q0 · U1 finished properly** (owner, 2026-10-30, after reviewing U1; done 2026-10-30, waiting on the owner's review). Spec and critique: [match-screens.md](match-screens.md), "Q0 · v2".
+  - Jumps raised: tap 12.8, air 10.8, full high jump 40 studs.
+  - The text kit and the UI lint.
+  - The Passage loading and teleport screen.
+  - The Antechamber as a full menu screen.
+  - The intermission v2: choose, rise, browse.
+  - Spawn facing, the arrival reveal and the protection outline.
+  - Plates in the World layer, the alert glint.
+  - Falling: the "You fell" band and the body dissolving.
+  - Objectives.
+  - The themed prompt, Blood Table staging.
+  - **Q0.11 Kurogane's pact site** (owner: "we need the Shinigami Kurogane spawn location"), with his spoken lines on pact and summon (owner: "white text like Duskbloods").
+  - No AI hunter bodies in the phases (owner).
+  - Proof: self-test 70/70 (Victorian) and 69/69 (Manor), logic 48/48, `MatchSmoke` 34/34, world report clean; a capture walk with a written critique, every item fixed or assigned.
+- **C1 · Combat rework** (owner, 2026-10-30: next, before U2).
+  - The SMG: a real bullet effect, and spread, so not every bullet of a burst lands.
+  - The M1 chain: feel, hitstop, knockback (owner earlier: "when you M1 someone they get knocked back").
+  - Light Beam and Blood Blade: redone to the VFX standard and ChatGPT's colour direction.
+  - Also from the owner: level-ups that matter (damage and HP growth checked against a time-to-kill table), directional movement (8-way strafing while locked, directional dodges).
+  - Research the reference footage first, write the spec, then build.
+  - Proof: self-test cases for spread and knockback, plus a capture review of every effect.
 - **U2 · Match screens II.**
   - Phase resolution (awards → standings and cutoff → the cull), spectate, the final setup banner, the medallion turning into two life marks, the results reveal, return and retry. Fix the Shinigami card (name and level on one line, status on a second).
   - Proof: the same gates, plus one interruption per screen (death or phase change).
+- **S1 · Sound foundation** (owner: right after U2).
+  - A cue registry with priorities and ducking.
+  - Our own sounds made by script: UI, the countdown, the phase bell, hits, parry, Renown.
+  - The owner uploads them.
+- **UI-R · HUD and plates remade** (owner: they "lack depth"). The top-left vitals, the plates and the Shinigami card, rebuilt from the Duskbloods palette and screenshots: layered fills, engraved frames, our own textures.
+- **U3 · In-match menu.** Standings, the rule card, "Leave the hunt" with D9's consequence spelled out.
 - **A1 · Admission.**
   - Manor: quick join, create, private code, party.
   - MemoryStore registry with atomic party reservations and expiry; reserved servers; delist at T−5; late arrivals sent home; a failed teleport frees its slots and can retry; shutdown returns everyone. Hunt tab v3 (party list, code entry).
@@ -154,6 +181,11 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
   - Pathfinding when the target is on another floor or out of sight; attack choice uses 3D reach with a vertical tolerance; home arrival and leash in 3D; an unreachable target gets menaced, then dropped; a path budget per tick.
   - Groups A–E go live; F after the spec's four cases pass: a player over the crypt, up the stairs, behind a wall, leaving the leash on another floor.
   - Proof: new self-test cases on the two-floor block, walk tests in the quarter, server frame time with 60 enemies.
+- **AI hunters v1** (owner: right after N1).
+  - They explore their region, fight enemies and earn Renown through the same ledger.
+  - They defend themselves, and go to ritual sites in phases II and III.
+  - Skill tiers come from data.
+  - From then on they get bodies in the phases again (`Config.Match.AiBodies.Phases`).
 - **E1 · Heal stake (C).**
   - A new input action. `Common.Heal`: 35% over 0.6 s, interruptible, spent once. 2 uses to start, 4 max, a kill gauge, refilled each phase, plus D3.
   - HUD badge with its gauge. Our own VFX: a local recovery effect and the HP rise in Verdant, never something that reads as immunity.
@@ -163,6 +195,15 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
   - Proof: two claimants, leaving range, a hit during the hold, a cutoff, a replayed request; world state and ledger agree.
 - **E3 · Feedback and commendations.**
   - Renown toasts (amount and source, merged), level-up pulse and toast, unlock notices, target info over the locked enemy (name, HP, glint), compass v1 (relevant opportunities, height cues), top-2 kill and collector commendations at phase end.
+  - Added after Q0:
+    - the XP gain readout by the level bar;
+    - objectives v2 (ritual sites, items);
+    - pickup notices and item tooltips;
+    - first-time help cards, kept in the Archive (a `SeenHelp` field in `ProfileTemplate`);
+    - commendation progress;
+    - the Manor's "Back from the hunt" card;
+    - hiding Roblox's player list in match places (ask the owner first);
+    - the floor readout in map browse, once the world gives floor heights.
   - Proof: UI gates; ties resolve the same way every time.
 - **W2 · Art proof of concept.**
   - A lighting and value study for the quarter (grayscale at camera 6/11/16).

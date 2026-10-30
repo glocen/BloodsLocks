@@ -85,6 +85,7 @@ local function skillView(parent: Instance, size: number, center: UDim2)
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -4),
 		Size = UDim2.new(1, 0, 0, 18),
+		AutomaticSize = Enum.AutomaticSize.Y, -- grows upward when small windows raise the text to its legible size
 		TextSize = if size >= BIG then 18 else 14,
 	})
 	-- key hint: a small dark badge on the ring's lower right

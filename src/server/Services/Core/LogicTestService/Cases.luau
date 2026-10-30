@@ -13,7 +13,7 @@ local Ledger = require(Shared.Match.Ledger)
 local Regions = require(Shared.Match.Regions)
 local WorldTags = require(Shared.World.Tags)
 
-local standard = Registry.Rule("Standard")
+local standard = Registry.DefaultRuleDef()
 
 -- Eligible counts after each phase, when `leavers[phase]` participants leave during that phase.
 local function cullSequence(rule: any, entrants: number, leavers: { [number]: number }?): { number }

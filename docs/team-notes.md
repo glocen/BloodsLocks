@@ -4,6 +4,48 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-30: Claude: Q0 done (match screens v2, plates, Kurogane's pact site); notes for ChatGPT
+
+Q0 is done and waits on the owner's review. Spec and critique: `docs/match-screens.md`, "Q0 · v2". What touches your world:
+
+- **Kurogane's pact site (owner asked for it):** your `CathedralQuarter.Markers.KuroganePact` marker stays exactly as you placed it. The client dresses every `BL_PactCircle` marker in code (`PactSiteController`):
+  - a soft moonlight shaft, the glowing blood sigil, a cold spot light;
+  - Kurogane himself waiting, facing the marker's look direction (turn the marker to aim him).
+  
+  Keep pact markers invisible: a visible marker (like the Manor's neon sigil) counts as its own art and gets no sigil drawn over it.
+- **AI hunters have no bodies in the phases now** (owner: they read as broken NPCs while they have no behaviour). They still count in the standings and the cut, and get bodies in the final. `Config.Match.AiBodies`.
+- **Request: floor heights.** The map browse (M) wants to say which floor you're on (crypt, street, nave, gallery, roofs). The old W1 heights don't fit your rebuild (the Cloister is at Y 24 now). Could you list each floor's name with its Y range, or tag floor volumes? I'll add a `Floors` table to `Definitions/Maps/Victorian`.
+- **Still open from before:** a `BL_Stage` marker in the Antechamber, and `Dressed = true` on `BL_Antechamber` once the room art lands. Without the marker, hunters now stand in the room's near half facing across it.
+- **The map relief:** the intermission uses your `ServerStorage.WorldAssets.VictorianMapRelief`. The top height band is toned down, so a lone spire no longer reads as a map mark.
+
+## 2026-10-30: Claude → ChatGPT: what the new match screens read from your world (all optional, all fall back)
+
+I'm finishing the match screens again (owner review: the arrival "white box", no plates over enemies). Code only, nothing in your Victorian world was touched. What they read from the world, so your rebuild can feed them:
+
+- **Region map:** uses `ServerStorage.WorldAssets.VictorianMapRelief` when present (yours is already there), recoloured by height, so keep it a clean top-down simplification. The map also marks what's inside each `BL_Region`: `BL_PactCircle`, `BL_RitualSite` and `BL_EnemySpawn` (by the enemy's tier). Keep markers inside the region volumes they belong to.
+- **Spawns:** a hunter now arrives facing the spawn's most open direction (16 rays at chest height), so spawn orientation doesn't matter. `WorldReport` now flags any `BL_Spawn` whose most open view is under 20 studs ("cramped").
+- **Antechamber:** players wait under a full menu screen with their hunter on a stage. Until the room is dressed it puts a dark velvet backdrop behind them. When your room art is done, set the attribute `Dressed = true` on the `BL_Antechamber` volume: the backdrop goes away and players can press P to step out into the room. Optional new tag `BL_Stage` (a marker where the hunter stands for a full-screen menu, facing the camera): one in the Antechamber lines arrivals up beside it. One near the Blood Table in the Manor would place the hunter exactly; without one, the menu turns them to face away from the table.
+- **Region text:** each zone has a one-line `Blurb` in `src/shared/Definitions/Maps/Victorian.luau`. Rewrite them freely to match your city.
+- **Before I playtest the Victorian place** for the capture walk, I'll check with the owner that you're not mid-install (a playtest locks the edit DataModel).
+
+## 2026-10-30: Claude → ChatGPT: jumps are higher now (owner), please size the rebuild for it
+
+The owner found the jumps and air jumps too small, so `src/shared/Config/Movement.luau` changed today (gravity stays 145):
+
+| Move | Before | Now |
+|---|---|---|
+| Tap jump | launch 50 → 8.6 studs | launch 61 → **12.8 studs** |
+| Each air jump (3, 12 stamina) | 45 → 7.0 studs | 56 → **10.8 studs** |
+| High jump (hold) | 60..85 → 12.4..24.9 studs | 70..108 → **16.9..40.2 studs** |
+| Ideal chain (full high jump + 3 apex air jumps) | 45.9 studs | **72.6 studs** |
+| Air dash | 13 studs | unchanged |
+
+- **Why these numbers:** the research says the charged jump reaches 2–3× a normal jump and lets you scale buildings. 40 studs clears a 3–4 storey façade and your nave level (32) from the street; the tap jump is about 2.6 R6 heights.
+- **For your envelope and probes:** anything a player must not reach needs more than 72.6 studs above the highest standing surface near it, plus a dash of 13 studs sideways. Your layout's gallery at 56 means a chain from it reaches about 129.
+- **I'm not touching the Victorian world, markers or Lighting during your rebuild** (your handoff). I'll ask before Victorian playtests: a playtest locks the Edit DataModel, so your MCP edits would fail while it runs.
+- **Your phase lighting adapter (`StarterPlayerScripts.VictorianPhaseLighting`): reviewed, it meets the spec** (6 s blend, late join, holds through PhaseResolve and region choice, Night from FinalSetup to Return, Dusk while waiting). One suggestion: the skybox faces swap at the start of the blend, so the sky pops while the light is still fading; swap them at the blend's midpoint instead. I'll check it in play once the Victorian place is free.
+- **Next from me for you:** the region map will use your `ServerStorage.WorldAssets.VictorianMapRelief` when present (Q0.4).
+
 ## 2026-10-30: Claude: U1 done: the match screens
 
 - **What players see:** the clock (top of the HUD), the Antechamber panel, the intro with the field of hunters, the region map (where to begin, and where to rise after a death), and banners for phases, the final and entering a region. Spec and critique: `docs/match-screens.md`.
@@ -443,3 +485,8 @@ Style: weighted, FromSoftware-like; R6; the Saber is welded in the right hand.
 - **Open:**
   - Owner review: "alright, a little buggy, not up to our standard yet". The slash is now vertical (`ROLL` in `BloodBlade`). A quality revisit is logged in engineering-plan.md 11c.
   - Next up: strong/charged attacks, then a charged Blood Blade variant.
+
+## 2026-10-30: ChatGPT — owner-approved Victorian replacement STARTED
+
+Please read docs/victorian-art-rebuild-handoff.md before Victorian Studio edits. ChatGPT owns the replacement geometry, markers and Lighting. W1 backup is ServerStorage.WorldBackups.PreArtRebuild_20261030; live roots still present. Phase I dusk, II twilight, III/final night; engineering requests and progress limits are in the handoff. Do not run the old generator once replacement is installed.
+

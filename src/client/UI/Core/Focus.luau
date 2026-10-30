@@ -2,7 +2,7 @@
 -- Focus: who owns the player's input right now. Screens push an owner and release it; the top owner decides:
 --   Cursor: the mouse is free (CameraController asks CursorFree() before locking it),
 --   Gameplay: the gameplay InputContext runs (false = moves, attacks and skills are paused),
---   Hud: the combat HUD layer shows.
+--   Hud: the combat HUD layer shows (and the World layer: plates and call-outs over the world).
 -- Releasing restores whatever is below, so a death, a phase change or an interrupted screen can't leave a stuck
 -- cursor or a dead context (UI standard: menus own cursor and input; closing restores prior control).
 
@@ -31,7 +31,9 @@ local function apply()
 	if context then
 		context.Enabled = if options then options.Gameplay else true
 	end
-	Layers.Get("HUD").Enabled = if options then options.Hud else true
+	local hud = if options then options.Hud else true
+	Layers.Get("HUD").Enabled = hud
+	Layers.Get("World").Enabled = hud
 end
 
 -- Takes input for `name`; returns the function that gives it back (safe to call more than once).

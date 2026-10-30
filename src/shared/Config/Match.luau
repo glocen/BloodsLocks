@@ -3,6 +3,8 @@
 -- profile. Phase lengths, culls, the final and rewards are per rule (Definitions/Rules, RuleDefaults). *(tune)*
 
 return {
+	ModeName = "Open Hunt", -- what seeking a public hunt is called on screen (Hunt tab, Antechamber)
+
 	Lobby = {
 		MaxPlayers = 8,
 		-- the countdown starts once this many are in the waiting room, and cancels below it. 1 for the proof of concept:
@@ -29,6 +31,10 @@ return {
 	-- live match servers start in Waiting at once.
 	StudioAutoStart = false,
 	SpawnHeight = 3, -- studs a body's root stands above a spawn marker (markers sit on the floor)
+	-- AI hunters (D11) have no judgement until AI hunters v1 (after N1), and a body that only stands still reads as a
+	-- broken NPC (owner, 2026-10-30). In the phases they hunt out of sight: no body, only their Renown, region and
+	-- placement show. The final gives them bodies, so it can be fought.
+	AiBodies = { Phases = false, Final = true },
 
 	-- Studio only: these lengths replace the rule's, so a whole match runs in a few minutes (with bot entrants, solo).
 	StudioFast = {

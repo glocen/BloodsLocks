@@ -128,6 +128,7 @@ function NpcService.SpawnAt(enemyId: string, cframe: CFrame, slot: Slot?): Model
 	local humanoid = Parts.Humanoid(model) :: Humanoid
 	humanoid.WalkSpeed = def.WalkSpeed
 	model:SetAttribute(A.OwnerId, EntityState.HostileSide) -- one side: enemies never hurt each other
+	model:SetAttribute(A.EnemyId, def.Id) -- clients read the definition (tier, name) for its plate
 	enemies[model] = {
 		Model = model,
 		Def = def,
