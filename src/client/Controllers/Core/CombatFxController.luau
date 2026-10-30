@@ -22,12 +22,16 @@ local FloatingText = require(UI.Components.FloatingText)
 local Flash = require(UI.Components.Flash)
 local Vfx = script.Parent.Parent.Parent.Vfx
 local Gunshot = require(Vfx.Gunshot)
+local BloodHit = require(Vfx.BloodHit)
+local Hitstop = require(Vfx.Hitstop)
 local Projectile = require(Vfx.Projectile)
 local BloodBlade = require(Vfx.BloodBlade)
 local LightBeam = require(Vfx.LightBeam)
 local BloodCharge = require(Vfx.BloodCharge)
 local FireNova = require(Vfx.FireNova)
 local Parts = require(Shared.Util.Parts)
+local Vector = require(Shared.Util.Vector)
+local Combat = require(Shared.Config.Combat)
 local Muzzle = require(Shared.Util.Muzzle)
 local Raycast = require(Shared.Util.Raycast)
 local CameraController = require(script.Parent.CameraController)
@@ -40,6 +44,9 @@ local HEAVY_HIT = 80
 local HEAL_COLOR = Theme.Colors.Heal
 local CALLOUT_RANGE = 35 -- studs: call-outs show for what's this close to you (or your lock)
 local BEAM_FADE = 0.12 -- seconds a beam's held sound takes to fade as it ends
+local MELEE_BLOOD = 1.6 -- a blade's blood hit, against a round's 1
+local CONTACT_OUT = 0.8 -- studs from the target's centre toward the attacker: where a blade meets the body
+local CONTACT_UP = 0.6
 
 local SOUNDS = Registry.Sounds()
 local SHEET = Registry.SoundSheet()
@@ -74,16 +81,21 @@ local function playSwing(model: Model, id: string, action: any, startedAt: numbe
 	end
 end
 
--- A landed melee hit: the attacker's own hit cue, else the plain body hit. (Rounds, projectiles and beams play their
--- impacts where they land.)
-local function playMeleeHit(model: Model, fx: Instance)
+-- A landed melee hit: the attacker's own hit cue (else the plain body hit), the blood hit at the contact thrown back
+-- toward the attacker, and a hitstop on both. (Rounds, projectiles and beams play their impacts where they land.)
+local function meleeHit(model: Model, fx: Instance)
 	local root = Parts.Root(model)
 	if fx:GetAttribute(A.LastHitRanged) == true or not root then
 		return
 	end
 	local attacker = entityNamed(fx:GetAttribute(A.LastHitBy))
+	local attackerRoot = Parts.Root(attacker)
 	local cues = if attacker then SOUNDS.Actions[(EntityState.CurrentAction(attacker))] else nil
 	Sfx.Play((cues and cues.Hit) or SOUNDS.Feedback.BodyHit, root)
+	local toward = if attackerRoot then Vector.Flat(attackerRoot.Position - root.Position) else root.CFrame.LookVector
+	BloodHit.Play(root.Position + toward * CONTACT_OUT + Vector3.yAxis * CONTACT_UP, toward + Vector3.yAxis, MELEE_BLOOD)
+	local stop = if num(fx, A.LastHitDamage, 0) >= Combat.Hitstop.HeavyDamage then Combat.Hitstop.Heavy else Combat.Hitstop.Light
+	Hitstop.Play(if attacker then { model, attacker } else { model }, stop)
 end
 
 -- A reload's sound, from the moment it starts (after a burst it starts as the burst ends).
@@ -242,7 +254,7 @@ local function watch(model: Instance)
 	on("LastHitAt", function()
 		local damage = num(fx, A.LastHitDamage, 0)
 		Flash.Pulse(model, Theme.Colors.Health)
-		playMeleeHit(model, fx)
+		meleeHit(model, fx)
 		if isMe(model) then
 			CameraController.Shake(2.2, 12, 0.3)
 		elseif fx:GetAttribute(A.LastHitBy) == (player.Character and player.Character.Name) then

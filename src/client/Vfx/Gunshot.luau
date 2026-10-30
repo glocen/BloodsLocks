@@ -5,8 +5,7 @@
 --   Tracer: a short pale streak flying from the muzzle to where the round stopped, at TRACER_SPEED; the impact shows
 --           when it lands.
 --   Surface: hot sparks thrown off along the surface's facing, falling; dust the colour of the surface; a brief light.
---   Body: a dark, wet mist plume thrown back toward the shooter and up (blood-red to near-black, alpha-blended, never
---         glowing), with a few hot red streaks as its edge: a hit, never a wound (no gore).
+--   Body: the shared BloodHit (dark wet mist, hot red streaks; no gore), thrown back toward the shooter and up.
 --   Miss: only the tracer.
 -- Play(shooter, origin, hitPosition, normal?, hitBody?, onImpact?): the muzzle is the shooter's held gun (its Muzzle
 -- attachment) when it has one, else `origin`, where the server's ray left. Returns that muzzle position; onImpact
@@ -15,6 +14,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(script.Parent.Kit)
+local BloodHit = require(script.Parent.BloodHit)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local Equipment = require(ReplicatedStorage.Shared.Simulation.Equipment)
 local Raycast = require(ReplicatedStorage.Shared.Util.Raycast)
@@ -184,54 +184,10 @@ local function surfaceHit(position: Vector3, normal: Vector3)
 	Kit.Flash(position + normal * 0.3, V.Fire, 1.4, 5, 0.06)
 end
 
+-- Rounds hit bodies with the shared blood hit, thrown back out of the wound side and upward so the shooter sees it
+-- (along the shot, the body would hide it).
 local function bodyHit(position: Vector3, direction: Vector3)
-	-- thrown back out of the wound side and upward, so the shooter sees it (along the shot, the body hides it)
-	local spray = (-direction + Vector3.yAxis * BODY_LIFT).Unit
-	Kit.Burst(CFrame.lookAt(position, position + spray), {
-		{ -- a dark, wet mist plume (alpha-blended: darkness can't come from glow)
-			Count = 2,
-			Texture = T.MistBurst,
-			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
-			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors({ { 0, V.Blood }, { 0.25, V.BloodWet }, { 0.6, V.BloodDeep }, { 1, V.BloodDark } }),
-			Transparency = Kit.Seq({ { 0, 0 }, { 0.6, 0.3 }, { 1, 1 } }),
-			Size = Kit.Seq({ { 0, 1.6 }, { 1, 2.8 } }),
-			Lifetime = NumberRange.new(0.35, 0.5),
-			Speed = NumberRange.new(1.5, 3),
-			EmissionDirection = Enum.NormalId.Front,
-			SpreadAngle = Vector2.new(35, 35),
-			Drag = 4,
-			ZOffset = 0.5,
-		},
-		{ -- a few red streaks
-			Count = 6,
-			Texture = T.Spark,
-			Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(V.BloodCore, V.Blood),
-			LightEmission = 0.4,
-			Size = Kit.Seq({ { 0, 0.45 }, { 1, 0.2 } }),
-			Lifetime = NumberRange.new(0.12, 0.22),
-			Speed = NumberRange.new(10, 18),
-			EmissionDirection = Enum.NormalId.Front,
-			SpreadAngle = Vector2.new(50, 50),
-			Acceleration = Vector3.new(0, -50, 0),
-			ZOffset = 0.5,
-		},
-		{ -- dark mist settling behind
-			Count = 1,
-			Texture = T.SmokePuff,
-			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
-			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = ColorSequence.new(V.BloodDark),
-			Transparency = Kit.Seq({ { 0, 0.5 }, { 1, 1 } }),
-			Size = Kit.Seq({ { 0, 0.8 }, { 1, 1.6 } }),
-			Lifetime = NumberRange.new(0.5, 0.6),
-			Speed = NumberRange.new(0.5, 1),
-			Drag = 3,
-			Rotation = NumberRange.new(0, 360),
-		},
-	})
+	BloodHit.Play(position, -direction + Vector3.yAxis * BODY_LIFT, 1)
 end
 
 function Gunshot.Play(

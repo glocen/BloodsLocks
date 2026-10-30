@@ -12,6 +12,9 @@ return {
 	-- Knockback (Simulation/Knock): a hit pushes its target straight away for Time seconds, Hit.Knockback studs in
 	-- all (a hit without one uses ByReaction); a blocked hit pushes BlockedScale of that, a parried one not at all.
 	Knock = { Time = 0.15, BlockedScale = 0.5, ByReaction = { None = 0, Flinch = 1.2, Heavy = 4 } },
+	-- Hitstop (client presentation only): a landed melee hit freezes both fighters' animations this long; HeavyDamage
+	-- and up uses Heavy. A model already frozen isn't frozen again, so a flurry can't stack it.
+	Hitstop = { Light = 0.06, Heavy = 0.09, HeavyDamage = 80 },
 
 	Guard = {
 		WalkSpeed = 8,
