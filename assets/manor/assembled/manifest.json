@@ -1,0 +1,12 @@
+{
+  "authorship": "Original team geometry and maps only",
+  "status": "Unapproved architecture/material review; landscape and interior still separate",
+  "windows": 32,
+  "tower_local_roblox": [
+    -155,
+    0,
+    -8
+  ],
+  "source": "tools/art/assemble_manor_scene.py",
+  "scope": "Full exterior assembly; two-floor interior not converted to meshes yet"
+}

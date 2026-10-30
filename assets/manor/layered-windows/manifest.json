@@ -1,0 +1,96 @@
+{
+  "authorship": "Original Blender geometry; no imported stock assets",
+  "specs": {
+    "Lower": {
+      "centre_x": -9,
+      "opening_width": 7.6,
+      "spring": 13.4,
+      "peak": 19.981793068761732,
+      "recess": 1.82,
+      "outer_projection": 0.82
+    },
+    "Upper": {
+      "centre_x": 9,
+      "opening_width": 7.6,
+      "spring": 15.8,
+      "peak": 22.381793068761734,
+      "recess": 1.82,
+      "outer_projection": 0.82
+    }
+  },
+  "status": "Layered geometric depth review; material ageing remains to be refined",
+  "objects": [
+    {
+      "name": "Lower_STONE_Jamb.018",
+      "triangles": 8856
+    },
+    {
+      "name": "Lower_STONE_ArchLeft.018",
+      "triangles": 10728
+    },
+    {
+      "name": "Lower_STONE_ArchRight.018",
+      "triangles": 10728
+    },
+    {
+      "name": "Lower_STONE_Sill.001",
+      "triangles": 232
+    },
+    {
+      "name": "Lower_STONE_Corbel.002",
+      "triangles": 216
+    },
+    {
+      "name": "Lower_STONE_CorbelFoot.002",
+      "triangles": 216
+    },
+    {
+      "name": "Lower_GLASS.001",
+      "triangles": 264
+    },
+    {
+      "name": "Lower_IRON_Lead.006",
+      "triangles": 648
+    },
+    {
+      "name": "Lower_IRON_Tracery.064",
+      "triangles": 768
+    },
+    {
+      "name": "Upper_STONE_Jamb.020",
+      "triangles": 9840
+    },
+    {
+      "name": "Upper_STONE_ArchLeft.018",
+      "triangles": 10728
+    },
+    {
+      "name": "Upper_STONE_ArchRight.018",
+      "triangles": 10728
+    },
+    {
+      "name": "Upper_STONE_Sill.001",
+      "triangles": 232
+    },
+    {
+      "name": "Upper_STONE_Corbel.002",
+      "triangles": 216
+    },
+    {
+      "name": "Upper_STONE_CorbelFoot.002",
+      "triangles": 216
+    },
+    {
+      "name": "Upper_GLASS.001",
+      "triangles": 264
+    },
+    {
+      "name": "Upper_IRON_Lead.006",
+      "triangles": 648
+    },
+    {
+      "name": "Upper_IRON_Tracery.064",
+      "triangles": 768
+    }
+  ]
+}
