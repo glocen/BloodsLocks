@@ -1,10 +1,11 @@
 --!strict
--- SlashTrail: what a sabre leaves in the air (docs/combat-rework.md, C1.2), from our drawn textures
--- (tools/blender/vfx_sprites.py): a dark blood smear between the blade's base and point, a hot hairline along the
--- point's path, blood flung off the point and a breath of dark mist, drawn only while the blow sweeps through.
--- Play(model, id, action, startedAt): schedules one swing's trail on the model's held blade (its BladeBase and BladeTip
--- points, Simulation/Equipment), from just before the action's hit window to just after; a swing cancelled before it
--- comes (a dodge, a stagger) draws nothing. Heavy blows leave a longer smear and more blood.
+-- SlashTrail: a blade's motion smear, after the network-test study (docs/reference/network-test/vfx.md, "The sabre
+-- M1"): during the swing's fast arc a pale, translucent wedge follows the blade for a few frames, denser toward the
+-- point, with a brighter line on the point's path. It takes the scene's light (gold by firelight, silver at night) and
+-- nothing lingers. From our drawn textures (tools/blender/vfx_sprites.py:
+-- blade_smear, slash_edge), between the held blade's BladeBase and BladeTip points (Simulation/Equipment).
+-- Play(model, id, action, startedAt): draws one swing's smear around its hit window; a swing cancelled before it
+-- comes (a dodge, a stagger) draws nothing. Heavy blows smear a little longer.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -17,15 +18,13 @@ local Combat = require(ReplicatedStorage.Shared.Config.Combat)
 local T = Kit.Textures
 local V = Theme.Vfx
 
-local LEAD = 0.07 -- the smear starts this long before the hit window opens (the blade is already sweeping)
-local TAIL = 0.05 -- and keeps drawing this long after it closes
-local EDGE_FROM = 0.75 -- the hairline covers the blade from here (0 the base point, 1 the point) to the point
-local MIST_AT = 0.6 -- the mist breathes off the blade here
-local SMEAR_LIFE, EDGE_LIFE = 0.16, 0.1 -- seconds a stretch of smear / hairline lasts
-local DROPS, MIST = 60, 20 -- particles a second while the blade draws
-local HEAVY = 1.4 -- heavy blows: the smear lasts longer, more blood flies
+local LEAD = 0.05 -- the smear starts this long before the hit window opens (the blade is already fast)
+local TAIL = 0.02 -- and stops this long after it closes
+local EDGE_FROM = 0.7 -- the bright line covers the blade from here (0 the base point, 1 the point) to the point
+local SMEAR_LIFE, EDGE_LIFE = 0.085, 0.06 -- seconds a stretch of smear / line lasts (2-3 frames at 30 fps)
+local HEAVY = 1.5 -- heavy blows: the smear lasts this much longer
 
-type Rig = { Smear: Trail, Edge: Trail, Drops: ParticleEmitter, Mist: ParticleEmitter, Until: number }
+type Rig = { Smear: Trail, Edge: Trail, Until: number }
 
 local SlashTrail = {}
 
@@ -43,7 +42,7 @@ local function trail(from: Attachment, to: Attachment, props: { [string]: any })
 	t.Attachment0, t.Attachment1 = from, to
 	t.TextureMode = Enum.TextureMode.Stretch
 	t.FaceCamera = false -- the smear lies in the swing's plane
-	t.MinLength = 0.05
+	t.MinLength = 0.02
 	t.Enabled = false
 	for key, value in props do
 		(t :: any)[key] = value
@@ -52,7 +51,7 @@ local function trail(from: Attachment, to: Attachment, props: { [string]: any })
 	return t
 end
 
--- The trail's pieces on a held weapon, built once and kept with it (nil for a model without blade points).
+-- The smear's pieces on a held weapon, built once and kept with it (nil for a model without blade points).
 local function rig(weapon: Model): Rig?
 	local built = rigs[weapon]
 	if built then
@@ -66,46 +65,20 @@ local function rig(weapon: Model): Rig?
 	end
 	local made: Rig = {
 		Smear = trail(base, tip, {
-			Texture = T.SlashSmear,
-			Color = Kit.Colors(V.BloodWet, V.BloodDark),
-			Transparency = Kit.Seq({ { 0, 0.05 }, { 0.6, 0.35 }, { 1, 1 } }),
-			LightEmission = 0, -- alpha-blended: blood reads dark, never neon
-			LightInfluence = 0.4,
+			Texture = T.BladeSmear,
+			Color = ColorSequence.new(V.BladeSmear),
+			Transparency = Kit.Seq({ { 0, 0.1 }, { 1, 1 } }),
+			LightEmission = 0.15,
+			LightInfluence = 0.75, -- it takes the scene's light, as a real blur of the steel would
 			Lifetime = SMEAR_LIFE,
 		}),
 		Edge = trail(point(blade, base.Position:Lerp(tip.Position, EDGE_FROM)), tip, {
 			Texture = T.SlashEdge,
-			Color = Kit.Colors(V.BloodCore, V.Blood),
-			Transparency = Kit.Seq(0, 1),
-			LightEmission = 1,
-			LightInfluence = 0,
+			Color = ColorSequence.new(V.BladeEdge),
+			Transparency = Kit.Seq({ { 0, 0.35 }, { 1, 1 } }),
+			LightEmission = 0.6,
+			LightInfluence = 0.3,
 			Lifetime = EDGE_LIFE,
-		}),
-		Drops = Kit.Emitter(tip, { -- blood flung off the point: it falls along the arc behind the blade
-			Texture = T.Spark,
-			Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(V.BloodWet, V.BloodDeep),
-			LightInfluence = 0.5,
-			Size = Kit.Seq({ { 0, 0.16 }, { 1, 0.05 } }),
-			Lifetime = NumberRange.new(0.25, 0.45),
-			Speed = NumberRange.new(2, 6),
-			SpreadAngle = Vector2.new(180, 180),
-			Acceleration = Vector3.new(0, -60, 0),
-			Drag = 1,
-		}),
-		Mist = Kit.Emitter(point(blade, base.Position:Lerp(tip.Position, MIST_AT)), { -- a breath of dark mist left hanging
-			Texture = T.SmokePuff,
-			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
-			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = ColorSequence.new(V.BloodDark),
-			LightInfluence = 0.5,
-			Transparency = Kit.Seq({ { 0, 0.6 }, { 1, 1 } }),
-			Size = Kit.Seq({ { 0, 0.5 }, { 1, 1.3 } }),
-			Lifetime = NumberRange.new(0.4, 0.6),
-			Speed = NumberRange.new(0.3, 0.8),
-			SpreadAngle = Vector2.new(180, 180),
-			Drag = 4,
-			Rotation = NumberRange.new(0, 360),
 		}),
 		Until = 0,
 	}
@@ -116,9 +89,8 @@ end
 local function draw(pieces: Rig, on: boolean, heavy: boolean)
 	local scale = if heavy then HEAVY else 1
 	pieces.Smear.Lifetime = SMEAR_LIFE * scale
+	pieces.Edge.Lifetime = EDGE_LIFE * scale
 	pieces.Smear.Enabled, pieces.Edge.Enabled = on, on
-	pieces.Drops.Rate = if on then DROPS * scale else 0
-	pieces.Mist.Rate = if on then MIST * scale else 0
 end
 
 function SlashTrail.Play(model: Model, id: string, action: any, startedAt: number)

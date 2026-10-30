@@ -1,9 +1,9 @@
 --!strict
--- BloodBlade: a crescent of liquid blood flying away from the caster, standing upright and facing the camera like a
--- sword wave (it reads from behind). The blade is our drawn crescent (Kit.Textures.BloodCrescent: hot rim, wet gloss,
--- near-black body, needle tips) on a thin plane, with a rim halo behind it, both faces, unlit so it reads the same
--- in any lighting. Streaks off the tips and apex, heavy dripping blood, wet splatter and a red mist. Cast flare at
--- the muzzle on spawn; splatter, a spray of droplets, a faint shock shell and a light pop on impact.
+-- BloodBlade: a crimson crescent flying away from the caster, standing upright and facing the camera like a sword
+-- wave (it reads from behind). The blade is our drawn crescent (Kit.Textures.BloodCrescent) on a thin plane, with a
+-- rim halo behind it, both faces, unlit so it reads the same in any lighting. Streaks off the tips and apex, sparks
+-- and a dark-red mist. A cast flare on spawn; sparks, a faint shock shell and a light pop on impact. No gore, ever
+-- (AGENTS.md rule 4: Roblox ToS): no drips, splatter or droplets. To be rebuilt in C1 (ask the owner about its look).
 
 local Kit = require(script.Parent.Kit)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -86,33 +86,6 @@ function BloodBlade.Spawn(cframe: CFrame): Visual
 	streak(root, Vector3.new(SPAN * 0.47, -HEIGHT * 0.22, 0), 0.3)
 	streak(root, Vector3.new(0, HEIGHT * 0.36, 0), 0.5)
 
-	-- Heavy drips falling off the blade.
-	Kit.Emitter(root, {
-		Texture = T.Drop,
-		Orientation = Enum.ParticleOrientation.VelocityParallel,
-		Color = Kit.Colors(P.BloodWet, P.BloodDark),
-		Size = Kit.Seq({ { 0, 0.42 }, { 1, 0.1 } }),
-		Transparency = Kit.Seq({ { 0, 0 }, { 0.85, 0.2 }, { 1, 1 } }),
-		Lifetime = NumberRange.new(0.5, 0.85),
-		Rate = 110,
-		Speed = NumberRange.new(2, 6),
-		SpreadAngle = Vector2.new(180, 180),
-		Acceleration = Vector3.new(0, -110, 0),
-		LightEmission = 0.1,
-	})
-	-- Wet splatter left hanging in the air behind it.
-	Kit.Emitter(root, {
-		Texture = T.Splat,
-		FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
-		FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-		Color = Kit.Colors(P.BloodWet, P.BloodDeep),
-		Size = Kit.Seq(1.4, 2.6),
-		Transparency = Kit.Seq(0.15, 1),
-		Lifetime = NumberRange.new(0.25, 0.35),
-		Rate = 30,
-		Rotation = NumberRange.new(0, 360),
-		LightEmission = 0.1,
-	})
 	-- Red mist.
 	Kit.Emitter(root, {
 		Texture = T.Smoke,
@@ -131,7 +104,7 @@ function BloodBlade.Spawn(cframe: CFrame): Visual
 		LightEmission = 0.15,
 		ZOffset = -1,
 	})
-	-- A fine spray off the edge.
+	-- Sparks off the edge.
 	Kit.Emitter(root, {
 		Texture = T.Dot,
 		Color = Kit.Colors(P.BloodCore, P.BloodWet),
@@ -166,12 +139,10 @@ function BloodBlade.Cast(cframe: CFrame)
 		{ Count = 1, Texture = T.Crescent, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 			Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(6.5), Lifetime = NumberRange.new(0.2),
 			Rotation = NumberRange.new(-20, 20), LightEmission = 0.5 },
-		{ Count = 18, Texture = T.Drop, Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(P.BloodWet, P.BloodDark), Size = Kit.Seq(0.34, 0.08), Lifetime = NumberRange.new(0.4, 0.6),
-			Speed = NumberRange.new(8, 18), SpreadAngle = Vector2.new(55, 55), EmissionDirection = Enum.NormalId.Front,
-			Acceleration = Vector3.new(0, -110, 0) },
-		{ Count = 2, Texture = T.Splat, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = Kit.Colors(P.BloodWet), Size = Kit.Seq(3), Lifetime = NumberRange.new(0.25), Rotation = NumberRange.new(0, 360) },
+		{ Count = 12, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,
+			Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.4, 0.1), Lifetime = NumberRange.new(0.15, 0.3),
+			Speed = NumberRange.new(10, 20), SpreadAngle = Vector2.new(45, 45), EmissionDirection = Enum.NormalId.Front,
+			Drag = 5, LightEmission = 0.6 },
 	})
 	Kit.Flash(cframe.Position, P.Blood, 3, 12, 0.18)
 end
@@ -184,18 +155,13 @@ function BloodBlade.Impact(visual: Visual, position: Vector3, direction: Vector3
 	end
 	Kit.Release(visual.Root, 0.9)
 	Kit.Burst(cframe, {
-		{ Count = 1, Texture = T.SplatWide, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = Kit.Colors(P.BloodDark), Size = Kit.Seq(9.5), Lifetime = NumberRange.new(0.4), Rotation = NumberRange.new(0, 360), ZOffset = -0.5 },
-		{ Count = 2, Texture = T.Splat, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = Kit.Colors(P.BloodWet), Size = Kit.Seq(6.5), Lifetime = NumberRange.new(0.32, 0.4), Rotation = NumberRange.new(0, 360),
-			LightEmission = 0.1 },
 		{ Count = 1, Texture = T.Crescent, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 			Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(8.5), Lifetime = NumberRange.new(0.18), Rotation = NumberRange.new(-30, 30),
 			LightEmission = 0.6 },
-		{ Count = 45, Texture = T.Drop, Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(P.BloodWet, P.BloodDark), Size = Kit.Seq({ { 0, 0.5 }, { 1, 0.12 } }), Lifetime = NumberRange.new(0.5, 0.9),
-			Speed = NumberRange.new(14, 34), SpreadAngle = Vector2.new(70, 70), EmissionDirection = Enum.NormalId.Front,
-			Acceleration = Vector3.new(0, -120, 0), Drag = 1.5 },
+		{ Count = 20, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,
+			Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.5, 0.12), Lifetime = NumberRange.new(0.15, 0.3),
+			Speed = NumberRange.new(16, 32), SpreadAngle = Vector2.new(70, 70), EmissionDirection = Enum.NormalId.Front,
+			Drag = 5, LightEmission = 0.6 },
 		{ Count = 20, Texture = T.Dot, Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(0.2, 0),
 			Lifetime = NumberRange.new(0.2, 0.4), Speed = NumberRange.new(20, 40), SpreadAngle = Vector2.new(180, 180),
 			Drag = 5, LightEmission = 0.6 },

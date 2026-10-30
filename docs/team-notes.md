@@ -4,6 +4,14 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 ## Now
 
+**ROBLOX TERMS OF USE FIRST: NO GORE, EVER** (owner, 2026-10-31). Blood-effect images uploaded on 2026-10-30/31 put a moderation warning on the owner's Roblox account.
+- No blood effects at all: no drops, sprays, splatter, stains or smears, and nothing realistic.
+- A hit shows only as the body flashing red with a white outline.
+- Never upload anything that could read as gore.
+- In doubt, ask the owner first.
+
+The full rule is AGENTS.md rule 4.
+
 **Team mode: Claude only** (owner, 2026-10-30). ChatGPT is off; Claude does every area, world art included. Planned (owner): next week a head-to-head trial, Claude and GPT-6 Astra each building the same hero piece; ChatGPT joins only if Astra is clearly better.
 
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
@@ -47,6 +55,19 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-31 · Claude · No gore: every blood effect scrapped
+
+- Blood textures Claude uploaded put a moderation warning on the owner's Roblox account.
+- **Removed:**
+  - `Vfx/BloodHit` and `Vfx/BloodSplat`;
+  - the drips, splatter and droplets in `Vfx/BloodBlade` and `Vfx/BloodCharge` (now crimson sparks);
+  - the blood generators in `tools/blender/vfx_sprites.py`;
+  - the blood texture ids in `Kit.Textures`.
+- **A hit now** is the body flashing red with a white outline (`UI/Components/Flash`, one Highlight per body).
+- **The rule** is in AGENTS.md rule 4, the VFX rule, the Now board and Claude's memory.
+- **For the owner:** archive the uploaded blood images in the Creator Dashboard: 73716442107985, 132527224441651, 89451782214064, 92466747845719, 96856818725735, 85186176840498, 76864841147756, and the red smear 97751459305668.
+- **Also:** velocity-aligned particles lead with their texture's left edge. The Spark was redrawn: every spark before was sideways.
 
 ### 2026-10-30 · Claude · The network-test study
 

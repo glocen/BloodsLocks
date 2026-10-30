@@ -25,24 +25,21 @@ Kit.Textures = {
 	-- Rendered for BloodsLocks in Blender (tools/blender/vfx_sprites.py)
 	MuzzleFlash = "rbxassetid://124670609876463", -- four star-flash variants, Grid2x2 (coloured: use white)
 	MuzzleCone = "rbxassetid://94054541399503", -- side flame for a Beam, muzzle end at the bottom (coloured)
-	Spark = "rbxassetid://91483215993987", -- thin hot streak, for velocity-aligned particles (white)
+	Spark = "rbxassetid://108622929695285", -- thin hot streak, velocity-aligned (white)
 	TracerStreak = "rbxassetid://109264662547912", -- pale core in a faint glow, for a Beam (white)
 	SmokePuff = "rbxassetid://140359744386400", -- lit volumetric puff, Grid4x4 one-shot (white: tint it)
-	MistBurst = "rbxassetid://88664832177801", -- fibrous plume thrown toward the top, Grid4x4 one-shot, velocity-aligned (white)
 	-- Trails run a texture's vertical axis along their length (the top is the newest edge) and its horizontal axis
-	-- from Attachment0 (left) to Attachment1 (right).
-	SlashSmear = "rbxassetid://97751459305668", -- a sabre's blood smear: blade base left, point right (grey: tint it)
+	-- from Attachment0 (left) to Attachment1 (right). Velocity-aligned particles (VelocityParallel) lead with the
+	-- texture's LEFT edge: their art is drawn moving left.
 	SlashEdge = "rbxassetid://102684460045011", -- the hot hairline the point leaves, same layout (white, additive)
+	BladeSmear = "rbxassetid://91511977557661", -- a blade's pale motion smear for a Trail, same layout (white: tint it)
 	-- Creator Store art
 	Crescent = "rbxassetid://13138038111", -- slash crescent flipbook, Grid4x4
 	CrescentDark = "rbxassetid://13780268621", -- crescent arcs, Grid4x4
 	Smoke = "rbxassetid://18369727963", -- smoke wisps flipbook, Grid4x4
-	Drop = "rbxassetid://14480500149", -- teardrop
 	Dot = "rbxassetid://11197917329", -- soft dot
 	Wisp = "rbxassetid://15253860988", -- wispy energy column
-	Splat = "rbxassetid://16668936898", -- blood splatter flipbook, Grid4x4
 	Fire = "rbxassetid://16850891267", -- fire flipbook, Grid4x4
-	SplatWide = "rbxassetid://16669046762", -- blood splatter flipbook, Grid4x4
 	Glow = "rbxassetid://1075864321", -- soft radial glow
 }
 

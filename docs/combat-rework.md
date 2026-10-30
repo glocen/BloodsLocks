@@ -55,8 +55,9 @@ Lock-on aims at the target but keeps the spread. Stagger still builds per landed
 ## C1.3 · Blood Blade and C1.4 · Light Beam
 
 These come after C1.1 and C1.2. First a capture of the current effects and a written critique against the brief, then the redo with the rendered sprites. The brief's shapes still hold:
-- **Blood Blade:** a dark wet crescent with a crimson edge, restrained drips and mist, cast and impact.
-- **Light Beam:** convergence, a layered scrolling core, a contact flare, a collapse.
+- **Blood Blade** (shown to players as "Crimson Crescent", owner 2026-10-30): a huge stylized crimson energy crescent thrown from the raised free hand, thinning to a streak; never liquid, no droplets (AGENTS.md rule 4). Ask the owner about its look before building it.
+- **Light Beam:** cold white (owner, 2026-10-30): raise the gun overhead, a star flare at the crystal, aim, a white burst, a thin straight white ray with swirl rings at its root; planted while firing.
+- **Every C1 effect is redone to the network-test study** (owner, 2026-10-30): the sabre hit, the SMG, the Blood Blade, the Light Beam, the bite, guard, howl and the movement trails. **No blood effects, ever** (AGENTS.md rule 4; owner, 2026-10-31): a hit is the body's red flash with a white outline. The order and the gaps are in `docs/reference/network-test/takeaways.md` §1.
 
 ## Later in C1 (owner's earlier asks)
 
@@ -78,12 +79,12 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
 - **Spread:** in `Gunfire` and `BurstSMG.Spread` (Base 0.8°, Bloom 2.2°, Max 6.5°). Up close every round lands; at 30 studs 13–15 of 20 land.
 - **The gun:** Gustave's machine pistol, modelled and baked in Blender (`tools/blender/smg.py`): blued steel, aged brass, walnut grips, garnet medallions that glow (an emissive mask), and an amber crystal (a glass shell over a neon core, with a small light). Held in the left hand by `Equipment.AttachLoadout`. The owner asked for the light without sparkles.
 - **The burst:** a duelist's stance. The body blades with the gun shoulder forward, the arm snaps to shoulder height, and each round kicks a little higher with the bloom. Published as `Config.Animations.SMGBurst`.
-- **The effect** (`Vfx/Gunshot`, from `ShotFx`): a star flash and flame cone at the gun's real muzzle, a light, and gun smoke. A pale tracer flies at 700 studs/s, and the impact waits for it to land. Surfaces get sparks, dust in the surface's colour and a light. Bodies get a crimson mist plume and streaks thrown back toward the shooter (stylized, no wound). `Kit.TimeScale` slows effects for frozen review captures.
+- **The effect** (`Vfx/Gunshot`, from `ShotFx`): a star flash and flame cone at the gun's real muzzle, a light, and gun smoke. A pale tracer flies at 700 studs/s, and the impact waits for it to land. Surfaces get sparks, dust in the surface's colour and a light. A struck body flashes red with a white outline (no blood effect: AGENTS.md rule 4). `Kit.TimeScale` slows effects for frozen review captures.
 - **Lighting** (owner's OK): the Manor's grade now has violet shadows, warm lamp bloom and a light violet haze. The old values are in `ServerStorage.WorldBackups.Lighting_PreDuskbloodsGrade_20261030`.
 - **Sound** (2026-10-30): 14 combat cues synthesized from scratch by `tools/audio/sound_sheet.py` (no samples): the shot, reload, surface and body hits, two swings, the saber hit, block, parry, the Blood Blade's cast and impact, and the Light Beam's charge, loop and end. They're packed into one sheet so a batch costs one upload. `Definitions/Sounds` says which cue plays when (Registry checks it at load); `Client.Audio.Sfx` plays them in 3D, and swings peak as their hit window opens. Silent until the owner uploads the sheet. The gunshot's body hit is now dark wet mist (the VFX rule).
 
 **C1.2 done.** Self-test 72/72 and logic tests pass in the Manor.
-- **Knockback** (data `Hit.Knockback`, held by the movement step) and **hitstop** (client `AdjustSpeed(0)`, 0.06 s; longer for heavy blows), plus the shared `Vfx/BloodHit` at the blade's contact.
+- **Knockback** (data `Hit.Knockback`, held by the movement step) and **hitstop** (client `AdjustSpeed(0)`, 0.06 s; longer for heavy blows), and the struck body's red flash with a white outline (`UI/Components/Flash`; no blood effects, AGENTS.md rule 4).
 - **The sabre**, rebuilt in Blender (`tools/blender/saber.py`) to the owner's direction (2026-10-30): "the blade should be black with some gold and jewel, use Albert as reference".
   - **The blade:** black lacquered steel, damascened in gold (a gothic panel at the root, gold rules on the fuller's shoulders up to a finial, a gold vine in the fuller), with a polished edge.
   - **The garnet:** at the blade's root, in a domed gold quatrefoil with four pearls.
@@ -91,7 +92,7 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
   - **Built for play:** the hilt is scaled to fill an R6 fist (a 0.9-stud grip, like the old sabre's).
   - **Two meshes, two texture sets.** The blade's UVs are laid out by the script, at 723 texels a stud. The inlay is a mask drawn by the script and baked through the blade's material.
   - **Points:** `Grip`, `BladeBase`, `BladeTip` and `Jewel` are named in `Equipment.Points`.
-- **The slash** (`Vfx/SlashTrail`, from each melee action's start): a dark blood smear Trail between `BladeBase` and `BladeTip`, a hot crimson hairline on the point's path, blood flung off the point and a breath of dark mist. It draws from just before the hit window to just after, and a swing cancelled first draws nothing. Heavy blows leave more. The textures are drawn by `tools/blender/vfx_sprites.py` (`slash_smear`, `slash_edge`).
+- **The slash** (`Vfx/SlashTrail`, from each melee action's start; rebuilt 2026-10-31 after the network-test study): a short pale motion smear between `BladeBase` and `BladeTip` that takes the scene's light, and a bright line on the point's path, for the swing's fast frames only. A swing cancelled first draws nothing; heavy blows smear a little longer. The textures are drawn by `tools/blender/vfx_sprites.py` (`blade_smear`, `slash_edge`).
 - **Reviewed:** captures in the Manor's test pad, from the player's camera and from the side, frozen mid-swing.
 
 **Next:**

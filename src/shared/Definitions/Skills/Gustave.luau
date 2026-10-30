@@ -9,7 +9,7 @@ return {
 		-- Blood Blade: a crescent of the Gustave's blood, thrown between normal attacks. Builds stagger hard.
 		["Gustave.BloodBlade"] = {
 			Icon = "BloodCrescent", -- HUD emblem (Theme.Images)
-			DisplayName = "Blood Blade",
+			DisplayName = "Crimson Crescent", -- the owner's pick (2026-10-30): never the reference's skill name
 			Anim = "BloodBlade",
 			Duration = 0.5,
 			TrackUntil = 0.16,

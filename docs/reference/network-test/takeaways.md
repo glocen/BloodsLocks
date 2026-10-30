@@ -1,6 +1,7 @@
 # Takeaways: what we build from the study (DESIGN)
 
 Our adaptation of everything in this folder, slice by slice. All of it is **DESIGN**, ruled by AGENTS.md (IP safety, custom only, no gore) and the owner's direction (2026-10-30):
+- **ROBLOX TERMS OF USE FIRST: NO GORE, EVER** (AGENTS.md rule 4; owner, 2026-10-31, after a moderation warning on the owner's account). The reference's blood is never reproduced: no blood effects of any kind. A hit shows as the body flashing red with a white outline. In doubt, ask the owner.
 - **The structure follows the reference closely** (layouts, flows, timings: "95% or 99% is fine but not 100%"); **every visible asset is ours:** art, icons, type, words, names and sounds.
 - **The rendering is ours:** stylized like Type Soul but more detailed and deeper, never their realistic graphics.
 - **The order:** C1 first (skills, VFX, SFX, the blade) to the bar; then the owner and Claude plan the combat framework rework together; the UI rework; the Victorian map.
@@ -11,21 +12,22 @@ Measured references in [vfx.md](vfx.md) and [animation.md](animation.md). Our cu
 
 | Effect | What we have | What the reference shows | Our rebuild |
 |---|---|---|---|
-| **Sabre hit** | `SlashTrail` (a dark blood smear with a crimson hairline); `BloodHit` (a dark plume) | A pale motion smear on the blade for 2–3 frames; a crimson droplet cone along the cut at contact, ≈0.15 s to peak, gone by ≈0.5 s; the target flinches and slides on the same frame | A crisp, stylized pale smear for the fast frames; a layered crimson droplet cone (dense core, strings, specks) thrown along the cut; keep knockback and hitstop; small floor splatter if the owner allows (§2) |
+| **Sabre hit** | `SlashTrail` (a pale motion smear, rebuilt 2026-10-31); the body's red flash with a white outline (`UI/Components/Flash`) | A pale motion smear on the blade for 2–3 frames; the target flinches and slides on the same frame (their blood: never reproduced) | The pale smear for the fast frames; the red body flash; knockback and hitstop. **No blood effects** (owner, 2026-10-31) |
 | **SMG burst** | One thin pale tracer at 700 studs/s | 5–6 thick orange-gold rays at once, fanned by the spread, fading in ≈0.2 s; a big orange-white muzzle bloom; brass casings | Instant thick rays per round with a white-hot core, fanned by the real spread; a bigger layered muzzle bloom; ejected casings |
-| **Blood Blade** | A crescent effect (`Vfx/BloodBlade`), animation unpublished | The free hand rises (≈0.3–0.5 s); a liquid crimson crescent 3–4× the hero's height, a sharp leading edge, a ragged droplet trail; it thins to a streak in ≈0.5 s; dark wine-red mist on point-blank hits | A new cast animation (the raised free hand); a huge layered liquid crescent (droplet mesh or flipbook, ragged edge, trailing droplets); a dark mist burst on impact; a bigger charged version |
+| **Blood Blade** (players see "Crimson Crescent") | A crescent effect (`Vfx/BloodBlade`, its drips and splatter removed 2026-10-31), animation unpublished | The free hand rises (≈0.3–0.5 s); a huge crescent thrown from it, thinning to a streak in ≈0.5 s | A new cast animation (the raised free hand) and a stylized crimson energy crescent (light, sparks, mist; never liquid). **Ask the owner about its look before building it** |
 | **Light Beam** | A warm gold beam from the crystal (the brief's direction) | Raise overhead (≈0.2 s); a white star flare at the crystal (≈1.1 s); aim (≈0.2 s); a white burst; a thin straight white ray with swirl rings at its root; planted | A cold white beam (owner to confirm, §2): the raise-hold-aim animation, the star flare with long streaks, the root rings, the planted brace |
-| **Bite** | A heal number over the biter; no effect of its own | Grab; an upward crimson fountain; a white-glitter drain; white smoke ribbons on release; a big crimson fan burst | A five-stage effect keyed to the five stages of the animation |
+| **Bite** | A heal number over the biter; no effect of its own | Grab; a white-glitter drain; white smoke ribbons on release (their blood: never reproduced) | **Ask the owner first** (the action itself is a bite). If approved: grab, a white-glitter drain, white smoke ribbons; no blood |
 | **Guard, howl** | Call-outs and flashes in `CombatFxController`; no layered effect | A dark-red translucent disc (a sphere for some); an orange-gold block flash; the howl a pale shockwave sphere with a heat-haze edge | Rebuild both as layered effects |
 | **Movement** | No trails | White streak bursts under air jumps, ribbon trails on high jumps, afterimages on dodges | Add all three |
 | **Sound** | 14 synthesized cues, waiting for the owner's upload | Not assessed: the study looked at frames only | A listening pass on the recording's audio before we redo the cues |
 
 ## 2. Decisions for the owner
 
-1. **Blood:** our rule says near-black blood with a thin hot edge; the reference shows **saturated, lit crimson droplet shapes for the cut, over dark wine-red mist for the mass**. Proposed rule: "blood is saturated crimson droplet shapes (crescents, cones, fans) over dark wine-red mist; lit, short-lived; never neon, never gore (no wounds, pools or parts)". We'd check Roblox's maturity guidelines for blood before building it.
-2. **The Light Beam's colour:** cold white (the reference) instead of warm gold (our brief).
-3. **Floor splatter that stays:** small splatter only, never pools, or none.
-4. **A name clash:** our skill's player-visible name **"Blood Blade"** (`Definitions/Skills/Gustave.luau`) is the reference's exact skill name, on a class with the same weapons. AGENTS.md says to flag it. Original alternatives: **"Crimson Crescent"** or **"Bloodwake"**. Nothing is renamed until the owner picks.
+1. **Blood: none, ever** (owner, 2026-10-31, overriding 2026-10-30's droplet plan after the moderation warning). A hit is the body flashing red with a white outline.
+2. **The Light Beam's colour:** cold white (2026-10-30).
+3. **Floor splatter: never** (2026-10-31).
+4. **"Blood Blade"** is shown to players as **"Crimson Crescent"** (`Definitions/Skills/Gustave.luau`); internal ids keep `BloodBlade` (2026-10-30).
+5. **Open: the Blood Blade's look and the bite's effect.** Ask the owner before building either.
 
 ## 3. The match screens (U2 and polish)
 

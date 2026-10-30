@@ -1,7 +1,7 @@
 --!strict
 -- BloodCharge: the tell for a charging melee blow, readable by the attacker and their opponent. While charging,
--- blood is drawn in from the air around the body, a crimson glow builds along the blade, and a dark red mist pools
--- at the feet, all growing with the charge. When the blow is armed (it can be released), a sharp glint on the blade
+-- crimson sparks are drawn in from the air around the body, a crimson glow builds along the blade, and a dark red
+-- mist gathers at the feet, all growing with the charge (no gore: AGENTS.md rule 4). When the blow is armed (it can be released), a sharp glint on the blade
 -- tip. On release, a crimson flare off the blade; abandoned (dodged out), it just drains away.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -70,14 +70,14 @@ function BloodCharge.Spawn(model: Model): Visual
 		end
 	end
 
-	-- An invisible shell around the body: blood is pulled in from its surface.
+	-- An invisible shell around the body: sparks are pulled in from its surface.
 	local body = Kit.Anchor(CFrame.new(), Vector3.one * 7)
 	local center = attachment(body, Vector3.new(0, -2.6, 0))
 	local gather = Kit.Emitter(body, {
 		Shape = Enum.ParticleEmitterShape.Sphere,
 		ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward,
 		ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface,
-		Texture = T.Drop,
+		Texture = T.Spark,
 		Orientation = Enum.ParticleOrientation.VelocityParallel,
 		Color = Kit.Colors(P.BloodDeep, P.Blood),
 		Size = Kit.Seq({ { 0, 0 }, { 0.3, 0.5 }, { 1, 0.15 } }),
@@ -178,10 +178,10 @@ function BloodCharge.Release(visual: Visual, fired: boolean)
 			{ Count = 1, Texture = T.Crescent, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 				Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(8), Lifetime = NumberRange.new(0.2),
 				Rotation = NumberRange.new(-30, 30), LightEmission = 0.8 },
-			{ Count = 20, Texture = T.Drop, Orientation = Enum.ParticleOrientation.VelocityParallel,
-				Color = Kit.Colors(P.BloodWet, P.BloodDark), Size = Kit.Seq(0.36, 0.08), Lifetime = NumberRange.new(0.4, 0.6),
-				Speed = NumberRange.new(10, 24), SpreadAngle = Vector2.new(50, 50), EmissionDirection = Enum.NormalId.Front,
-				Acceleration = Vector3.new(0, -110, 0) },
+			{ Count = 14, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,
+				Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.4, 0.1), Lifetime = NumberRange.new(0.15, 0.3),
+				Speed = NumberRange.new(10, 22), SpreadAngle = Vector2.new(45, 45), EmissionDirection = Enum.NormalId.Front,
+				Drag = 5, LightEmission = 0.6 },
 		})
 		Kit.Flash(at, P.Blood, 5, 18, 0.3)
 	end

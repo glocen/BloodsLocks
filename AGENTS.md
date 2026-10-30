@@ -15,7 +15,12 @@ Codex loads this file automatically; Claude Code loads it through `CLAUDE.md`. R
    - Their match structure + their terms + their look together reads as a clone. Our match structure follows theirs closely, so our names and our look must be clearly our own. Check any truly unusual mechanic for patents before copying it.
    - Invent original names. Describe visual goals by qualities (gothic, crimson moonlight, fog), never "like X". Check every AI-made name against the list above. **Fan test:** if a fan could name the exact thing it came from, redesign it.
    - Flag anything that breaks these rules, existing content included, to the owner with an original alternative; don't rename locked names on your own. Log every new asset in `docs/asset-log.md`.
-4. **Roblox Terms of Use.** No gore: blood stays stylized (dark-red mist, sparks, light), with no wounds, severed parts or gore pools.
+4. **Roblox Terms of Use, always.** **NO GORE, EVER** (owner, 2026-10-31, after a blood-effect image upload put a moderation warning on the owner's Roblox account: "DONT EVER GO TO GORE").
+   - **No blood effects of any kind:** no drops, drips, strings, sprays, splatter, stains, smears or pools, and nothing realistic. No wounds, severed parts or gore.
+   - **A hit on a body shows as the body flashing red with a white outline** (`UI/Components/Flash`), and nothing else.
+   - **This covers what we upload too:** every image, mesh, sound and asset is uploaded to the owner's account and moderated. Never upload anything that could read as gore or break the Terms of Use.
+   - **If anything might be gore, or you're unsure, ask the owner first.**
+   - Always check a new effect, asset or text against the Roblox Terms of Use and Community Standards before building or uploading it.
 
 ## How the owner wants work done
 

@@ -197,6 +197,8 @@ return {
 		Tracer = Color3.fromRGB(255, 234, 204), -- a round in flight: pale, warm
 		GunSmoke = Color3.fromRGB(150, 146, 152),
 		Dust = Color3.fromRGB(122, 112, 104), -- stone dust a round kicks up (blended toward the surface's colour)
+		BladeSmear = Color3.fromRGB(236, 232, 226), -- a blade's motion smear: pale; the scene's light tints the rest
+		BladeEdge = Color3.fromRGB(255, 250, 244), -- the bright line on the point's path
 	},
 
 	-- Class portraits (Blood Table, Bloodsworn tab): ViewportFrame lighting and card shading.

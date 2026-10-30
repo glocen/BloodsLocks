@@ -1,5 +1,7 @@
 # VFX: every effect, broken into its layers
 
+> **ROBLOX TERMS OF USE FIRST: NO GORE, EVER** (AGENTS.md rule 4; owner, 2026-10-31). The reference's blood effects below are recorded as observation only and are **never reproduced**. Our hits show as the body flashing red with a white outline. In doubt, ask the owner.
+
 Every effect seen in the first full playthrough (0:00–52:23). The key ones are **measured** from dense bursts (frame rate given) and full frames; the rest are described from the 1-second survey. **OBSERVED** unless labelled. Our own effects are judged against these breakdowns, but the look stays our own (the art direction in the [README](README.md)); what we change is in section 12 and [takeaways.md](takeaways.md).
 
 ## 1. The visual language
@@ -154,8 +156,8 @@ Every effect seen in the first full playthrough (0:00–52:23). The key ones are
 
 ## 12. Against our current effects (DESIGN)
 
-- **Sabre M1:** our `Vfx/SlashTrail` (a dark blood smear with a crimson hairline) and `Vfx/BloodHit` (a dark alpha plume) don't match. The reference reads as **a short pale motion smear on the blade, then a sharp crimson droplet cone thrown along the cut**, the target flinching and pushed on the same frame.
+- **Sabre M1:** our trail is now a short pale motion smear (`Vfx/SlashTrail`, 2026-10-31), and the hit is the body's red flash with a white outline (no blood effect: AGENTS.md rule 4). The target flinches and is pushed on the same frame.
 - **SMG:** our one thin pale tracer flying at 700 studs/s doesn't match. The reference shows **several thick, saturated orange-gold rays at once**, fanned by the spread, fading in ≈0.2 s, with a big orange-white muzzle bloom and brass casings.
-- **Blood Blade:** a huge liquid crescent from a raised free hand, droplets at its ragged edge, thinning into a streak; dark wine-red mist at point-blank range.
+- **Blood Blade:** a huge crescent thrown from a raised free hand, thinning into a streak. Ours will be a stylized crimson energy crescent (light, sparks, mist; never liquid); ask the owner about its look first.
 - **The Light Beam:** our brief's "warm golden light" doesn't match. The reference is **cold white**: raise overhead, star flare, aim, white burst, a thin straight white ray with swirl rings at its root, planted while firing.
-- **The rule for blood** (`.claude/rules/vfx.md`: "near-black with a thin hot edge") contradicts the reference. **For the owner:** proposed rule, "blood is saturated crimson droplet shapes (crescents, cones, fans) for the cut, over dark wine-red mist for the mass; lit, short-lived; never neon, never gore (no wounds, pools or parts)". Persistent floor splatter needs a no-gore check (small splatter, never pools), and Roblox's maturity guidelines for blood should be checked before we build it.
+- **Blood:** none, ever (AGENTS.md rule 4; owner, 2026-10-31). The proposed droplet rule of 2026-10-30 was scrapped after uploaded blood textures drew a moderation warning on the owner's account.

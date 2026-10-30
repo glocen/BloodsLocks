@@ -5,7 +5,8 @@
 --   Tracer: a short pale streak flying from the muzzle to where the round stopped, at TRACER_SPEED; the impact shows
 --           when it lands.
 --   Surface: hot sparks thrown off along the surface's facing, falling; dust the colour of the surface; a brief light.
---   Body: the shared BloodHit (dark wet mist, hot red streaks; no gore), thrown back toward the shooter and up.
+--   Body: nothing here: the struck body flashes red with a white outline (UI/Components/Flash, from the hit event).
+--         No blood effects, ever (AGENTS.md rule 4: Roblox ToS).
 --   Miss: only the tracer.
 -- Play(shooter, origin, hitPosition, normal?, hitBody?, onImpact?): the muzzle is the shooter's held gun (its Muzzle
 -- attachment) when it has one, else `origin`, where the server's ray left. Returns that muzzle position; onImpact
@@ -14,7 +15,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(script.Parent.Kit)
-local BloodHit = require(script.Parent.BloodHit)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local Equipment = require(ReplicatedStorage.Shared.Simulation.Equipment)
 local Raycast = require(ReplicatedStorage.Shared.Util.Raycast)
@@ -29,7 +29,6 @@ local CONE_LENGTH = 0.9
 local FLASH_TIME = 0.05
 local SURFACE_PROBE = 0.25 -- how far the dust probe starts off the surface
 local DUST_TINT = 0.5 -- how far dust leans toward the surface's own colour
-local BODY_LIFT = 0.8 -- how much a body hit's spray rises (added to the way back toward the shooter)
 local SMOKE_LIGHT = 0.5 -- smoke and dust half lit by the scene: fully lit, they turn to black blots at night
 local HANDS = { "Left", "Right" }
 
@@ -183,12 +182,6 @@ local function surfaceHit(position: Vector3, normal: Vector3)
 	Kit.Flash(position + normal * 0.3, V.Fire, 1.4, 5, 0.06)
 end
 
--- Rounds hit bodies with the shared blood hit, thrown back out of the wound side and upward so the shooter sees it
--- (along the shot, the body would hide it).
-local function bodyHit(position: Vector3, direction: Vector3)
-	BloodHit.Play(position, -direction + Vector3.yAxis * BODY_LIFT, 1)
-end
-
 function Gunshot.Play(
 	shooter: Model?,
 	origin: Vector3,
@@ -203,9 +196,7 @@ function Gunshot.Play(
 	local direction = if path.Magnitude > 1e-3 then path.Unit else Vector3.zAxis
 	muzzleEffect(from, direction)
 	tracer(from, hitPosition, function()
-		if hitBody then
-			bodyHit(hitPosition, direction)
-		elseif normal then
+		if normal and not hitBody then
 			surfaceHit(hitPosition, normal)
 		end
 		if onImpact then

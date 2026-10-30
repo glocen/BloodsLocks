@@ -1,13 +1,17 @@
 """Renders BloodsLocks' gunfire and hit sprites (our own art) with Blender, headless:
   smoke_puff    4x4 flipbook of 256 px cells: a lit volumetric puff that billows out and thins (white: tint it)
-  mist_burst    4x4 flipbook of 256 px cells: a fibrous burst thrown toward the top of the cell, for particles
-                oriented along their velocity (white: tint it crimson for blood, which stays mist, never gore)
+  mist_burst    4x4 flipbook of 256 px cells: a fibrous burst thrown toward the left of the cell, for velocity-aligned
+                particles (white: tint it)
   muzzle_flash  2x2 sheet of 256 px variants: a star flash, white-hot core to orange rim (one variant a shot)
   muzzle_cone   128x512: the side flash, for a Beam (a Beam runs its texture's vertical axis along its length)
-  spark         64x256: a thin hot streak tapered at both ends, for velocity-aligned particles (white: tint it)
+  spark         256x64: a thin hot streak tapered at both ends, for velocity-aligned particles (white: tint it)
   tracer        64x512: a pale thin core in a faint glow, tapered at both ends, for a Beam (white: tint it)
-  slash_smear   256x512: a sabre's blood smear for a Trail (base left, point right, newest at the top; grey: tint it)
   slash_edge    64x512: the hot hairline the point leaves, for a Trail (same layout; white, additive)
+  blade_smear   256x256: a blade's pale motion smear for a Trail (base left, point right, newest at the top; white)
+No gore, ever (AGENTS.md rule 4: Roblox ToS): nothing here draws blood (no drops, sprays, splatter or stains), and
+nothing that could read as gore is ever uploaded (it went to the owner's account and drew a moderation warning).
+Velocity-aligned art is drawn moving toward the top, then turned (lead_left) so it moves toward the LEFT: a particle
+with Orientation VelocityParallel leads with its texture's left edge (tested in Studio, 2026-10-31).
 The flipbooks run left to right, top to bottom (Roblox's Grid4x4). Volumes render in Cycles; the flat emissive
 shapes are drawn with numpy, so every sprite can be retuned and redrawn at any time.
 
@@ -52,6 +56,12 @@ def load_rgba(path):
     image.pixels.foreach_get(data)
     bpy.data.images.remove(image)
     return data.reshape(height, width, 4)[::-1]
+
+
+def lead_left(cell):
+    """Turns art drawn moving toward the top so it moves toward the left (a quarter turn counter-clockwise): velocity-
+    aligned particles lead with their texture's left edge."""
+    return np.ascontiguousarray(np.rot90(cell, 1))
 
 
 def sheet(cells, columns):
@@ -146,24 +156,6 @@ def streak_noise(height, width, along, across, rng):
     return small[y0] * (1 - f) + small[y1] * f
 
 
-def slash_smear(width=256, height=512, seed=23):
-    """For a Trail between a blade's base (left) and its point (right), the newest edge at the top: the blood a sabre
-    leaves in the air. A wet body thickening toward the point, a brighter rim just inside it, streaks along the
-    stroke, and a tail that tears into wisps (grey: the trail's colour tints it, the rim brightest)."""
-    rng = np.random.default_rng(seed)
-    v = np.linspace(0, 1, height)[:, None]  # 0 the head (newest) .. 1 the tail
-    u = np.linspace(0, 1, width)[None, :]  # 0 the blade's base .. 1 its point
-    streaks = streak_noise(height, width, 220, 9, rng)
-    breakup = value_noise((height, width), 36, rng)
-    body = smoothstep(0.02, 0.92, u) ** 1.5 * (1 - smoothstep(0.95, 1.0, u))
-    rim = np.exp(-((u - 0.9) / 0.04) ** 2)
-    life = (1 - v) ** 1.25 * smoothstep(0.0, 0.025, v)
-    torn = smoothstep(0.75 * v, 0.75 * v + 0.3, 0.65 * streaks + 0.35 * breakup)  # toward the tail only wisps survive
-    alpha = np.clip(1.35 * (0.8 * body * (0.55 + 0.45 * streaks) + 0.45 * rim) * life * torn, 0, 1)
-    grey = np.clip(0.42 + 0.58 * np.maximum(rim, smoothstep(0.6, 0.95, u) * 0.5), 0, 1) * np.ones_like(v)
-    return np.concatenate([np.repeat(grey[..., None], 3, axis=-1), alpha[..., None]], axis=-1)
-
-
 def slash_edge(width=64, height=512):
     """For a Trail along a blade's last stretch, its point at the right, the newest edge at the top: a hot hairline on
     the point's path in a soft glow, dying toward the tail (white: tint it; additive)."""
@@ -172,6 +164,21 @@ def slash_edge(width=64, height=512):
     line = np.exp(-((u - 0.88) / 0.05) ** 2) + 0.3 * np.exp(-((u - 0.8) / 0.2) ** 2)
     intensity = line * (1 - v) ** 2.2 * smoothstep(0.0, 0.02, v)
     return np.concatenate([np.ones((height, width, 3)), np.clip(intensity, 0, 1)[..., None]], axis=-1)
+
+
+def blade_smear(width=256, height=256, seed=41):
+    """A blade's motion smear for a Trail: the blade's base at the left, its point at the right, the newest edge at the
+    top. A pale, translucent wedge: denser toward the point (it moves fastest), streaked along the motion, crisp at
+    its leading edge, gone at its tail; a brighter line on the point's path. White: the trail's colour tints it."""
+    rng = np.random.default_rng(seed)
+    v = (np.arange(height) + 0.5)[:, None] / height  # 0 the newest edge .. 1 the tail
+    u = (np.arange(width) + 0.5)[None, :] / width  # 0 the base .. 1 the point
+    streaks = streak_noise(height, width, 400, 5, rng)
+    body = smoothstep(0.02, 0.75, u) ** 1.3 * (1 - smoothstep(0.96, 1.0, u))
+    life = (1 - v) ** 1.8 * smoothstep(0.0, 0.012, v)
+    edge = np.exp(-((u - 0.93) / 0.025) ** 2) * (1 - v) ** 3
+    alpha = np.clip((0.55 * body * (0.7 + 0.3 * streaks) + 0.6 * edge) * life, 0, 1)
+    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
 
 
 def streak(width, height, core, glow, glow_strength):
@@ -253,14 +260,16 @@ def math_node(tree, operation, a, b=None):
     return n.outputs[0]
 
 
-def render_frames(scene, frames, update, name):
+def render_frames(scene, frames, update, name, turn=None):
+    """Renders `frames` cells as a 4x4 sheet, each cell passed through `turn` if given (lead_left)."""
     cells = []
     for i in range(frames):
         update(i / (frames - 1))
         path = OUT / f"_{name}_{i:02d}.png"
         scene.render.filepath = str(path)
         bpy.ops.render.render(write_still=True)
-        cells.append(load_rgba(path))
+        cell = load_rgba(path)
+        cells.append(turn(cell) if turn else cell)
         path.unlink()
     return sheet(cells, 4)
 
@@ -363,7 +372,7 @@ def mist_burst(cell=256, frames=16):
         wisps.inputs["W"].default_value = t * 1.2
         density.node.inputs[1].default_value = 95 * (1 - t) ** 1.8 + 2.0  # ... and everything thins
 
-    return render_frames(scene, frames, update, "mist")
+    return render_frames(scene, frames, update, "mist", lead_left)
 
 
 # --- main ------------------------------------------------------------------------------------------------------------
@@ -371,10 +380,10 @@ def mist_burst(cell=256, frames=16):
 DRAWN = {
     "muzzle_flash": muzzle_flash,
     "muzzle_cone": muzzle_cone,
-    "spark": lambda: streak(64, 256, core=0.10, glow=0.35, glow_strength=0.35),
+    "spark": lambda: lead_left(streak(64, 256, core=0.10, glow=0.35, glow_strength=0.35)),
     "tracer": lambda: streak(64, 512, core=0.07, glow=0.30, glow_strength=0.25),
-    "slash_smear": slash_smear,
     "slash_edge": slash_edge,
+    "blade_smear": blade_smear,
 }
 RENDERED = {"smoke_puff": smoke_puff, "mist_burst": mist_burst}
 
