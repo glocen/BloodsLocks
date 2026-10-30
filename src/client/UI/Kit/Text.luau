@@ -1,8 +1,11 @@
 --!strict
 -- Text: themed labels. Text.new(parent, style, props) where style picks font + size from Theme:
 --   "Display" (titles), "Title", "Label" (bold UI labels), "Body", "Caption", "Numeric".
+-- Legible: every label keeps its rendered size at Theme.TextSize.MinRendered (captions MinCaption) whatever the
+-- window: when the UI scale drops, the authored size rises to compensate (UI standard section 2).
 
 local Theme = require(script.Parent.Parent.Theme)
+local Layers = require(script.Parent.Parent.Core.Layers)
 
 export type Style = "Display" | "Title" | "Label" | "Body" | "Caption" | "Numeric"
 
@@ -16,6 +19,27 @@ local STYLES: { [string]: { Font: Font, Size: number } } = {
 }
 
 local Text = {}
+
+local legible: { [TextLabel]: { Authored: number, Minimum: number } } = setmetatable({}, { __mode = "k" }) :: any
+
+local function fit(label: TextLabel, entry: { Authored: number, Minimum: number }, scale: number)
+	label.TextSize = math.max(entry.Authored, math.ceil(entry.Minimum / math.max(scale, 0.01)))
+end
+
+-- Keeps `label` at least `minimum` rendered pixels tall at any UI scale (its current TextSize is the authored one).
+function Text.Legible(label: TextLabel, minimum: number?)
+	local entry = { Authored = label.TextSize, Minimum = minimum or Theme.TextSize.MinRendered }
+	legible[label] = entry
+	fit(label, entry, Layers.Scale())
+end
+
+Layers.ScaleChanged:Connect(function(scale: number)
+	for label, entry in legible do
+		if label.Parent then
+			fit(label, entry, scale)
+		end
+	end
+end)
 
 function Text.new(parent: Instance, style: Style, props: { [string]: any }?): TextLabel
 	local s = STYLES[style]
@@ -62,6 +86,7 @@ function Text.new(parent: Instance, style: Style, props: { [string]: any }?): Te
 	label.ZIndex = math.max(label.ZIndex, 2)
 	shadow.Parent = parent
 	label.Parent = parent
+	Text.Legible(label, if style == "Caption" then Theme.TextSize.MinCaption else Theme.TextSize.MinRendered)
 	return label
 end
 

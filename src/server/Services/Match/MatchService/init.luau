@@ -36,6 +36,7 @@ local TravelService = require(Core.TravelService)
 local ParticipantService = require(script.Parent.ParticipantService)
 local Spawning = require(script.Spawning)
 local Settlement = require(script.Settlement)
+local Atlas = require(script.Atlas)
 
 local S = MatchState.States
 local M = MatchState.Match
@@ -133,6 +134,7 @@ local function enter(newState: string, length: number?)
 	deadline = if length then time() + length else 0
 	root:SetAttribute(M.State, state)
 	root:SetAttribute(M.Phase, phase)
+	root:SetAttribute(M.StartedAt, time())
 	root:SetAttribute(M.Deadline, deadline)
 	Log.Info("Match", if newState == S.Phase or newState == S.PhaseResolve or newState == S.RegionChoice then `{state} {phase}` else state)
 	MatchService.StateChanged:Fire(state, phase)
@@ -552,6 +554,7 @@ function MatchService.Start()
 	root = ReplicatedStorage:WaitForChild(MatchState.FolderName) :: Folder
 	root:SetAttribute(M.Rule, rule.Id)
 	root:SetAttribute(M.State, state)
+	Atlas.Publish(root)
 	CombatSim.SetGuard(function(target: Model, now: number): boolean
 		if state == S.Idle then
 			return false

@@ -32,6 +32,7 @@ MatchState.Match = {
 	State = "State",
 	Phase = "Phase", -- the current or upcoming phase index (0 before phase 1)
 	Deadline = "Deadline", -- time() the current state ends (0: no deadline)
+	StartedAt = "StartedAt", -- time() the current state began
 	Rule = "Rule", -- Definitions/Rules id
 	Entrants = "Entrants", -- seats filled when the countdown ended (players + AI hunters)
 	Locked = "Locked", -- joins closed
@@ -55,6 +56,12 @@ MatchState.Participant = {
 	Placement = "Placement", -- 0 until decided
 	RevivalAt = "RevivalAt", -- time() a dead entrant comes back (0 when alive or out)
 }
+
+-- The map's regions for screens (Atlas): MatchState.Regions.<zoneId> (attribute DisplayName) with one child per
+-- volume (attributes Min, Max: Vector3). And MatchState.Relief: a light copy of the district's visible geometry.
+MatchState.RegionsName = "Regions"
+MatchState.ReliefName = "Relief"
+MatchState.Region = { DisplayName = "DisplayName", Min = "Min", Max = "Max" }
 
 -- Client: the participants folder, or nil if this place has no match (waits up to `timeout` seconds).
 function MatchState.WaitParticipants(timeout: number): Folder?

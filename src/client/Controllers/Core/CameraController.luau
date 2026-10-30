@@ -17,6 +17,7 @@ local Vector = require(Shared.Util.Vector)
 local EntityState = require(Shared.Simulation.EntityState)
 local CameraShaker = require(ReplicatedStorage.Modules.SharedModules.CameraShaker)
 local LockOnController = require(script.Parent.LockOnController)
+local Focus = require(script.Parent.Parent.Parent.UI.Core.Focus)
 
 local A = EntityState.Attr
 
@@ -52,8 +53,9 @@ local function update(dt: number)
 		return
 	end
 	camera.CameraType = Enum.CameraType.Scriptable
-	UserInputService.MouseBehavior = if GuiService.MenuIsOpen then Enum.MouseBehavior.Default else Enum.MouseBehavior.LockCenter
-	UserInputService.MouseIconEnabled = false
+	local cursor = GuiService.MenuIsOpen or Focus.CursorFree()
+	UserInputService.MouseBehavior = if cursor then Enum.MouseBehavior.Default else Enum.MouseBehavior.LockCenter
+	UserInputService.MouseIconEnabled = cursor
 
 	local wantedFocus = root.Position + Vector3.new(0, Config.FocusHeight, 0)
 	focus = if focus then focus:Lerp(wantedFocus, Vector.Smooth(Config.FollowSharpness, dt)) else wantedFocus
@@ -67,7 +69,7 @@ local function update(dt: number)
 		local wantedPitch = math.clamp(math.asin(toTarget.Y) + Config.LockPitchBias, Config.PitchMin, Config.PitchMax)
 		pitch += (wantedPitch - pitch) * alpha
 	else
-		local delta = UserInputService:GetMouseDelta()
+		local delta = if cursor then Vector2.zero else UserInputService:GetMouseDelta()
 		yaw -= delta.X * Config.Sensitivity
 		pitch = math.clamp(pitch - delta.Y * Config.Sensitivity, Config.PitchMin, Config.PitchMax)
 	end

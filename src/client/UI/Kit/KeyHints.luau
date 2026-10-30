@@ -3,6 +3,7 @@
 -- round for one character and a pill for words, then its action in serif. Set(list) replaces the hints.
 
 local Theme = require(script.Parent.Parent.Theme)
+local Text = require(script.Parent.Text)
 
 local M = Theme.Menu
 
@@ -47,6 +48,7 @@ function KeyHints.Glyph(parent: Instance, key: string, order: number?): TextLabe
 	box.TextColor3 = Theme.Colors.Text
 	box.Text = key
 	box.Parent = parent
+	Text.Legible(box)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(0.5, 0)
 	round.Parent = box
@@ -100,6 +102,7 @@ function Class.Set(self: any, list: { { string } })
 		label.Text = pair[2]
 		label.LayoutOrder = 10
 		label.Parent = row
+		Text.Legible(label)
 	end
 end
 

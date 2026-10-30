@@ -4,8 +4,10 @@
 -- scales uniformly, so offsets, strokes and paddings stay proportional on every screen.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Theme = require(script.Parent.Parent.Theme)
+local Signal = require(ReplicatedStorage.Shared.Util.Signal)
 
 export type LayerName = "HUD" | "Menus" | "Overlay" | "Toasts" | "Transition"
 
@@ -13,8 +15,12 @@ local MIN_SCALE, MAX_SCALE = 0.5, 1.5
 
 local Layers = {}
 
+-- Fires (scale) when the fit scale changes (window resized): Text keeps rendered sizes legible from it.
+Layers.ScaleChanged = Signal.new() :: Signal.Signal<number>
+
 local guis: { [string]: ScreenGui } = {}
 local scales: { UIScale } = {}
+local current = 1
 
 local function fit()
 	local camera = workspace.CurrentCamera
@@ -26,6 +32,10 @@ local function fit()
 	local scale = math.clamp(math.min(viewport.X / reference.X, viewport.Y / reference.Y), MIN_SCALE, MAX_SCALE)
 	for _, uiScale in scales do
 		uiScale.Scale = scale
+	end
+	if scale ~= current then
+		current = scale
+		Layers.ScaleChanged:Fire(scale)
 	end
 end
 
@@ -76,7 +86,7 @@ end
 
 -- The current fit scale (for code that converts screen pixels into authored units).
 function Layers.Scale(): number
-	return if scales[1] then scales[1].Scale else 1
+	return current
 end
 
 return Layers

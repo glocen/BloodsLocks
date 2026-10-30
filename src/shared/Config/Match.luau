@@ -5,7 +5,9 @@
 return {
 	Lobby = {
 		MaxPlayers = 8,
-		MinPlayers = 2, -- the countdown starts once this many are in the waiting room, and cancels below it
+		-- the countdown starts once this many are in the waiting room, and cancels below it. 1 for the proof of concept:
+		-- a single real player starts a hunt and AI hunters take every other seat (owner, 2026-10-29, amending D11's 2)
+		MinPlayers = 1,
 		Countdown = 30, -- seconds
 		FullCountdown = 10, -- the countdown shortens to this when the lobby is full
 		LockAt = 5, -- seconds left when joins close and the server delists itself

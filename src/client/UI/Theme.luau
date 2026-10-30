@@ -16,7 +16,7 @@ local Palette = {
 	BloodDeep = Color3.fromRGB(88, 8, 24),
 	BloodMuted = Color3.fromRGB(142, 34, 40), -- HP: deep, desaturated (Duskbloods-like)
 	BloodMutedDeep = Color3.fromRGB(64, 14, 20),
-	Ember = Color3.fromRGB(222, 140, 60), -- stamina, warmth
+	Ember = Color3.fromRGB(222, 140, 60), -- posture, warmth
 	EmberDeep = Color3.fromRGB(130, 66, 22),
 	Moon = Color3.fromRGB(110, 146, 220), -- info, cold side, ready
 	Verdant = Color3.fromRGB(120, 196, 128), -- heals
@@ -82,7 +82,8 @@ return {
 		Numeric = Font.new(BODY, Enum.FontWeight.SemiBold),
 	},
 
-	TextSize = { Caption = 14, Body = 18, Label = 20, Title = 30, Display = 48 },
+	-- MinRendered / MinCaption: the smallest text may ever render on screen, after scaling (UI standard section 2)
+	TextSize = { Caption = 14, Body = 18, Label = 20, Title = 30, Display = 48, MinRendered = 16, MinCaption = 14 },
 
 	Space = { XS = 4, S = 8, M = 12, L = 20, XL = 32, XXL = 48 },
 

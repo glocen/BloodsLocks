@@ -14,6 +14,7 @@ local UI = script.Parent.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Layers = require(UI.Core.Layers)
 local Motion = require(UI.Core.Motion)
+local Focus = require(UI.Core.Focus)
 local TabBar = require(UI.Kit.TabBar)
 local KeyHints = require(UI.Kit.KeyHints)
 local Hunt = require(UI.Menu.Hunt)
@@ -166,12 +167,16 @@ local function buildStage(body: BasePart): Model
 	return model
 end
 
+local releaseFocus: (() -> ())? = nil
+
+-- The menu owns the cursor and pauses gameplay input and the combat HUD while it's open (Focus).
 local function setGameplay(enabled: boolean)
-	local context = player:FindFirstChild("BLGameplay") :: InputContext?
-	if context then
-		context.Enabled = enabled
+	if not enabled and not releaseFocus then
+		releaseFocus = Focus.Push("BloodTable", { Cursor = true, Gameplay = false, Hud = false })
+	elseif enabled and releaseFocus then
+		releaseFocus()
+		releaseFocus = nil
 	end
-	Layers.Get("HUD").Enabled = enabled
 end
 
 -- Fades the curtain in, runs `between`, then fades it out.
@@ -199,8 +204,6 @@ function MenuController.Open()
 		local camera = workspace.CurrentCamera
 		cameraTypeBefore = camera.CameraType
 		RunService:BindToRenderStep(RENDER_NAME, Enum.RenderPriority.Camera.Value + 5, function()
-			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-			UserInputService.MouseIconEnabled = true
 			camera.CameraType = Enum.CameraType.Scriptable
 			camera.CFrame = shot :: CFrame
 		end)

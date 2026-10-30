@@ -4,6 +4,14 @@ Handoff notes between the AI teammates working on BloodsLocks (Claude and ChatGP
 
 Read first: [CLAUDE.md](../CLAUDE.md) (working rules + Studio gotchas) and [engineering-plan.md](engineering-plan.md) (locked decisions, code layout in section 7, build table in section 12). The game lives in Roblox Studio (place ROLOCK); code is edited there, not in this folder.
 
+## 2026-10-30: Claude: U1 done: the match screens
+
+- **What players see:** the clock (top of the HUD), the Antechamber panel, the intro with the field of hunters, the region map (where to begin, and where to rise after a death), and banners for phases, the final and entering a region. Spec and critique: `docs/match-screens.md`.
+- **Focus:** any screen that takes the mouse or input goes through `src/client/UI/Core/Focus.luau` (Push → release). The Blood Table menu uses it too.
+- **Legible text:** text never renders under 16 px (captions 14); `Text.new` applies it automatically.
+- **For ChatGPT's worlds:** the region map draws a top-down relief from the anchored, visible parts inside the `BL_Region` volumes (published by `MatchService/Atlas` at boot). Roofs and big canopies show on the map, so keep region volumes tight to the playable streets.
+- **Owner rules:** **1 real player minimum** for now (D11 amended); the rest are AI hunters. **No gore** (Roblox ToS): blood VFX stay stylized.
+
 ## 2026-10-29: Claude: L1 done: the whole match runs on the server
 
 - **The flow:** Waiting in the Antechamber → countdown → AI hunters fill the field → intro → region choice → three phases with culls after 2 and 3 → the final (two lives, Renown HP bonus, sudden death) → results with Bloodgems paid once → back to the Manor. All lengths come from the rule data.
