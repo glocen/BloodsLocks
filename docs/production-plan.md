@@ -1,6 +1,6 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (C1.1 and C1.2 done; `docs/combat-rework.md`, "Progress"); the network-test reference study as soon as the owner's video arrives; then U2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (C1.1 and C1.2 done; `docs/combat-rework.md`, "Progress"); the network-test reference study is done for one full playthrough (`docs/reference/network-test/`), and C1's effects and animations are redone to it next; then U2.**
 
 > Roles, ownership and the team mode: AGENTS.md. D11 and every other owner decision: [engineering-plan.md](engineering-plan.md) §3.
 
@@ -14,12 +14,16 @@ This is the working order for Claude's sessions. [engineering-plan.md](engineeri
 - Quality first. Speed comes from order and tooling, never from skipping a check.
 
 **Added 2026-10-30 (evening):**
-- **The reference study comes first, and it gets the most effort.** The owner is sending a 4K60 recording (~5 GB) of the whole Duskbloods network test, with several matches. Claude surveys all of it and writes organized notes in `docs/reference/network-test/`, with frames kept local. The notes cover:
+- **The reference study comes first, and it gets the most effort.** The owner sent a 1080p60 recording (5.3 GB) of the whole Duskbloods network test, with several matches. Claude surveyed one full playthrough of it (0:00–52:23, one frame a second; the owner stopped it there) and wrote organized notes in `docs/reference/network-test/`, with frames kept local. The notes cover:
   - scenery by phase, region and time of day (dusk, twilight, night);
   - gameplay, combat, movement, VFX, SFX and UI.
 
   These notes are the foundation of full production.
 - **UI rework to Duskbloods' look,** as accurate as possible inside the IP guardrail (AGENTS.md): close, never a 1:1 copy. Our own identity comes later.
+- **Art direction** (owner): "we aren't making the graphism like Duskbloods". The game should look like Type Soul (a stylized Roblox anime action game), but more detailed, never simplistic, with far more depth.
+  - Duskbloods is the reference for gameplay, mood, scenery and UI structure.
+  - The owner judged the C1 VFX and animations so far "bad": every effect and animation gets far more craft (layering, impact, anticipation, weight).
+  - The reference study now samples every second (owner: "1 second!"); its home is `docs/reference/network-test/`.
 - **Combat framework rework:** needed (the owner's Albert video), but not yet. First C1's skills, VFX, SFX and blade reach the bar. Then Claude reports, and the owner and Claude plan it together.
 
 ## 1. Status at a glance (2026-10-30)

@@ -29,3 +29,5 @@ assets/manor/**/*.blend
 assets/manor/**/*.blend1
 assets/manor/**/*.fbx
 assets/manor/**/*.png
+# Reference study frames (tools/reference/frames.py): local study evidence, never committed (the repo is public)
+build/reference/

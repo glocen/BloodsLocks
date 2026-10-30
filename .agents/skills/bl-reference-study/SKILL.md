@@ -1,14 +1,15 @@
 ---
 name: bl-reference-study
-description: Study reference footage and screenshots (the Duskbloods frame database ChatGPT built, the owner's screenshots) to answer one design question, cheaply and inside the IP rules, and write the findings as an OBSERVED/DESIGN study. Use before designing a map, region, enemy, boss, screen or effect from reference.
+description: Study reference footage and screenshots (the network-test study in docs/reference/network-test, the owner's recordings and screenshots) to answer one design question, cheaply and inside the IP rules, and write the findings as an OBSERVED/DESIGN study. Use before designing a map, region, enemy, boss, screen or effect from reference.
 ---
 
 # Reference study (shared by Claude and ChatGPT)
 
 ## Where the evidence is
 
-- **The written index (cheap): read it first.** `docs/duskbloods-evidence-appendix.md`, `docs/duskbloods-evidence-second-half.md`, `docs/duskbloods-gameplay-breakdown.md`, `docs/duskbloods-reference.md`, `docs/duskbloods-manual-summary.md`, and `docs/ui-research.md` (the owner's screenshots). They say what was seen at which timestamp.
-- **The images (expensive), on the owner's PC:** ChatGPT's study folder `C:/Users/gloce/.codex/visualizations/2026/10/29/01a1894d-1ea3-7272-a667-17d74cd6c8e1/reference`. It holds the 1280×720 source video (Vosair's 2:49:34 recording, supplied by the owner), 341 frames at 30-second intervals in 29 contact sheets, 2-second sequences of key moments, and the extraction scripts.
+- **The network-test study (read it first):** `docs/reference/network-test/` (2026-10-30). The full recording at 1080p60 surveyed every second for 0:00–52:23 (one full playthrough), with measured bursts, in topic files (match flow, scenery, combat, movement, VFX, animation, UI, enemies, takeaways). Its frames are local, in `build/reference/network-test/`; make more with `tools/reference/frames.py` from the owner's `C:\Users\gloce\Videos\duskbloodsfullreference.mp4`.
+- **The older written index:** `docs/duskbloods-gameplay-breakdown.md`, `docs/duskbloods-reference.md`, `docs/duskbloods-manual-summary.md`, `docs/ui-research.md` (the owner's screenshots). ChatGPT's 30-second survey (`docs/duskbloods-evidence-appendix.md`, `docs/duskbloods-evidence-second-half.md`) is superseded by the study for 0:00–52:23 (owner, 2026-10-30) and stays useful only beyond it.
+- **ChatGPT's older images**, on the owner's PC: `C:/Users/gloce/.codex/visualizations/2026/10/29/01a1894d-1ea3-7272-a667-17d74cd6c8e1/reference` (a 1280×720 copy of the recording, 341 frames at 30-second intervals, 2-second sequences, and the ffmpeg build the study tool uses).
 - **Study evidence only:** never copy frames, crops or traced shapes into the game or the repo. Git keeps our notes and our own drawings.
 
 ## Study without wasting tokens

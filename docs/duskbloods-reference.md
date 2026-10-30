@@ -1,5 +1,7 @@
 # Duskbloods reference notes
 
+> **The main reference is now the network-test study, [docs/reference/network-test/](reference/network-test/README.md)** (2026-10-30): the full recording surveyed every second for one full playthrough, with measured effects, screens and match flow. These notes keep the earlier web research.
+
 Research for BloodsLocks design decisions. Sources are network-test and preview coverage from 2026, so details may change. Where sources conflict, the note says which one we followed.
 
 ## Movement

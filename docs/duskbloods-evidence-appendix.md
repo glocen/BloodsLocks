@@ -1,5 +1,7 @@
 # Duskbloods evidence appendix — 29 October 2026
 
+> **Superseded for 0:00–52:23** by the network-test study, [docs/reference/network-test/](reference/network-test/README.md) (owner, 2026-10-30: redo the reference at one frame a second). Kept for the record and for later parts of the recording.
+
 Read [the engineering brief](duskbloods-gameplay-breakdown.md) first and [the UI quality standard](ui-quality-standard.md) when implementing presentation. This appendix records evidence and uncertainty; it is not a second competing game specification.
 
 ## Evidence status and coverage

@@ -1,5 +1,7 @@
 # Vosair recording: visual survey from 1:24:00 to 2:49:33
 
+> The network-test study, [docs/reference/network-test/](reference/network-test/README.md), now covers 0:00–52:23 at one frame a second (owner, 2026-10-30). This survey still covers the later matches until the study reaches them.
+
 **Research stopped at the owner's request.** This appendix contains the completed 30-second visual survey only. No dense second-half extraction was performed or inspected by this agent. The dense-extraction priorities below are deferred work, not completed evidence. Do not describe this appendix as a full continuous watch or as measured attack/transition timing.
 
 Source: https://www.youtube.com/watch?v=8Dyw5O2zyiY — owner-supplied recording. Inspected locally from `survey/survey_15.jpg` through `survey_29.jpg` on 29 October 2026.

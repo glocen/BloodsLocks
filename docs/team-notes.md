@@ -12,9 +12,10 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 - C1.1: SMG spread, the Blender-built machine pistol, the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload).
 - C1.2, the M1: knockback, hitstop, the black-and-gold sabre, the slash trail.
 
+- The network-test reference study: one full playthrough of the owner's 4K recording, read one frame a second, now in `docs/reference/network-test/` (topic files and the owner's open decisions in `takeaways.md`).
+
 Next:
-- Blood Blade and Light Beam.
-- The network-test reference study, as soon as the owner's video lands: the biggest task, notes in `docs/reference/network-test/`.
+- Redo the C1 effects and animations to the study and the owner's bar (Type Soul-like depth; "the VFX and animation you made are bad"): sabre hit, SMG, Blood Blade, Light Beam, bite, guard, howl, movement trails.
 - Then U2.
 
 The combat framework rework waits until C1 is at the bar, then gets planned with the owner. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
@@ -46,6 +47,13 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-30 · Claude · The network-test study
+
+- The owner's full recording (`C:\Users\gloce\Videos\duskbloodsfullreference.mp4`) read one frame a second for 0:00–52:23: one full playthrough. The owner stopped it there; the rest is more matches.
+- The notes are in `docs/reference/network-test/` (README, timeline, match flow, scenery, combat, movement, VFX, animation, UI, enemies, takeaways). Frames are local in `build/reference/network-test/` (gitignored); `tools/reference/frames.py` makes more.
+- ChatGPT's 30-second survey is superseded for that span (owner); the old docs carry a pointer.
+- Open for the owner (`takeaways.md` §2): the colour of blood, the Light Beam's colour, floor splatter, and our skill's name "Blood Blade" (the reference's exact name).
 
 ### 2026-10-30 · Claude · C1.2: the sabre and the slash
 
