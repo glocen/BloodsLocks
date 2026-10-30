@@ -1,8 +1,9 @@
 --!strict
 -- Locomotion: the Duskbloods-style movement kit: sprint toggle, tap jump / hold-to-charge high jump, air jumps,
--- ground dodge (with i-frames) or backstep, air dash, extra fall gravity. Runs per character inside the
--- simulation (see Runner) in two halves around ActionSim: Sense reads the ground and dodge state, Step applies
--- movement once the action result is known. All state lives in attributes (EntityState).
+-- ground dodge (with i-frames) or backstep, air dash, extra fall gravity; a hit's knockback (Knock) overrides them
+-- while it lasts. Runs per character inside the simulation (see Runner) in two halves around ActionSim: Sense reads
+-- the ground and dodge state, Step applies movement once the action result is known. All state lives in attributes
+-- (EntityState).
 
 local Shared = script.Parent.Parent
 local Config = require(Shared.Config.Movement)
@@ -11,6 +12,7 @@ local Vector = require(Shared.Util.Vector)
 local EntityState = require(script.Parent.EntityState)
 local Stamina = require(script.Parent.Stamina)
 local ActionSim = require(script.Parent.ActionSim)
+local Knock = require(script.Parent.Knock)
 
 local A = EntityState.Attr
 local GRAVITY = workspace.Gravity
@@ -162,7 +164,10 @@ function Locomotion.Step(character: Model, humanoid: Humanoid, root: BasePart, s
 	-- Velocity
 	local v = root.AssemblyLinearVelocity
 	local walkSpeed: number
-	if dodging then
+	local pushed = Knock.Hold(character, humanoid, root, now)
+	if pushed > 0 then
+		walkSpeed = pushed -- a hit's push wins over the dodge, lunges and steering until it ends
+	elseif dodging then
 		local d = Config.Dodge
 		local t = math.clamp((now - EntityState.Number(character, A.DodgeStart, now)) / d.Duration, 0, 1)
 		local speed = d.StartSpeed + (d.EndSpeed - d.StartSpeed) * t

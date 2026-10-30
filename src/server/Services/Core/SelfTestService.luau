@@ -19,6 +19,7 @@ local DebugService = require(script.Parent.DebugService)
 local EntityService = require(script.Parent.EntityService)
 local NpcService = require(script.Parent.NpcService)
 local ProgressionService = require(script.Parent.ProgressionService)
+local NpcActor = require(script.Parent.Parent.Parent.Npc.NpcActor)
 
 local A = EntityState.Attr
 local ENEMY_SPAWN_TAG = NpcService.SpawnTag
@@ -263,6 +264,14 @@ function SelfTestService.Start()
 	end
 	EntityService.PlayerDied:Connect(function(player: Player, killer: number?, shares: { [number]: number })
 		lastDeath = { Victim = player.Name, Killer = killer, Shares = shares }
+	end)
+	-- The pad dummy never acts, but its body is driven like any NPC's, so hits push it (knockback).
+	RunService.Heartbeat:Connect(function()
+		local pad = workspace:FindFirstChild(PAD_NAME)
+		local dummy = pad and pad:FindFirstChild("Dummy")
+		if dummy and dummy:IsA("Model") then
+			NpcActor.Update(dummy, time())
+		end
 	end)
 end
 

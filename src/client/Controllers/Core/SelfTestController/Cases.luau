@@ -211,6 +211,27 @@ return {
 		end,
 	},
 	{
+		Name = "M1 knockback",
+		Run = function(t)
+			-- a light hit pushes the dummy straight back by its Knockback (docs/combat-rework.md, C1.2)
+			local hit = Registry.Action(saber.Light).Hit
+			local dummy = t.Dummy() :: Model
+			local root = dummy:FindFirstChild("HumanoidRootPart") :: BasePart
+			t.Lock()
+			local before = root.Position
+			local function moved(): number
+				return Vector3.new(root.Position.X - before.X, 0, root.Position.Z - before.Z).Magnitude
+			end
+			t.Press("Attack")
+			-- input delay varies between sessions: wait for the push to start, then for it to run its course
+			t.Check("the hit pushes the dummy", waitFor(function()
+				return moved() > 0.2
+			end, 2))
+			t.Wait(Combat.Knock.Time + 0.3)
+			t.Near("by its Knockback distance", moved(), hit.Knockback, hit.Knockback * 0.3)
+		end,
+	},
+	{
 		Name = "Plates",
 		Run = function(t)
 			local dummy = t.Dummy() :: Model

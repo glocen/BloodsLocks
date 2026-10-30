@@ -9,7 +9,9 @@ return {
 	StaggerDuration = 2.0, -- a full meter leaves the target staggered (open to a bite) this long
 
 	Hitstun = { None = 0, Flinch = 0.28, Heavy = 0.55, Parried = 0.9 },
-	Knockback = { None = 0, Flinch = 10, Heavy = 34 }, -- studs/s pushed away from the attacker
+	-- Knockback (Simulation/Knock): a hit pushes its target straight away for Time seconds, Hit.Knockback studs in
+	-- all (a hit without one uses ByReaction); a blocked hit pushes BlockedScale of that, a parried one not at all.
+	Knock = { Time = 0.15, BlockedScale = 0.5, ByReaction = { None = 0, Flinch = 1.2, Heavy = 4 } },
 
 	Guard = {
 		WalkSpeed = 8,

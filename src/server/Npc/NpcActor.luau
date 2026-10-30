@@ -2,7 +2,8 @@
 -- NpcActor: what every AI-driven entity (training dummy, Shinigami, enemy) does with its body, so brains only
 -- decide *what* to do. NPCs don't run the player simulation (ActionSim, Locomotion); the server drives their
 -- action attributes here and CombatService detects their hits like anyone else's.
---   Update (every brain tick): ends a finished action, drives its lunge, plays animations. True while acting.
+--   Update (every brain tick): holds a hit's knockback (Knock), ends a finished action, drives its lunge, plays
+--   animations. True while acting or being pushed, so the brain doesn't steer.
 --   CanAct: alive, in the world, not stunned.
 --   Telegraph: a coloured flash before an attack. Begin: face a direction and start an action.
 --   Face, Approach, Hold: body control.
@@ -16,6 +17,7 @@ local Parts = require(Shared.Util.Parts)
 local Vector = require(Shared.Util.Vector)
 local EntityState = require(Shared.Simulation.EntityState)
 local AnimationSim = require(Shared.Simulation.AnimationSim)
+local Knock = require(Shared.Simulation.Knock)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -23,6 +25,8 @@ local num = EntityState.Number
 local MOVING = 0.1 -- MoveDirection magnitude that counts as walking
 
 local NpcActor = {}
+
+local beingPushed: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any -- bodies a hit is pushing
 
 function NpcActor.CanAct(model: Model, now: number): boolean
 	return model.Parent ~= nil and num(model, A.HP, 0) > 0 and not EntityState.IsStunned(model, now)
@@ -43,6 +47,16 @@ function NpcActor.Update(model: Model, now: number): boolean
 	local root, humanoid = Parts.Root(model), Parts.Humanoid(model)
 	if not root or not humanoid then
 		return false
+	end
+	local pushed = Knock.Hold(model, humanoid, root, now)
+	if pushed > 0 then
+		humanoid.WalkSpeed = pushed -- a lower walk speed would brake the push
+		beingPushed[model] = true
+		AnimationSim.Step(animator(humanoid), model, now, true, true)
+		return true
+	elseif beingPushed[model] then
+		beingPushed[model] = nil
+		humanoid:Move(Vector3.zero) -- the push is over: stop, or the humanoid keeps walking along it
 	end
 	local acting = false
 	local _, action, startedAt = EntityState.CurrentAction(model)

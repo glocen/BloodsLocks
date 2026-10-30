@@ -71,6 +71,8 @@ local A = {
 	Aim = "aim",
 	Ammo = "amo",
 	ReloadUntil = "rlU", -- 0 when not reloading
+	Knock = "knV", -- the push a hit gave (velocity, studs/s), held until KnockUntil (Simulation/Knock)
+	KnockUntil = "knU",
 	Level = "lvl", -- in-match level (gates skills; the leveling system arrives with match rules)
 	Skill1Charges = "s1C",
 	Skill1RechargeAt = "s1R", -- when the next charge comes back
@@ -122,6 +124,7 @@ EntityState.Defaults = {
 		Stagger = 0, StaggerUntil = 0, HitstunUntil = 0,
 		ActionId = "", ActionStart = 0, ActionBuffered = false, ActionFacing = Vector3.new(0, 0, -1), Queued = "",
 		EvadeFreeFrom = -10, GuardStart = -1, Aim = Vector3.new(0, 0, -1), Ammo = 0, ReloadUntil = 0,
+		Knock = Vector3.zero, KnockUntil = 0,
 	},
 	Fx = {
 		LastHitAt = -10, LastHitDamage = 0, LastHitBy = "", LastHitRanged = false, LastEvadedAt = -10, LastBlockAt = -10,

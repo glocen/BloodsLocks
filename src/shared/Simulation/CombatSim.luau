@@ -20,6 +20,7 @@ local Zones = require(Shared.Util.Zones)
 local PlaceRole = require(Shared.Util.PlaceRole)
 local Signal = require(Shared.Util.Signal)
 local Leveling = require(script.Parent.Leveling)
+local Knock = require(script.Parent.Knock)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -140,13 +141,7 @@ local function damage(request: HitRequest, now: number, amount: number)
 		end
 	end
 
-	local push = Config.Knockback[reaction] or 0
-	local away = toward(attacker, target)
-	local root = Parts.Root(target)
-	if push > 0 and away and root then
-		local v = root.AssemblyLinearVelocity
-		root.AssemblyLinearVelocity = Vector3.new(away.X * push, v.Y, away.Z * push)
-	end
+	Knock.Apply(target, attacker, Knock.Distance(hit), now)
 end
 
 local function apply(request: HitRequest, now: number)
@@ -201,6 +196,7 @@ local function apply(request: HitRequest, now: number)
 		end
 		Stamina.Drain(target, power * Config.Guard.StaminaPerDamage * (hit.GuardDrain or 1), now)
 		loseHp(target, attacker, power * Config.Guard.ChipDamage)
+		Knock.Apply(target, attacker, Knock.Distance(hit) * Config.Knock.BlockedScale, now)
 		fx:SetAttribute(A.LastBlockAt, now)
 		if num(target, A.Stamina, 0) <= 0 then
 			interrupt(target, now, Config.Guard.BreakStun, nil)
