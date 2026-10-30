@@ -471,13 +471,7 @@ The owner wants the perfected framework kept on GitHub as an archive: each world
   - `Projectile`: generic client flight. Each projectile look exposes `Spawn(cframe)`, `Move(visual, cframe)` and `Impact(visual, position, direction)`.
   - Colors come from `Theme.Vfx`. Meshes live in `ReplicatedStorage.Shared.Assets.Vfx`.
   - `CombatFxController` maps the server's `ProjectileFx` visual name to a look through `PROJECTILE_LOOKS`.
-- **Owner review 2026-10-29:** "alright" but **not yet up to our standard**. The slash is now upright (vertical) at the owner's request. The "a little buggy" was most likely the saber falling apart, now fixed.
-- **Drawn textures, 2026-10-29:**
-  - **The textures:** our own art, drawn by `tools/vfx_textures.py` (pure Python; `py tools/vfx_textures.py <out_dir> --preview`). The sandboxed shell can't write into Documents, so the script draws into a scratch folder.
-  - **Blood Blade:** now a drawn crescent sprite (hot rim, wet gloss, near-black body, needle tips) plus a rim halo, as unlit SurfaceGuis on both faces of a thin plane (replaces the glass mesh).
-  - **Light Beam:** the drawn soft band (core, mid, haze) plus drawn energy strands, replacing the onion bands. The beam is now continuous and soft-edged.
-  - **Glints:** the charge "armed" glint and the beam flares use the drawn four-point glint.
-  - **Owner review:** "still not my standard but fine, move on, we redo it later". The VFX quality revisit is **parked**: come back after the core loop, before the polish step.
+- **Dated review notes** (the owner's 10-29 reviews, the drawn-textures pass): archived in [archive/vfx-review-notes-2026-10.md](archive/vfx-review-notes-2026-10.md).
 - **Next:** a charged Blood Blade (hold) variant.
 
 ## 12. Build steps
