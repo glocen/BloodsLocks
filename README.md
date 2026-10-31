@@ -28,7 +28,6 @@ The game lives in Roblox Studio (the Manor hub, place "ROLOCK", and the Victoria
 - **glocen**: director, owner, final say. The vision and every decision; the data system and the original modules in `src/owner/`.
 - **Claudius**: lead designer (Claude, in the owner's claude.ai project). The team's foundation (`AGENTS.md`, the rules and the skills) and the Victorian map brief.
 - **Claude**: builds the game (Claude Code). The framework and the systems in `src/`, the match, the UI and VFX, the asset pipeline, Gustave's machine pistol, the Cathedral Quarter blockout.
-- **Claude (cloud)**: Claude Code on the web, from the owner's phone. Static checks, plans and specs, research, tools and reviews, through pull requests (`docs/cloud-tasks.md`).
 - **ChatGPT**: world artist (Codex), when the owner switches it on. The whole-game brief, the UI quality standard, the Duskbloods evidence study, the Cathedral Quarter spec, the Manor art studies, Gustave's animation sources.
 
 Who works on what, and the current team mode: [AGENTS.md](AGENTS.md).

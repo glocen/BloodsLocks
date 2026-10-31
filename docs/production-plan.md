@@ -24,7 +24,7 @@ This is the working order for Claude's sessions. [engineering-plan.md](engineeri
   - Duskbloods is the reference for gameplay, mood, scenery and UI structure.
   - The owner judged the C1 VFX and animations so far "bad": every effect and animation gets far more craft (layering, impact, anticipation, weight).
   - The reference study now samples every second (owner: "1 second!"); its home is `docs/reference/network-test/`.
-- **Combat framework rework:** needed (the owner's Albert video), but not yet. First C1's skills, VFX, SFX and blade reach the bar. Then Claude reports, and the owner and Claude plan it together.
+- **Combat framework rework:** needed (the owner's Albert video), but not yet. First C1's skills, VFX, SFX and blade reach the bar. Then Claude reports, and the owner and Claude plan it together. The owner's order of 2026-10-31 makes it item 5 (team notes, "Now"): combat, movement and camera, piece by piece. Its plan, for the owner's review: [core-feel-plan.md](core-feel-plan.md).
 
 ## 1. Status at a glance (2026-10-30)
 

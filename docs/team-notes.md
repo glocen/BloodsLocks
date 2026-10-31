@@ -12,11 +12,7 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 The full rule is AGENTS.md rule 4.
 
-**Team mode: Claude, with Claude (cloud) alongside** (owner, 2026-10-31). ChatGPT is off; Claude does every area, world art included. Planned (owner): next week a head-to-head trial, Claude and GPT-6 Astra each building the same hero piece; ChatGPT joins only if Astra is clearly better.
-
-**Claude (cloud):** Claude Code on the web, from the owner's phone; no Studio or art. Its brief and ordered tasks: `docs/cloud-tasks.md`.
-- **The tasks:** the core-feel code inventory (the combat, movement and camera plan waits on it), the static checks and CI, the docs diet, compact test reports, a names sweep, a code review, the time-to-kill table, name proposals, the UI rework spec and verified Roblox facts.
-- **How it delivers:** each task as a pull request, which Claude tests in Studio and merges.
+**Team mode: Claude only** (owner, 2026-10-30). ChatGPT is off; Claude does every area, world art included. Planned (owner): next week a head-to-head trial, Claude and GPT-6 Astra each building the same hero piece; ChatGPT joins only if Astra is clearly better.
 
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
 
@@ -33,10 +29,10 @@ Next, in this order (owner, 2026-10-31):
 2. Sounds: Claude can't upload audio (it needs a permission scripts don't have), so sounds come from Roblox's audio library. Done: the measured reference, the shortlists, the audition panel, provisional cues. The owner's picks are pending.
 3. The SMG burst, the guard's shield model and a parry that costs no stamina.
 4. Push.
-5. Combat, movement and camera, piece by piece from the reference with full effort ("one of the core systems").
+5. Combat, movement and camera, piece by piece from the reference with full effort ("one of the core systems"). Its plan, for the owner's review: `docs/core-feel-plan.md`.
 6. Then the whole UI, close to the reference's but our own.
 
-The combat framework rework waits until C1 is at the bar, then gets planned with the owner. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
+Item 5 is the combat framework rework. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
 
 **ChatGPT (off):** left mid-way through an owner-approved Victorian art rebuild (replacement geometry, markers and Lighting; phase I dusk, II twilight, III and the final night). W1 backup: `ServerStorage.WorldBackups.PreArtRebuild_20261030`. Its handoff (`docs/victorian-art-rebuild-handoff.md`), Manor world scripts and art tools are committed as it left them (owner, 2026-10-30); the 29 MB of `.blend`, `.fbx` and `.png` art sources in `assets/manor/` stay on the owner's PC, gitignored. Don't run the old CathedralQuarter generator once the replacement is installed.
 
@@ -54,12 +50,14 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 
 **Small follow-ups (Claude)**
 
+- **Docs diet** (owner, 2026-10-31: "delete the bloat, keep one copy"): fold the older 30-second survey (`docs/duskbloods-evidence-appendix.md` and `-second-half.md`, ChatGPT's, so deleting them needs the owner's OK) and `docs/ui-research.md` into their homes, and trim `docs/duskbloods-reference.md` to what the network-test study doesn't cover.
 - Code comments that still say "Bloodsworn tab" (`Net`, `ClassService`, `Theme`, `Arsenal`): the tab is "Classes".
 - IP names (owner, 2026-10-30: "I'll propose names"): bring 3–4 original names for the companions now called "Shinigami" (Bleach's core term, player-visible) and notes on the title "BloodsLocks" (near "Duskbloods" and "Deadlock"). Nothing is renamed until the owner picks.
 - Self-test, logic tests and the world report return every PASS line. A compact default (counts and failures only, the full list on request) would cut tokens on every test run with no loss.
 
 **Waiting on the owner**
 
+- **The combat, movement and camera plan** (`docs/core-feel-plan.md`, §7): centre the camera, sprint as a toggle or a hold, and the order.
 - **Save both places** (File → Save to Roblox): the rule cleanup lives in their open Edit copies until then. Deleted:
   - **In the Manor:** the downloaded street-lamp, castle-tower, chest and wind-spiral models, one loose mesh, two unnamed models of downloaded parts, and the downloaded sky textures in two old Lighting backups.
   - **In the Victorian place:** downloaded skies and a baseplate texture in its backups.
@@ -78,6 +76,13 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-31 · Claude · The combat, movement and camera plan; the cloud teammate parked
+- **The plan** for item 5, the combat framework rework: `docs/core-feel-plan.md`. Thirteen pieces, the camera first. Each is measured from the reference, built, tested, reviewed side by side and accepted by the owner before the next.
+- **The camera's first readings** (the Albert clip and the recording): `docs/reference/network-test/movement.md` §3.
+- **Parked** (owner, 2026-10-31: "we wont add cloud teammate for now"): the Claude (cloud) brief and its pointers. The brief stays in git: `git show 60088df:docs/cloud-tasks.md`.
+- **Back with Claude:** the docs diet the brief held ("Small follow-ups").
+- **Open:** the owner's three questions (the plan's §7). Building starts after items 3 and 4.
 
 ### 2026-10-31 · Claude · The ward (C1.6); a push no longer turns the guard aside
 - **The ward:** a crimson glass buckler with our rose-window tracery: `Vfx/Ward`, the mesh from `tools/blender/ward.py`, the template in `Assets/Vfx/Ward`.

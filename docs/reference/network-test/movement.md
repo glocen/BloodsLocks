@@ -29,6 +29,11 @@ How the hero moves, from the first full playthrough (0:00–52:23). **OBSERVED**
 ## 3. The camera
 
 - Third person behind the hero, slightly above; it pulls back during fast travel.
+- **Framing** (first readings, 2026-10-31; "Albert" is the owner's Albert clip, 30 fps): the hero stays near the middle of the frame, mostly 40–60 % across, with no steady shoulder offset (Albert 0:05–0:43 at one frame a second; 0:15.0–0:16.9 at 15 fps).
+- **A gentle look down while running:** the far railing and the sky fill roughly the top quarter to third of the frame (Albert 0:15–0:21).
+- **Steady:** no bob, and no shake visible in 320-pixel-wide bursts, while running or trading blows (Albert 0:15.0–0:16.9, 1:29.6–1:31.5).
+- **Close duels:** the view looks steeply down, the floor filling the frame with no sky (Albert 1:29.6–1:31.5). Whether the player or the lock-on tilted it doesn't show.
+- **Jumps:** through the tutorial's air jumps the hero climbs from the lower middle into the upper half of the frame instead of staying centred (3:25.2–3:26.9). During a high jump over the roofs the view looks steeply down on them (37:38.0–37:39.6).
 - **Lock-on** puts a circular reticle on the target and keeps both in frame (6:18); a flick switches targets.
 - Authored shots for big moments: the phase arrival from behind the hero; the hub's reveal pulling back through the hall (12:00–12:20); the victory tilting up to the moon (51:38–51:45).
 
@@ -36,5 +41,5 @@ How the hero moves, from the first full playthrough (0:00–52:23). **OBSERVED**
 
 - **Jumps match:** our `Config.Movement.MaxJumps = 4` (a ground jump and three air jumps), with a held high jump.
 - **Sprint:** ours is a toggle; the reference teaches holding. Keep ours unless the owner asks.
-- **We lack** ivy and grip climbing, ledge grabs, wall jumps and instant travel. These belong to the combat framework rework (owner, 2026-10-30), not C1.
+- **We lack** ivy and grip climbing, ledge grabs, wall jumps and instant travel. These belong to the combat framework rework (owner, 2026-10-30; [its plan](../../core-feel-plan.md)), not C1.
 - **Trails:** our movement has no trails yet; the reference's air-jump streaks, high-jump ribbons and dodge afterimages are part of how the movement reads, and belong to the VFX pass.
