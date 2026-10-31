@@ -11,7 +11,7 @@
 --         bite's hold names its beats (Seize, Fangs, Pulse).
 --   Projectiles (by the projectile's Visual): Cast on release, Impact where it stops.
 --   Weapons (by weapon id): Reload when a reload starts.
---   Feedback: hits on bodies and surfaces with no cue of their own, blocks and parries.
+--   Feedback: hits on bodies and surfaces with no cue of their own, blocks, parries and guard breaks.
 -- Registry checks every name and slice here at load.
 
 return {
@@ -34,6 +34,8 @@ return {
 			Volume = 0.8, Pitch = { 0.95, 1.05 }, Range = 70 },
 		Parry = { Id = "rbxassetid://9113133597", From = 0, To = 0.44, Peak = 0, Level = -19.3,
 			Volume = 0.9, Pitch = { 0.98, 1.02 }, Range = 90 },
+		GuardBreak = { Id = "rbxassetid://9114855870", From = 0.17, To = 1.03, Peak = 0.04, Level = -18.7,
+			Volume = 0.9, Pitch = { 0.96, 1.04 }, Range = 90 },
 		BloodBladeCast = { Id = "rbxassetid://9114446852", From = 0, To = 0.78, Peak = 0.23, Level = -20.1,
 			Volume = 0.8, Pitch = { 0.96, 1.04 }, Range = 80 },
 		BloodBladeImpact = { Id = "rbxassetid://9125640290", From = 0, To = 0.83, Peak = 0.07, Level = -19.1,
@@ -84,5 +86,6 @@ return {
 		SurfaceHit = "SurfaceHit",
 		Block = "GuardBlock",
 		Parry = "Parry",
+		GuardBreak = "GuardBreak",
 	},
 }

@@ -256,6 +256,18 @@ local briefs: { [string]: Brief } = {
 		Tail = { 0.06, 0.3 },
 		Bands = { Low = 0.7, Mid = 0.25, High = 0.05 },
 	},
+	GuardBreak = {
+		Brief = "the guard shattering: a glassy break with a hard metallic crack and weight under it",
+		Keywords = { "glass break", "glass shatter", "glass smash", "shield break", "ice shatter", "crystal break",
+			"window break", "glass crash", "breaking glass", "ice break", "bottle break", "metal crack", "shatter" },
+		Avoid = { "music", "car", "phone", "loop", "slow motion" },
+		Prefer = { "glass", "shatter", "break", "smash", "crystal", "ice", "shield" },
+		Mode = "Hit",
+		Slice = { 0.4, 1.4 },
+		Attack = { 0, 0.03 },
+		Tail = { 0.3, 1.2 },
+		Bands = { Low = 0.3, Mid = 0.4, High = 0.3 },
+	},
 	BiteRelease = {
 		Brief = "the throw that ends the bite: a big dark gust of wind with weight",
 		Keywords = { "wind gust", "whoosh gust", "air burst", "throw whoosh", "magic release", "dark whoosh",

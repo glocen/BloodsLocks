@@ -79,6 +79,18 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 
 ## Entries
 
+### 2026-10-31 · Claude · The ward (C1.6); a push no longer turns the guard aside
+- **The ward:** a crimson glass buckler with our rose-window tracery: `Vfx/Ward`, the mesh from `tools/blender/ward.py`, the template in `Assets/Vfx/Ward`.
+  - It rises with the guard on the off-hand side and cracks as the guard's stamina runs low.
+  - A block whirls orange-gold arcs, and a parry bursts white-gold.
+  - A guard break shatters it into glass shards with a crimson-to-black puff. The break has a provisional library sound.
+- **Bug fixed:** a hit's push turned the body away from its attacker, so a guard stopped one hit and then stood sideways. Pushes now hold the facing (`Knock.Facing`), for players and NPCs.
+- **Tests:** self-test 129/129 (Manor) and 130/130 (Victorian), logic 63/63 in both. New: the "Ward" case, and a second-block check in "Guard".
+- **Open:**
+  - the owner's look;
+  - the ward over the Victorian red sky and in a dark interior;
+  - next in C1: the SMG burst rebuild and the Crimson Crescent's black gradient.
+
 ### 2026-10-31 · Claude · Sounds from Roblox's library, measured against the reference
 - **The reference's audio, measured** (23 minutes of the recording plus the whole Albert clip): `docs/reference/network-test/audio.md`, made with `tools/reference/audio.py` (run with Blender's Python). Inspiration only.
 - **`tools/studio/Audio`:**

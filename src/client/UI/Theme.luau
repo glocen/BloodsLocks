@@ -203,6 +203,15 @@ return {
 		WindSmokeDeep = Color3.fromRGB(14, 12, 20),
 		Wind = Color3.fromRGB(196, 202, 218), -- its wind lines: pale, cool
 		Drain = Color3.fromRGB(226, 234, 255), -- the life a bite drinks: cold white motes (magic's colour role)
+		-- the ward (Vfx/Ward): dark crimson glass, a hot rim, gold-red leading; blocks and parries flash gold (rites)
+		WardGlass = Color3.fromRGB(70, 5, 16),
+		WardHot = Color3.fromRGB(230, 70, 54), -- the glass flashing on a block
+		WardRim = Color3.fromRGB(255, 74, 48),
+		WardLine = Color3.fromRGB(255, 132, 84), -- the rose-window tracery
+		WardCrack = Color3.fromRGB(255, 220, 186), -- cracks catching the light
+		WardLight = Color3.fromRGB(255, 58, 40), -- the light it casts on the arm and face
+		WardEmber = Color3.fromRGB(255, 110, 60),
+		WardShard = Color3.fromRGB(150, 14, 34), -- its shards: crimson glass, lit
 	},
 
 	-- Class portraits (Blood Table, Bloodsworn tab): ViewportFrame lighting and card shading.

@@ -1,9 +1,10 @@
 --!strict
 -- CombatFxController: combat feedback for every entity, read from the events CombatSim and the enemy brains write on
 -- each entity's Humanoid (EntityState.Fx): hit flashes, call-outs (Evaded, Blocked, PARRY, Guard broken, HOWL, bite
--- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, a bite's smoke and
--- wind through its hold (Vfx/BiteWind), gunshots (Vfx/Gunshot: muzzle, tracer, impact), skill projectiles, channeled
--- beams and charge telegraphs, and their sounds
+-- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, the ward on every
+-- raised guard with its block, parry and break (Vfx/Ward), a bite's smoke and wind through its hold (Vfx/BiteWind),
+-- gunshots (Vfx/Gunshot: muzzle, tracer, impact), skill projectiles, channeled beams and charge telegraphs, and their
+-- sounds
 -- (Audio/Sfx, cues named in Definitions/Sounds). Damage itself reads on the plates (PlateController: HP bars and the
 -- running total of what you dealt), so hits pop no numbers.
 
@@ -17,6 +18,7 @@ local EntityState = require(Shared.Simulation.EntityState)
 local Net = require(Shared.Net)
 local Registry = require(Shared.Definitions.Registry)
 local Sfx = require(script.Parent.Parent.Parent.Audio.Sfx)
+local Budget = require(script.Parent.Parent.Parent.Util.Budget)
 local UI = script.Parent.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local FloatingText = require(UI.Components.FloatingText)
@@ -26,6 +28,7 @@ local Gunshot = require(Vfx.Gunshot)
 local Hitstop = require(Vfx.Hitstop)
 local SlashTrail = require(Vfx.SlashTrail)
 local BiteWind = require(Vfx.BiteWind)
+local Ward = require(Vfx.Ward)
 local Projectile = require(Vfx.Projectile)
 local BloodBlade = require(Vfx.BloodBlade)
 local LightBeam = require(Vfx.LightBeam)
@@ -342,6 +345,20 @@ local function watch(model: Instance)
 		listen(model, fx, A[name], handler)
 	end
 
+	-- The ward: raised with the guard, cracking as the guard's stamina runs low (an entity with no stamina is whole).
+	local function guarding()
+		Ward.Set(model, num(model, A.GuardStart, -1) >= 0)
+	end
+	local function strength()
+		local most = num(model, A.StaminaMax, 0)
+		Ward.Strength(model, if most > 0 then num(model, A.Stamina, most) / most else 1)
+	end
+	listen(model, model, A.GuardStart, guarding)
+	listen(model, model, A.Stamina, strength)
+	listen(model, model, A.StaminaMax, strength)
+	strength()
+	guarding()
+
 	on("LastHitAt", function()
 		local damage = num(fx, A.LastHitDamage, 0)
 		Flash.Pulse(model, Theme.Colors.Health)
@@ -358,6 +375,7 @@ local function watch(model: Instance)
 		end
 	end)
 	on("LastBlockAt", function()
+		Ward.Block(model)
 		local root = Parts.Root(model)
 		if root then
 			Sfx.Play(SOUNDS.Feedback.Block, root)
@@ -370,6 +388,7 @@ local function watch(model: Instance)
 		end
 	end)
 	on("LastParryAt", function()
+		Ward.Parry(model)
 		Flash.Pulse(model, Theme.Colors.Accent)
 		local root = Parts.Root(model)
 		if root then
@@ -391,6 +410,11 @@ local function watch(model: Instance)
 		end
 	end)
 	on("GuardBrokenAt", function()
+		Ward.Break(model)
+		local root = Parts.Root(model)
+		if root then
+			Sfx.Play(SOUNDS.Feedback.GuardBreak, root)
+		end
 		if near(model) then
 			FloatingText.Pop(model, "Guard broken", Theme.Colors.Health, true)
 		end
@@ -454,6 +478,7 @@ function CombatFxController.Start()
 			Sfx.Play(cues.Impact, position)
 		end
 	end)
+	local updateWards = Budget.Wrap("Wards", Ward.Update)
 	RunService.RenderStepped:Connect(function(dt)
 		for id, projectile in projectiles do
 			if not Projectile.Step(projectile, dt) then
@@ -464,6 +489,7 @@ function CombatFxController.Start()
 		updateBeams()
 		updateCharges()
 		updateBites()
+		updateWards()
 		pollOwn()
 	end)
 end

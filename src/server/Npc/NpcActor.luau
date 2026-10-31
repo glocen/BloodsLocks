@@ -51,11 +51,17 @@ function NpcActor.Update(model: Model, now: number): boolean
 	local pushed = Knock.Hold(model, humanoid, root, now)
 	if pushed > 0 then
 		humanoid.WalkSpeed = pushed -- a lower walk speed would brake the push
+		local facing = Knock.Facing(model, now)
+		if facing then -- pushed back, not turned away (steering along the push would turn the body)
+			humanoid.AutoRotate = false
+			root.CFrame = CFrame.lookAt(root.Position, root.Position + facing)
+		end
 		beingPushed[model] = true
 		AnimationSim.Step(animator(humanoid), model, now, true, true)
 		return true
 	elseif beingPushed[model] then
 		beingPushed[model] = nil
+		humanoid.AutoRotate = true
 		humanoid:Move(Vector3.zero) -- the push is over: stop, or the humanoid keeps walking along it
 	end
 	local acting = false

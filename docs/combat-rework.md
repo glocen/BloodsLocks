@@ -116,6 +116,40 @@ The owner's words: "for the bite it js the animation and let make a wind effect 
 5. **Gore:** smoke, wind and cold light only, and the hit feedback is the victim's red flash with a white outline. A neck bite with no blood is common in Roblox vampire games; nothing wet is drawn or heard.
 6. **Track budget:** one one-shot per body (`BiteHold` or `Bitten`), within `AnimationSim`'s two.
 
+## C1.6 · The ward: guard, block, parry, guard break (owner, 2026-10-31: "the shield model when blocking")
+
+**Reference (OBSERVED; bursts 9:39.4–9:41.3 at 10 fps and 14:42.5–14:43.7 at 15 fps, crops on the hero):**
+- **Raised guard:** a buckler-sized disc, about a third of the body's height, at the off-hand shoulder. It's dark crimson glass, darker at the centre, with a brighter rim. It pops in within 0.1 s (9:40.4 → 9:40.5) and holds still.
+- **A blocked hit (14:42.9–14:43.1):** thin orange-gold arcs whirl round the upper body at several radii for about 0.2 s, with red-gold sparks at the hit.
+- **The manual's card (9:21):** a red translucent shield with crimson energy at its edge.
+
+**Ours (DESIGN): the ward,** a crimson glass buckler with a gothic rose-window tracery.
+- **Form:** a shallow glass lens 1.9 studs across, from `tools/blender/ward.py`, with a separate hot rim (a thin torus). It sits 0.6 studs ahead of the chest on the off-hand side at shoulder height, turned 10° outward, and follows the body. Every guarding entity gets one.
+- **Layers:**
+  - dark crimson glass, with the tracery drawn on it in gold-red lines;
+  - the hot rim, plus a soft ring of glow round it;
+  - a faint shimmer skin;
+  - a few embers drifting off the rim;
+  - a crimson light on the arm and face.
+- **Raise and lower:** it grows 0.4 → 1.06 → 1 in 0.12 s with a flash of the rim. Lowered, it shrinks and fades in 0.08 s.
+- **Strength:** cracks fade in as stamina falls below half; under a fifth the ward flickers.
+- **Block:** the ward flashes hot and a ripple runs out from its centre. Four to six thin gold arcs whirl round it at several radii for 0.2 s, and gold sparks spray off its face. Then the shake and the block sound (both exist).
+- **Parry:** a white-gold starburst and a bright ring snapping out from the ward, with more and brighter arcs, more sparks, a stronger shake and the parry sound. Gold is the colour of rites, so it marks the perfect timing.
+- **Guard break:** the ward cracks through and shatters. Crimson glass shards fly out and fall, a puff goes from crimson to black (the owner's black gradient), and the rim snaps. A sound is added (a provisional library slice until the owner's sounds arrive).
+- **Code:**
+  - `Vfx/Ward` (client): one pooled ward per entity. It's raised and lowered from `GuardStart`, cracked from stamina, with bursts on `LastBlockAt`, `LastParryAt` and `GuardBrokenAt`, all through `CombatFxController`.
+  - Textures through the pipeline: `WardTracery`, `WardCracks`, `GlassShard`. The arcs, sparks, ring and glint reuse `CrescentArc`, `Spark`, `WindRing` and `Glint`.
+  - Meshes: published by `ModelAssembly` into `Assets/Vfx/Ward.rbxm`.
+
+**Critique before building:**
+1. **Seen from behind.** The player's camera sees the ward's back. The glass must read from both sides (the tracery is mapped through to the back) and stick out past the silhouette on the off-hand side, as in the reference. Judged from the player's camera; size and offset are tuned there.
+2. **Dark on dark.** Dark glass vanishes in night streets, and additive glow vanishes against the red sky. So darkness comes from the glass (alpha), and readability from the hot rim, the embers and the light. Checked over a dark and a bright backdrop.
+3. **Floating.** If the off-hand arm isn't near it, the ward looks detached. It's checked against our guard pose. If they clash, the offset moves to the forearm, or the guard animation raises the off-hand.
+4. **Clutter.** Arcs and sparks live 0.2 s or less, so blocks in a flurry don't pile up; the parry is bigger but rare.
+5. **Cost.** Each guarding entity gets two parts, three emitters and one light, pooled rather than rebuilt per raise. The bursts are short-lived emitters.
+6. **No gore.** Glass, light, smoke and sparks only; the shards are glass. Checked before any upload (AGENTS.md rule 4).
+7. **Fan test.** A translucent energy buckler is a genre staple. Our rose-window tracery, the hot rim and the gold arcs make it ours, and there is no sphere.
+
 ## Later in C1 (owner's earlier asks)
 
 - **Level-ups that matter:** a time-to-kill table per level, then damage and HP growth tuned to it.
@@ -128,7 +162,7 @@ The owner's words: "for the bite it js the animation and let make a wind effect 
 3. **Knockback could break the chain** by pushing the target out of reach of the next swing. Light hits push 2.5 studs while each swing's lunge closes about 2.4; the 4th hit pushes 6 and ends the chain with space, which is when a gap is wanted.
 4. **Knockback and walls:** the push is velocity held by the simulation, so it stops at walls like movement does, with no clipping.
 5. **Hitstop desync:** it's presentation only and capped. The simulation's timing is untouched.
-6. **No gore:** body hits are mist and sparks, never sprays or pools.
+6. **No gore:** a body hit shows only as the body flashing red with a white outline (AGENTS.md rule 4).
 
 ## Progress (2026-10-30)
 
@@ -161,6 +195,22 @@ The owner's words: "for the bite it js the animation and let make a wind effect 
 - **Built:** the hold (`Simulation/Bite`), the kneel, the four Blender clips, `Vfx/BiteWind` on the hold's clock, the bite camera, five sound cues.
 - **Reviewed:** Blender sheets from the player's camera and the side, and live captures frozen at the kneel, the fangs, the drain and the release.
 - **Open:** the owner's look in play. The Butcher (1.35×) isn't checked yet. The sounds wait for the sheet's upload.
+
+**C1.6 built (2026-10-31): the ward.** Self-test 129/129 in the Manor and 130/130 in the Victorian place, logic 63/63 in both.
+- **Built:**
+  - the glass buckler: `tools/blender/ward.py`, published into `Assets/Vfx/Ward`;
+  - `Vfx/Ward`: raise and lower, cracks with the guard's stamina, the block, the parry and the break;
+  - its textures: `WardTracery`, `WardCracks`, `GlassShard`;
+  - a guard-break sound: a provisional library slice;
+  - the self-test case "Ward".
+- **Fixed on the way:** a hit's push turned the body away from its attacker. The push steers the humanoid, and auto-rotate turned it along the push. So a guard stopped one hit and then stood sideways to the next.
+  - Pushes now hold the facing the body had when the hit landed (`Knock.Facing`), for players and NPCs.
+  - The "Guard" case checks that a second hit is blocked too.
+- **Reviewed:** frozen captures from the player's camera on the test pad: raised (front and back), block, parry, break.
+  - The ward moved out beside the head; from behind it was hidden.
+  - The block's arcs are orange-gold; white-gold is kept for the parry.
+  - Every light is kept small, so the floor never pools with red.
+- **Open:** a look over the Victorian red sky and a dark interior, and the owner's look in play.
 
 **Next:**
 1. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`), raised overhead the way Albert raises his (the owner's video).

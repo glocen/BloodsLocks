@@ -159,6 +159,17 @@ local function testHitAfter(who: any, trigger: string, delay: number, actionId: 
 	return true
 end
 
+-- Queues a light hit from the pad dummy on the player that drains `drain` stamina if the player guards it: the
+-- ward's cracks and a guard break, through the real guard path (the dummy is level 1, so power is the hit's Damage).
+local function testGuardHit(who: any, drain: number): boolean
+	local _, character = characterOf(who)
+	local attacker = assert(padDummy(), "no dummy to attack with")
+	local damage = 10
+	local hit = { Damage = damage, Stagger = 0, Reaction = "None", GuardDrain = drain / (damage * Combat.Guard.StaminaPerDamage) }
+	CombatSim.Queue({ Attacker = attacker, Target = character, Hit = hit })
+	return true
+end
+
 -- The combat entity called `name`, or nil.
 local function entityNamed(name: string): Model?
 	for _, model in CollectionService:GetTagged(EntityState.Tag) do
@@ -272,6 +283,7 @@ function SelfTestService.Init()
 	DebugService.Register("TestHitAfter", testHitAfter)
 	DebugService.Register("TestStagger", testStagger)
 	DebugService.Register("TestWound", testWound)
+	DebugService.Register("TestGuardHit", testGuardHit)
 	DebugService.Register("TestPadClear", testPadClear)
 	DebugService.Register("TestEnemy", testEnemy)
 	DebugService.Register("TestEnemySpawn", testEnemySpawn)

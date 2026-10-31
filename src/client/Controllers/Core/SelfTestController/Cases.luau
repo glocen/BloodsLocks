@@ -33,6 +33,8 @@ local PactSiteController = require(script.Parent.Parent.PactSiteController)
 local Budget = require(script.Parent.Parent.Parent.Parent.Util.Budget)
 local Sfx = require(script.Parent.Parent.Parent.Parent.Audio.Sfx)
 local Kit = require(script.Parent.Parent.Parent.Parent.Vfx.Kit)
+local Ward = require(script.Parent.Parent.Parent.Parent.Vfx.Ward)
+local Theme = require(script.Parent.Parent.Parent.Parent.UI.Theme)
 local Layers = require(script.Parent.Parent.Parent.Parent.UI.Core.Layers)
 local Focus = require(script.Parent.Parent.Parent.Parent.UI.Core.Focus)
 
@@ -673,7 +675,102 @@ return {
 			end, 2)
 			t.Near("chip damage", hp - t.Num(A.HP), LIGHT1 * Combat.Guard.ChipDamage, 0.01)
 			t.Near("stamina drain", stamina - t.Num(A.Stamina), LIGHT1 * Combat.Guard.StaminaPerDamage, 1)
+			-- the block's push leaves the guard facing its attacker, so the next hit is blocked too (a push used to turn
+			-- the body aside: found 2026-10-31)
+			t.Wait(Combat.Knock.Time + 0.1)
+			local blockedBefore = EntityState.Number(t.Fx(), A.LastBlockAt, -10)
+			local hpBefore = t.Num(A.HP)
+			t.Server("TestHitAfter", "Now", 0)
+			local again = waitFor(function()
+				return EntityState.Number(t.Fx(), A.LastBlockAt, -10) ~= blockedBefore
+			end, 2)
+			t.Check("a second hit after the block's push is blocked too", again and hpBefore - t.Num(A.HP) < LIGHT1 * 0.5)
 			t.Hold("Guard", false)
+		end,
+	},
+	{
+		Name = "Ward",
+		Run = function(t)
+			-- the guard's glass buckler (Vfx/Ward): it rises with the guard ahead of the body and follows it, lowering
+			-- takes it away, a block flashes it hot and a parry white-gold, it cracks as the guard's stamina runs low,
+			-- and a guard break shatters it into glass shards, leaving nothing behind
+			local me = t.Root().Parent :: Model
+			local fx = t.Fx()
+			local function raised(): Model?
+				local found: Model? = nil
+				waitFor(function()
+					found = Ward.Shown(me)
+					return found ~= nil
+				end, 1)
+				return found
+			end
+			t.Hold("Guard", true)
+			local ward = raised()
+			t.Check("raising the guard raises the ward", ward ~= nil)
+			if not ward then
+				t.Hold("Guard", false)
+				return
+			end
+			local lens = ward:FindFirstChild("Lens") :: MeshPart
+			t.Wait(0.25)
+			local offset = t.Root().CFrame:PointToObjectSpace(lens.Position)
+			t.Check("it stands ahead of the chest, on the off-hand side", offset.Z < -0.6 and offset.X < -0.3 and offset.Y > 0.2,
+				tostring(offset))
+			t.Check("at its full size", math.abs(lens.Size.X - 1.9) < 0.05, lens.Size.X)
+			t.Hold("Guard", false)
+			t.Check("lowering the guard takes it away", waitFor(function()
+				return Ward.Shown(me) == nil
+			end, 0.5))
+			-- a parry: a hit landing just after the guard rises flashes the glass white-gold
+			local parriedBefore = EntityState.Number(fx, A.LastParryAt, -10)
+			t.Server("TestHitAfter", "Guard", Combat.Guard.PerfectWindow / 3)
+			t.Hold("Guard", true)
+			ward = raised()
+			local parried = waitFor(function()
+				return EntityState.Number(fx, A.LastParryAt, -10) ~= parriedBefore
+			end, 2)
+			t.Wait(0.03)
+			t.Check("a parry flashes it white-gold", parried and lens.Color.G > Theme.Vfx.WardGlass.G + 0.3, tostring(lens.Color))
+			-- a block flashes it hot
+			t.Wait(0.4)
+			local blockedBefore = EntityState.Number(fx, A.LastBlockAt, -10)
+			t.Server("TestHitAfter", "Now", 0)
+			local blocked = waitFor(function()
+				return EntityState.Number(fx, A.LastBlockAt, -10) ~= blockedBefore
+			end, 2)
+			t.Wait(0.03)
+			t.Check("a block flashes it hot", blocked and lens.Color.R > Theme.Vfx.WardGlass.R + 0.2, tostring(lens.Color))
+			-- cracks with the guard's stamina
+			local cracks = lens:FindFirstChild("CracksBack") :: Decal
+			t.Wait(0.3)
+			t.Check("whole, it shows no cracks", cracks.Transparency > 0.99, cracks.Transparency)
+			local most = t.Num(A.StaminaMax)
+			t.Server("TestGuardHit", t.Num(A.Stamina) - most * 0.2)
+			waitFor(function()
+				return t.Num(A.Stamina) <= most * 0.25
+			end, 2)
+			t.Wait(0.1)
+			t.Check("low on stamina, it cracks", cracks.Transparency < 0.4, cracks.Transparency)
+			-- a guard break shatters it
+			local brokenBefore = EntityState.Number(fx, A.GuardBrokenAt, -10)
+			t.Server("TestGuardHit", most)
+			local broken = waitFor(function()
+				return EntityState.Number(fx, A.GuardBrokenAt, -10) ~= brokenBefore
+			end, 2)
+			t.Wait(0.05)
+			local shards = false
+			for _, child in workspace:GetChildren() do
+				for _, emitter in child:GetDescendants() do
+					if emitter:IsA("ParticleEmitter") and emitter.Texture == Kit.Textures.GlassShard then
+						shards = true
+					end
+				end
+			end
+			t.Check("a guard break shatters it", broken and Ward.Shown(me) == nil)
+			t.Check("into glass shards", shards)
+			t.Hold("Guard", false)
+			local home = workspace:FindFirstChild("BL_Wards")
+			t.Check("and leaves nothing behind", home == nil or #home:GetChildren() == 0)
 		end,
 	},
 	{

@@ -14,6 +14,9 @@
   crescent_arc  512x192: an energy crescent, convex edge up: a hard bright edge, a streaked body fading inward (white)
   crescent_halo 512x192: the soft glow around that crescent (white, additive)
   energy_wisp   128x256: a soft wavering column of energy, tapered at both ends (white)
+  ward_tracery  512x512: the ward's rose-window tracery, face on, every line with a soft glow (white, for a Decal)
+  ward_cracks   512x512: cracks spreading through the ward's glass from three strikes (white, for a Decal)
+  glass_shard   2x2 sheet of 128 px cells: four crimson-glass shards, a bright edge and a glint each (white: tint it)
 No gore, ever (AGENTS.md rule 4: Roblox ToS): nothing here draws blood (no drops, sprays, splatter or stains), and
 nothing that could read as gore is ever uploaded (it went to the owner's account and drew a moderation warning).
 Velocity-aligned art is drawn moving toward the top, then turned (lead_left) so it moves toward the LEFT: a particle
@@ -257,6 +260,151 @@ def streak(width, height, core, glow, glow_strength):
     white = np.ones((height, width, 3)) * np.clip(0.75 + 0.25 * np.exp(-(u / core) ** 2), 0, 1)[..., None]
     return np.concatenate([white, np.clip(intensity, 0, 1)[..., None]], axis=-1)
 
+
+
+def line_alpha(distance, width, glow_width, glow_strength, pixel):
+    """An anti-aliased line of half-width `width` from a distance field, with a soft glow round it."""
+    core = smoothstep(width + pixel, width - pixel, distance)
+    glow = glow_strength * np.exp(-(distance / glow_width) ** 2)
+    return np.maximum(core, glow)
+
+
+def ward_tracery(size=512):
+    """The ward's rose window, face on: a double ring at the rim; twelve mullions from a foiled centre; pointed arches
+    springing between their tips; a roundel holding a quatrefoil in each light; a small oculus at the heart. Every
+    line glows softly, and a faint wash brightens the glass toward the rim (the ward is darker at its centre). White
+    on transparent: a Decal tints it in the game (gold-red leading on crimson glass)."""
+    x, y = grid(size)
+    r, theta = np.hypot(x, y), np.arctan2(y, x)
+    pixel = 2 / size
+    lights = 12
+    sector = 2 * math.pi / lights
+    to_spoke = (theta + sector / 2) % sector - sector / 2  # angle to the nearest mullion (mullions at 0, 30, 60 ...)
+    to_middle = theta % sector - sector / 2  # angle to the middle of the nearest light
+    frame = np.minimum(np.abs(r - 0.955), np.abs(r - 0.905))
+    mullion = np.where((r > 0.30) & (r < 0.905), np.abs(r * np.sin(to_spoke)), 9.0)
+    # pointed arches: each side bulges outward (a sine profile, steep at the springing) and the two meet at a point
+    # mid-light, where the slope is still steep
+    rise = 1 - np.abs(to_middle) / (sector / 2)  # 0 at a mullion, 1 mid-light
+    arch = np.abs(r - (0.755 + 0.13 * np.sin(0.28 * math.pi * rise) / math.sin(0.28 * math.pi)))
+    du, dv = r * np.cos(to_middle) - 0.6, r * np.sin(to_middle)
+    from_roundel = np.hypot(du, dv)
+    roundel = np.abs(from_roundel - 0.1)
+    foil_angle = np.arctan2(dv, du)
+    quatrefoil = np.abs(from_roundel - 0.068 * (0.7 + 0.3 * np.abs(np.cos(2 * foil_angle))))
+    hexafoil = np.abs(r - 0.205 * (0.76 + 0.24 * np.abs(np.cos(3 * theta))))
+    inner_ring = np.abs(r - 0.30)
+    oculus = np.abs(r - 0.06)
+    alpha = np.maximum.reduce([
+        line_alpha(frame, 0.012, 0.05, 0.3, pixel),
+        line_alpha(mullion, 0.011, 0.045, 0.3, pixel),
+        line_alpha(arch, 0.009, 0.04, 0.26, pixel),
+        line_alpha(np.minimum(roundel, inner_ring), 0.008, 0.035, 0.24, pixel),
+        line_alpha(np.minimum(quatrefoil, np.minimum(hexafoil, oculus)), 0.006, 0.03, 0.22, pixel),
+        0.14 * smoothstep(0.5, 0.95, r),  # the wash toward the rim
+    ])
+    alpha *= 1 - smoothstep(0.965, 0.985, r)
+    return np.concatenate([np.ones((size, size, 3)), np.clip(alpha, 0, 1)[..., None]], axis=-1)
+
+
+def crack_path(rng, start, heading, length, step, wander):
+    """A crack as a polyline: short steps that wander a little from the heading."""
+    points = [np.array(start, dtype=float)]
+    angle = heading
+    travelled = 0.0
+    while travelled < length:
+        angle += rng.normal(0, wander)
+        points.append(points[-1] + step * np.array([math.cos(angle), math.sin(angle)]))
+        travelled += step
+    return points
+
+
+def segment_distance(x, y, a, b):
+    """The distance from every pixel to the segment a-b."""
+    ab = b - a
+    t = np.clip(((x - a[0]) * ab[0] + (y - a[1]) * ab[1]) / max(float(ab @ ab), 1e-9), 0, 1)
+    return np.hypot(x - (a[0] + t * ab[0]), y - (a[1] + t * ab[1]))
+
+
+def ward_cracks(size=512, seed=83):
+    """Cracks through the ward's glass, for its strength: three strikes, each breaking the glass the way a blow does,
+    a star of nearly straight cracks running out and thinning, a few forking, tied near the strike by straight rings
+    from crack to crack (a spider's web). White on transparent: a Decal fades it in as the guard's stamina runs low."""
+    rng = np.random.default_rng(seed)
+    x, y = grid(size)
+    pixel = 2 / size
+    alpha = np.zeros((size, size))
+
+    def stroke(points, width_start, width_end):
+        nonlocal alpha
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            width = width_start + (width_end - width_start) * index / max(1, len(points) - 2)
+            alpha = np.maximum(alpha, line_alpha(segment_distance(x, y, a, b), width, 0.018, 0.16, pixel))
+
+    for centre, arms, reach in (((-0.18, 0.22), 8, 0.8), ((0.34, -0.2), 7, 0.6), ((-0.05, -0.45), 6, 0.45)):
+        centre = np.array(centre)
+        spokes = []
+        for arm in range(arms):
+            heading = arm / arms * 2 * math.pi + rng.uniform(-0.25, 0.25)
+            path = crack_path(rng, centre, heading, reach * rng.uniform(0.55, 1.0), 0.05, 0.07)
+            spokes.append(path)
+            stroke(path, 0.006, 0.0015)
+            if rng.random() < 0.45:  # a fork from part way along
+                fork = path[len(path) // 2]
+                stroke(crack_path(rng, fork, heading + rng.choice([-1, 1]) * rng.uniform(0.35, 0.7), reach * 0.3, 0.04,
+                                  0.08), 0.003, 0.001)
+        for ring in (1, 3):  # straight links between neighbouring cracks, a step or three out from the strike
+            for left, right in zip(spokes, spokes[1:] + spokes[:1]):
+                if ring < len(left) and ring < len(right) and rng.random() < 0.8:
+                    stroke([left[ring], right[ring]], 0.0028, 0.0028)
+    alpha *= 1 - smoothstep(0.93, 0.96, np.hypot(x, y))
+    return np.concatenate([np.ones((size, size, 3)), np.clip(alpha, 0, 1)[..., None]], axis=-1)
+
+
+def convex_hull(points):
+    """The convex hull of a few points, counter-clockwise (Andrew's monotone chain)."""
+    ordered = sorted(points, key=lambda q: (q[0], q[1]))
+
+    def half(sequence):
+        chain = []
+        for q in sequence:
+            while len(chain) >= 2 and ((chain[-1][0] - chain[-2][0]) * (q[1] - chain[-2][1])
+                                       - (chain[-1][1] - chain[-2][1]) * (q[0] - chain[-2][0])) <= 0:
+                chain.pop()
+            chain.append(q)
+        return chain
+
+    lower, upper = half(ordered), half(list(reversed(ordered)))
+    return lower[:-1] + upper[:-1]
+
+
+def glass_shard(cell=128, seed=89):
+    """Four shards of the ward's glass in a 2x2 sheet: sharp, uneven slivers, each with a bright edge, a clearer body
+    and one glint along it. Glass, never anything else (AGENTS.md rule 4). White: tinted crimson in the game."""
+    rng = np.random.default_rng(seed)
+    x, y = grid(cell)
+    pixel = 2 / cell
+    cells = []
+    for _ in range(4):
+        # a long point and two or three base corners, closed into a convex outline (a hull fills completely)
+        turn = rng.uniform(0, math.pi)
+        corners = [(0.95, 0.0)] + [(rng.uniform(0.3, 0.65), rng.uniform(1.9, 4.4)) for _ in range(int(rng.integers(2, 4)))]
+        stretch = rng.uniform(0.5, 0.75)  # slivers, longer than wide
+        raw = [np.array([rr * math.cos(a), rr * math.sin(a) * stretch]) for rr, a in corners]
+        raw = [np.array([q[0] * math.cos(turn) - q[1] * math.sin(turn), q[0] * math.sin(turn) + q[1] * math.cos(turn)]) for q in raw]
+        points = convex_hull(raw)
+        edges = [segment_distance(x, y, a, b) for a, b in zip(points, points[1:] + points[:1])]
+        edge = np.minimum.reduce(edges)
+        inside = np.ones_like(x, dtype=bool)  # convex polygon: inside every edge
+        for a, b in zip(points, points[1:] + points[:1]):
+            inside &= ((b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0])) >= 0
+        body = np.where(inside, 0.55, 0.0) * smoothstep(0.0, 2 * pixel, edge)
+        rim = line_alpha(edge, 0.012, 0.03, 0.25, pixel) * (inside | (edge < 0.02))
+        glint_a, glint_b = points[0] * 0.6, points[len(points) // 2] * 0.6
+        glint = line_alpha(segment_distance(x, y, glint_a, glint_b), 0.006, 0.02, 0.2, pixel) * inside
+        alpha = np.clip(np.maximum.reduce([body, rim, glint]), 0, 1)
+        cells.append(np.concatenate([np.ones((cell, cell, 3)), alpha[..., None]], axis=-1))
+    return sheet(cells, 2)
 
 # --- volumetric flipbooks (Cycles) ------------------------------------------------------------------------------
 
@@ -509,6 +657,9 @@ DRAWN = {
     "crescent_arc": crescent_arc,
     "crescent_halo": crescent_halo,
     "energy_wisp": energy_wisp,
+    "ward_tracery": ward_tracery,
+    "ward_cracks": ward_cracks,
+    "glass_shard": glass_shard,
 }
 RENDERED = {"smoke_puff": smoke_puff, "fire_burst": fire_burst}
 

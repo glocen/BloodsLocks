@@ -2,7 +2,9 @@
 -- Knock: knockback that shows. A hit pushes its target straight away from the attacker for Config.Knock.Time seconds,
 -- fast enough to cover the hit's distance; the target's own movement step holds that velocity (players in Locomotion,
 -- every other entity on the server, EntityService), with WalkSpeed raised to match so Roblox's walk controller doesn't
--- brake it. Apply runs inside CombatSim (the simulation); Hold runs every step while the push lasts.
+-- brake it. The body keeps the facing it had when the hit landed (Knock.Facing): steering along the push would
+-- otherwise turn it away from its attacker, and a guard turned aside stops blocking (found 2026-10-31). Apply runs
+-- inside CombatSim (the simulation); Hold runs every step while the push lasts.
 
 local Shared = script.Parent.Parent
 local Config = require(Shared.Config.Combat)
@@ -38,10 +40,20 @@ function Knock.Apply(target: Model, attacker: Model, distance: number, now: numb
 	end
 	target:SetAttribute(A.Knock, away * (distance / Config.Knock.Time))
 	target:SetAttribute(A.KnockUntil, now + Config.Knock.Time)
+	target:SetAttribute(A.KnockFacing, Vector.Flat(targetRoot.CFrame.LookVector))
 end
 
 function Knock.Active(model: Model, now: number): boolean
 	return now < EntityState.Number(model, A.KnockUntil, 0)
+end
+
+-- The facing to hold while a push lasts (the body's facing when it began), else nil.
+function Knock.Facing(model: Model, now: number): Vector3?
+	local facing = model:GetAttribute(A.KnockFacing)
+	if Knock.Active(model, now) and typeof(facing) == "Vector3" and facing.Magnitude > 0.5 then
+		return facing
+	end
+	return nil
 end
 
 -- Holds the push while it lasts. Returns its speed (0 when not pushed), the WalkSpeed the caller must keep.

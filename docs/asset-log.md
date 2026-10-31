@@ -14,5 +14,8 @@ Receipts for everything that ships (owner's IP Safety List): who made each asset
 | Menu images (Hunt card, ritual circle) | ids in `Theme.Images` | Claude | `tools/ui_textures.py` | Original |
 | Melted-wax candles | Manor | ChatGPT | Blender, `tools/art/build_melted_candles.py` | Original |
 | The bite's animations: `Staggered`, `Bite`, `BiteHold`, `Bitten` | ids in `Shared.Config.Animations` | Claude | Animated in Blender by script (`tools/blender/bite_anim.py` on `tools/blender/r6anim.py`), baked and published by `tools/studio/Animations/Author.SaveBaked` | Original |
+| The ward: the guard's crimson glass buckler (lens and rim meshes, the template) | `src/shared/Assets/Vfx/Ward.rbxm` (meshes 80536993531212 and 133062466600477) | Claude | Blender script `tools/blender/ward.py`, assembled by `tools/studio/Models/Ward.luau` | Original |
+| Ward textures: rose-window tracery, cracks, glass shards | `Client.Vfx.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy), tracked by `tools/vfx/textures.py` | Original |
+| Guard-break sound (provisional, until the owner's sounds) | cue `GuardBreak` in `Definitions/Sounds` (9114855870, "Ice Block Drop To Concrete Shatter 1") | Roblox's audio library: ProSoundEffects | Sliced and levelled by `tools/studio/Audio` | Licensed library |
 
 <!-- To backfill: every .rbxm in src/shared/Assets, the Gustave animations, the Manor and Victorian art kits, uploaded texture maps. -->

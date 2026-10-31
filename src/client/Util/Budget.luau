@@ -12,6 +12,7 @@ local WINDOW = 120 -- calls averaged
 Budget.Limits = {
 	Plates = 0.6,
 	Callouts = 0.2,
+	Wards = 0.3,
 	Match = 1.2,
 }
 
