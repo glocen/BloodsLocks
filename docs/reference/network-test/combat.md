@@ -38,6 +38,8 @@ What the player can do and how fights work, from the first full playthrough (pla
     - **A burst is 8 rounds.** At 19:22.733–19:23.333 the counter falls 8 → 0, a round every 0.067–0.10 s (0.086 s on average, about 11.7 rounds/s inside the burst); a burst lasts about 0.6–0.8 s.
     - **Bursts come at least 0.5 s apart:** 30:55.0–31:00.0 reads 40 → 32 → 24 → 16 → 8 with pauses of 0.5–1 s, about 6.4 rounds/s over 5 s of steady fire.
     - The hero fires one-handed at chest height, the arm out toward the target (full frame 19:23.2).
+    - **At 60 fps** (19:22.68–19:23.42, cropped on the hero): the gun comes up in ~0.1 s, then a round every ~0.085 s. Each round is a white-orange bloom the size of his head and shoulders for 3–4 frames. The overlapping rays read as one gold stream. Grey smoke gathers between rounds; sparks and casings fly up and to the right. The gun stays up ~0.05 s after the last round, then lowers.
+    - **Reload:** 0/40 at 19:23.33, 40/40 by 19:24.8: about 1.4 s.
 - **Skill 1, Blood Blade** (MANUAL 4:08; WIKI): fires a blade formed of the wielder's blood; hold to fire a stronger one.
   - **Uses:** 3 to start ("x3", "3/3"); enhancement raises it to 4 (33:03).
   - **Cooldown:** 12, lowered to 8 by enhancement (43:07).

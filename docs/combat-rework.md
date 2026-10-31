@@ -71,6 +71,13 @@ Lock-on aims at the target but keeps the spread. Stagger still builds per landed
 ### Next: the SMG pass (owner, 2026-10-31: "use Duskbloods as reference where he shoots with the SMG, we can make it very accurate, the size, effects etc; no reloading model, just a simple R6 animation"; "shooting should be slower, it's way too fast")
 
 - **Cadence, measured** (`docs/reference/network-test/combat.md`, The SMG): a burst is 8 rounds about 0.086 s apart, bursts at least 0.5 s apart, about 6.4 rounds/s in steady fire. Ours: 4 rounds 0.06 s apart, chained at once, about 9.5 rounds/s.
+- **The new burst (DESIGN; the numbers go into `Definitions/Weapons/BurstSMG` at the switch):**
+  - 8 rounds, the first at 0.08 s, then every 0.085 s (the last at 0.675 s); the action lasts 0.75 s, and the arm tracks the aim throughout;
+  - **Refire 0.35 s** (a new rule): the next burst can't start until 0.35 s after one ends, so its first round comes at least 0.5 s after the last, as in the reference;
+  - magazine 40, reload 1.4 s;
+  - spread Base 0.6°, Bloom 0.8°, Max 4.5°: eight rounds fan a little, and the burst still reads as one stream;
+  - damage 14 and stagger 5 a round, as now: over a full magazine and reload, damage per second (81 against 82) and stagger per second (29 against 29) stay as they are today. While firing it's ~23 % slower (102 damage/s against 133), which is the owner's "slower"; the bigger magazine pays it back.
+  - **The switch waits for the burst-hold clip** (`docs/asset-requests.md`, SMGBurstHold): today's clip holsters the gun at 0.25 s, so rounds after that would leave from the hip.
 - **The gun stays up for the whole burst:** today the burst animation raises the gun for only about 0.10–0.20 s and holsters it by 0.3 s, so a longer burst needs the new hold first (rounds after that come from the hip).
 - **Holds:** a burst hold (C1's). Idle, walk and run holding the SMG and the sabre (the owner: the current ones look wrong) are P2 of `docs/core-feel-plan.md`, and the simple R6 reload (no magazine model) is P9; the owner asked for them next, so the order is the owner's call.
 - **The burst matched to the reference** (the recording at 19:23 and the owner's Albert clip, `C:\Users\gloce\Videos\hqqXe55ZlnZNd6P.mov`): the bloom's size against the body, the ray stream, the casings, then a capture side by side.

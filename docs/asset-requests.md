@@ -22,6 +22,11 @@ The queue between the builder (Claude) and Claude (assets) (`docs/asset-maker.md
 
 ## SMGBurstHold: the gun up for the whole burst
 
-- **Status:** Waits on the builder: the burst's new cadence (about 8 rounds over 0.7 s; `docs/combat-rework.md`, "Next: the SMG pass").
-- **Today:** the burst clip raises the gun for only 0.1–0.2 s.
-- **Make:** the gun one-handed at chest height, the arm out toward the target, for the whole burst (the recording at 19:23.2), with recoil on each round.
+- **Status:** Open (after WeaponHolds: it starts from and returns to its idle SMG pose). Take it before SMGReload: it unblocks the builder's SMG pass.
+- **Today:** the burst clip (`SMGBurst`) raises the gun for only 0.1–0.2 s and holsters it by 0.3 s.
+- **Timing** (the new burst, `docs/combat-rework.md`, "The new burst"): one 0.75 s clip.
+  - the gun up and aimed by 0.07 s;
+  - 8 rounds, the first at 0.08 s, then every 0.085 s (the last at 0.675 s), each with a small, readable recoil kick;
+  - held until 0.75 s.
+- **Pose:** the gun one-handed at chest height, the arm out toward the target (the recording at 19:22.7–19:23.4 and 19:23.2). The body turns with the aim in code, so the clip keeps the arm straight ahead. What the free hand does comes from the reference.
+- **Deliver** the baked clip; the builder publishes it, sets the new numbers and checks every round leaves the muzzle in the game.
