@@ -12,7 +12,11 @@ Handoffs between glocen, Claudius, Claude and ChatGPT. The "Now" board is the cu
 
 The full rule is AGENTS.md rule 4.
 
-**Team mode: Claude only** (owner, 2026-10-30). ChatGPT is off; Claude does every area, world art included. Planned (owner): next week a head-to-head trial, Claude and GPT-6 Astra each building the same hero piece; ChatGPT joins only if Astra is clearly better.
+**Team mode: Claude, with Claude (cloud) alongside** (owner, 2026-10-31). ChatGPT is off; Claude does every area, world art included. Planned (owner): next week a head-to-head trial, Claude and GPT-6 Astra each building the same hero piece; ChatGPT joins only if Astra is clearly better.
+
+**Claude (cloud):** Claude Code on the web, from the owner's phone; no Studio or art. Its brief and ordered tasks: `docs/cloud-tasks.md`.
+- **The tasks:** the static checks and CI, the docs diet, compact test reports, a names sweep, a code review, the time-to-kill table, name proposals, the core-feel code inventory, the UI rework spec and verified Roblox facts.
+- **How it delivers:** each task as a pull request, which Claude tests in Studio and merges.
 
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
 

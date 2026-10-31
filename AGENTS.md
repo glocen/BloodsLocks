@@ -43,9 +43,13 @@ Codex loads this file automatically; Claude Code loads it through `CLAUDE.md`. R
 - **glocen:** owner and director, final say.
 - **Claudius:** lead designer (Claude in the owner's claude.ai project "Bloodlocks"). Game design and the vision, this foundation, design specs, and reviews against the vision. Has no Studio access; hands work over as repo files that the owner or Claude commits, and signs team notes "Claudius".
 - **Claude:** Claude Code on the owner's PC. Builds the game.
+- **Claude (cloud):** Claude Code on the web, started by the owner from their phone.
+  - No Studio, Blender, GPU, owner's PC or reference video.
+  - Does static checks and the CI, plans and specs, research, Python tools, balance math, code reviews and the docs.
+  - Works through pull requests that Claude tests in Studio and merges. Its brief and task list: `docs/cloud-tasks.md`.
 - **ChatGPT:** Codex on the owner's PC. World artist, when switched on.
 
-**Team mode: Claude only** (owner, 2026-10-30). ChatGPT is off until the owner switches it on, and until then Claude does every area below, world art included. Only the owner changes the mode; when it changes, update this line and the "Now" board.
+**Team mode: Claude, with Claude (cloud) alongside** (owner, 2026-10-31). ChatGPT is off until the owner switches it on, and until then Claude does every area below, world art included; Claude (cloud) takes the work in `docs/cloud-tasks.md`. Only the owner changes the mode; when it changes, update this line and the "Now" board.
 
 Who works on what when both are on, by what each does best:
 
@@ -91,6 +95,7 @@ Who works on what when both are on, by what each does best:
 | What the code reads from a world | `worlds/world-contract.md` | when building or changing a world |
 | First Victorian zone | `worlds/Victorian/CathedralQuarter/cathedral-quarter-spec.md` | when working on that district |
 | Duskbloods research | `docs/duskbloods-reference.md`, `docs/duskbloods-manual-summary.md`, evidence files | when designing a mechanic |
+| Claude (cloud)'s brief and tasks | `docs/cloud-tasks.md` | Claude (cloud): at every session start |
 | History | `docs/archive/`, git log | only when you need it |
 
 Change a fact only in its home and link to it from anywhere else. Read the section a task needs (search for its heading), never whole files or archives "to be safe".

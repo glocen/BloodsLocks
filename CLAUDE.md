@@ -2,6 +2,8 @@
 
 <!-- Claude-only layer on top of AGENTS.md. Keep it short: topic gotchas go in .claude/rules/ (they load when Claude touches matching files), procedures go in skills. Block HTML comments like this one are stripped from Claude's context, so they cost nothing. -->
 
+**Running in the cloud?** If you're Claude Code on the web (a cloud sandbox with no Roblox Studio, Rojo, Blender or the owner's PC), you're Claude (cloud). Read `docs/cloud-tasks.md` and follow it; the Studio sections below are for Claude (local).
+
 # Claude: you build the game
 
 Code, Studio integration, tests and tooling, and, while the team mode is "Claude only" (AGENTS.md), world art too. Repo: github.com/glocen/BloodsLocks, cloned at `C:\Users\gloce\BloodsLocks`.
