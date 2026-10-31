@@ -20,6 +20,11 @@ Poses and timing from the first full playthrough (0:00–52:23). The 1-second su
 - **Death:** the body breaks into streaks; no ragdoll seen.
 - **Victory:** standing still among the lilies while the camera rises to the moon (51:38–51:45).
 - **Running:** the short cape flows behind; the sabre held low.
+- **Carrying both weapons** (studied 2026-10-31 for WeaponHolds, from 1080p crops): he never puts either away.
+  - Standing and walking (the hub from behind, 12:21.0–12:23.0): upright, the arms hanging close and barely swinging. The sabre in the right hand points down, its blade angled back and out; the gun in the left points muzzle-down.
+  - Sprinting (4:00.0–4:01.1): leaning forward, both arms swept back and out from the body. The sabre trails back and out near level, the gun is held back, the strides are long and the cape streams.
+  - The owner's Albert clip shows the same (standing 0:03.4–0:05.0; running 0:15.0–0:15.9 and 0:19.6–0:20.5).
+  - DESIGN, ours (`tools/blender/holds_anim.py`): at idle the gun leads, angled out ahead, and the sabre is held back; in the sprint the gun arm pumps instead of sweeping back.
 - **Air jumps:** a tucked spin; **high jump:** a crouch, then a straight launch.
 - **Climbing:** hand over hand up towers and rock faces.
 

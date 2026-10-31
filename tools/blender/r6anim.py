@@ -169,6 +169,39 @@ def build_rig(name: str, palette: dict, weapons: bool = False) -> Rig:
     return rig
 
 
+# Each hand's real weapon: the .blend its script writes (saber.py, smg.py) and the objects in it. Their origins are
+# the grips (the models' Grip attachments, at the model's origin with no turn), seated in the hand like the game's welds.
+WEAPON_MESHES = {"Right Arm": ("saber.blend", ("Saber_Hilt", "Saber_Blade")),
+                 "Left Arm": ("smg.blend", ("SMG_Body", "SMG_Crystal"))}
+# Workbench colours for their materials (review only), by a word in the material's name.
+WEAPON_COLOURS = (("Inlaid", (0.075, 0.07, 0.08)), ("Steel", (0.075, 0.07, 0.08)), ("Brass", (0.62, 0.45, 0.17)),
+                  ("Walnut", (0.27, 0.12, 0.05)), ("Shagreen", (0.22, 0.04, 0.05)), ("Crystal", (1.0, 0.6, 0.2)),
+                  ("Garnet", (0.5, 0.03, 0.06)))
+
+
+def weapon_meshes(rig: Rig, folder: Path) -> bool:
+    """Gustave's real sabre and machine pistol in the rig's hands, for reviews that need their silhouettes: loaded from
+    the .blend files tools/blender/saber.py and smg.py wrote to `folder`. False (nothing added) if one is missing."""
+    paths = {arm: Path(folder) / blend for arm, (blend, _) in WEAPON_MESHES.items()}
+    if not all(path.exists() for path in paths.values()):
+        return False
+    for arm, (_, names) in WEAPON_MESHES.items():
+        with bpy.data.libraries.load(str(paths[arm])) as (_, data_to):
+            data_to.objects = list(names)
+        for obj in data_to.objects:
+            bpy.context.scene.collection.objects.link(obj)
+            obj.parent = rig.parts[arm]
+            obj.matrix_parent_inverse = Matrix.Identity(4)
+            obj.matrix_basis = to_blender(cframe(_GRIP))
+            rig.parts[obj.name] = obj
+            for slot in obj.material_slots:
+                for word, colour in WEAPON_COLOURS:
+                    if slot.material and word in slot.material.name:
+                        slot.material.diffuse_color = (*colour, 1)
+                        break
+    return True
+
+
 def place_root(rig: Rig, frame: int, position, facing, interpolation="LINEAR"):
     """Keys the HumanoidRootPart at a Roblox `position` (feet on the floor + ROOT_HEIGHT), facing a Roblox direction.
     Review only: in the game physics moves the root (the pull and the throw are Knock pushes)."""
@@ -377,6 +410,77 @@ def gaze(rig: Rig, local, target: Vector, hint) -> tuple:
     return (round(pitch, 1), round(turn, 1), tilt)
 
 
+def _rest_offset(part: str, local) -> Vector:
+    """A point of a limb (its own frame) from its joint, in Part0's frame with the limb at rest."""
+    _, c0, c1 = JOINTS[part]
+    c0m = cframe(c0)
+    return (c0m @ cframe(c1).inverted() @ Vector((*local, 1))).to_3d() - c0m.to_translation()
+
+
+def aim(rig: Rig, part: str, front, axis=None, point=None, local=(0, -1, 0), keep="front") -> tuple:
+    """Limb angles (pitch, turn, swing) from world directions (Roblox), with Part0 as it stands at the current frame: the
+    limb's front face toward `front` (an arm's: where the sabre's blade points, or the pistol's top), and its length
+    toward `axis` (an arm's: where the pistol's barrel points, out of the fist) or, instead, its `local` point (the hand)
+    onto the world `point`. A limb's front and length are square: `keep` says which of the two is kept exactly
+    ("front" or "axis"); the other is squared to it."""
+    part0, c0, _ = JOINTS[part]
+    frame0 = to_roblox(rig.parts[part0].matrix_world)
+    inverse = frame0.to_3x3().transposed()  # world to Part0's frame (a rotation)
+    f = (inverse @ Vector(front)).normalized()
+
+    def square(a, f):
+        if keep == "front":
+            return (a - a.dot(f) * f).normalized(), f
+        return a, (f - f.dot(a) * a).normalized()
+
+    if point is not None:
+        # the limb turns about its joint, so the point lands at pivot + Q·o, Q taking the rest frame (length down,
+        # front forward) to (length a, front f): Q·o = o.x (a × f) - o.y a - o.z f, solved for a by fixed point
+        o = _rest_offset(part, local)
+        d = inverse @ (Vector(point) - (frame0 @ cframe(c0)).to_translation())
+        a = d.normalized()
+        for _ in range(12):
+            a = ((d - o.x * a.cross(f) + o.z * f) / -o.y).normalized()
+            a, f = square(a, f)
+    else:
+        a, f = square((inverse @ Vector(axis)).normalized(), f)
+    q = Matrix((a.cross(f), -a, -f)).transposed()  # columns: where the rest right, length and front go
+    x, y, z = q.to_euler("ZYX")  # Rx·Ry·Rz, the order of transform's body-space angles
+    return (round(math.degrees(x), 2), round(math.degrees(y), 2), round(math.degrees(z), 2))
+
+
+def stand(rig: Rig, part: str, target, hint, local=(0, -1, 0)) -> tuple:
+    """Leg angles (pitch, turn, swing) that put the leg's `local` point (the sole's middle) over the world `target`'s
+    x and z, with Part0 as it stands at the current frame; the height is left to the torso (see sole). `hint` gives the
+    turn, kept, and the start. Newton steps on the two angles."""
+    part0, c0, c1 = JOINTS[part]
+    frame0 = to_roblox(rig.parts[part0].matrix_world) @ cframe(c0)
+    c1_inv, point, target = cframe(c1).inverted(), Vector((*local, 1)), Vector(target)
+    pitch, turn, swing = hint[0], hint[1], hint[2]
+
+    def miss(p, s):
+        q = frame0 @ transform(rig, part, (p, turn, s)) @ c1_inv @ point
+        return Vector((q.x - target.x, q.z - target.z))
+
+    for _ in range(12):
+        m = miss(pitch, swing)
+        if m.length < 1e-5:
+            break
+        h = 0.01
+        dp, ds = (miss(pitch + h, swing) - m) / h, (miss(pitch, swing + h) - m) / h
+        det = dp.x * ds.y - ds.x * dp.y
+        if abs(det) < 1e-9:
+            break
+        pitch -= (m.x * ds.y - ds.x * m.y) / det
+        swing -= (dp.x * m.y - m.x * dp.y) / det
+    return (round(pitch, 3), turn, round(swing, 3))
+
+
+def sole(rig: Rig, part: str) -> float:
+    """The height (Roblox world y) of a leg's lowest sole corner, at the current frame."""
+    return min(world_point(rig, part, (x, -1, z)).y for x in (-0.5, 0.5) for z in (-0.5, 0.5))
+
+
 # --- staging and review --------------------------------------------------------------------------------------------
 
 def stage(scene, fps=30, size=(960, 540)):
@@ -470,11 +574,64 @@ def render_sheet(scene, camera, frames, path: Path, columns=6):
     return path
 
 
+def body_camera(scene, rig: Rig, frame: int, azimuth: float, elevation=8.0, distance=13.0, fov=38.0, height=2.6,
+                name="BodyCamera"):
+    """A camera around the rig's root as it stands at `frame`: `azimuth` degrees from its front (90 = its right side,
+    180 = behind), `elevation` degrees up, `distance` studs from a point `height` studs over the floor."""
+    scene.frame_set(frame)
+    root = to_roblox(rig.root.matrix_world)
+    position = Vector((root[0][3], root[1][3], root[2][3]))
+    look = Vector((-root[0][2], -root[1][2], -root[2][2]))
+    side = look.cross(Vector((0, 1, 0))).normalized()  # the body's right
+    a, e = math.radians(azimuth), math.radians(elevation)
+    focus = position + Vector((0, height - ROOT_HEIGHT, 0))
+    eye = focus + (look * math.cos(a) + side * math.sin(a)) * distance * math.cos(e) + Vector((0, distance * math.sin(e), 0))
+    return fixed_camera(scene, eye, focus, fov, name)
+
+
+def render_shots(scene, shots, path: Path, columns=4):
+    """Like render_sheet, for shots from different cameras: (camera, frame, label) each, the label stamped on its tile."""
+    import numpy as np
+    scene.render.use_stamp = True
+    scene.render.use_stamp_date = scene.render.use_stamp_render_time = scene.render.use_stamp_camera = False
+    scene.render.use_stamp_lens = scene.render.use_stamp_scene = scene.render.use_stamp_filename = False
+    scene.render.use_stamp_frame = scene.render.use_stamp_time = False
+    scene.render.use_stamp_note = True
+    scene.render.stamp_font_size = 22
+    tiles = []
+    for camera, frame, label in shots:
+        scene.camera = camera
+        scene.frame_set(frame)
+        scene.render.stamp_note_text = label
+        tile = path.with_name(f"{path.stem}_{len(tiles):03d}.png")
+        scene.render.filepath = str(tile)
+        bpy.ops.render.render(write_still=True)
+        image = bpy.data.images.load(str(tile))
+        w, h = image.size
+        tiles.append(np.array(image.pixels[:], dtype=np.float32).reshape(h, w, 4))
+        bpy.data.images.remove(image)
+        tile.unlink()
+    h, w = tiles[0].shape[:2]
+    rows = math.ceil(len(tiles) / columns)
+    sheet = np.zeros((rows * h, columns * w, 4), dtype=np.float32)
+    for i, tile in enumerate(tiles):
+        r, c = divmod(i, columns)
+        y0 = (rows - 1 - r) * h
+        sheet[y0:y0 + h, c * w:(c + 1) * w] = tile
+    out = bpy.data.images.new(path.stem, columns * w, rows * h, alpha=True)
+    out.pixels = sheet.ravel()
+    out.filepath_raw = str(path)
+    out.file_format = "PNG"
+    out.save()
+    return path
+
+
 # --- bake for Studio -------------------------------------------------------------------------------------------------
 
-def export(rig: Rig, path: Path, character: str, name: str, start: int, end: int, markers=(), legs=1.0, source=""):
+def export(rig: Rig, path: Path, character: str, name: str, start: int, end: int, markers=(), legs=1.0, source="",
+           extra=None):
     """Bakes the rig's joints frame by frame (start to end) to JSON for Author.SaveBaked: each pose is the Motor6D
-    Transform's 12 CFrame components. Markers: (seconds, name)."""
+    Transform's 12 CFrame components. Markers: (seconds, name). `extra` adds fields (a loop's Loop, Priority, ...)."""
     scene = bpy.context.scene
     fps = scene.render.fps
     frames = []
@@ -483,7 +640,7 @@ def export(rig: Rig, path: Path, character: str, name: str, start: int, end: int
         poses = {part: [round(v, 5) for v in components(to_roblox(rig.joints[part].matrix_basis))] for part in PARTS}
         frames.append({"T": round((frame - start) / fps, 4), "Poses": poses})
     clip = {"Name": name, "Character": character, "Source": source, "Legs": legs, "Fps": fps, "Frames": frames,
-            "Markers": [{"T": t, "Name": n} for t, n in markers]}
+            "Markers": [{"T": t, "Name": n} for t, n in markers], **(extra or {})}
     path.write_text(json.dumps(clip, separators=(",", ":")))
     return path
 

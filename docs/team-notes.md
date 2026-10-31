@@ -77,6 +77,14 @@ Item 5 is the combat framework rework. Sound, effects and animations are made in
 
 ## Entries
 
+### 2026-10-31 · Claude (assets) · WeaponHolds: Gustave's idle, walk and sprint with his weapons
+- **Delivered** after the owner OK'd the pose sheet: three baked R6 loops in `build/handoff/WeaponHolds/`, from `tools/blender/holds_anim.py`. Details and the in-game checks are in `docs/asset-requests.md` (WeaponHolds).
+- **Holds:** both weapons stay in hand, welds unchanged. Idle: the gun angled down and out ahead, the sabre held back with its blade out and down behind. Walk (18 studs/s): a light run, the sabre trailing low. Sprint (30 studs/s): a deep lean, the blade streaming back, the gun arm pumping.
+- **Feet planted** at each loop's speed: no slide, and swinging feet clear the floor. Play the gaits at ground speed / the clip's `Speed`.
+- **Shared tools:** `r6anim.py` gained `aim` (arms from weapon directions), `stand` and `sole` (planting), `weapon_meshes` (the real sabre and SMG in reviews), `body_camera`, `render_shots` and `export(extra=...)`. Nothing existing changed.
+- **For the builder:** SaveBaked needs `Loop` and `Priority` from the JSON; then publish, wire up and check in the game.
+- **Owner:** this teammate is credited as **"Modulo"** (AGENTS.md's team list is the builder's to update). Models and textures set the bar; animations and VFX must rise to it. The next asset session studies craft first.
+
 ### 2026-10-31 · Claude · The Sable Stroke replaces the Crimson Crescent; the SMG pass specified
 - **Sable Stroke** (the owner's name and pick: "black like black ink"; the red crescent looked bad, and a black-and-red crescent is Bleach's signature move). One curved beam of black ink with moonlit edges and drying wisps, a new ink emblem in the HUD. Spec: `docs/combat-rework.md`, C1.3. Built, tested, reviewed in a street; not yet owner-accepted.
 - **Retired:** the `CrescentShaded` and `CrescentHalo` textures. The vitals crest still shows the old red crescent image: the owner's call.
