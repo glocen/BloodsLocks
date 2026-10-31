@@ -4,8 +4,8 @@
 -- first, on whatever is open, so `Invoke("UI lint")` with a menu up lints that menu. Expected numbers come from
 -- Config and the definitions, never from literals, so retuning a value doesn't break a check; tolerances cover
 -- simulation-step and network timing.
--- Not covered yet: sprint (its input has no Scriptable binding), bite, howl, the charged attack, Light Beam, enemy
--- leashing and the two-attackers limit. "Player kill credit" kills the player, so it stays last.
+-- Not covered yet: sprint (its input has no Scriptable binding), howl, the charged attack, Light Beam, enemy leashing
+-- and the two-attackers limit. "Player kill credit" kills the player, so it stays last.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -17,6 +17,10 @@ local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local PlayerState = require(Shared.Simulation.PlayerState)
 local Leveling = require(Shared.Simulation.Leveling)
+local Bite = require(Shared.Simulation.Bite)
+local Parts = require(Shared.Util.Parts)
+local Animations = require(Shared.Config.Animations)
+local CameraConfig = require(Shared.Config.Camera)
 local Players = game:GetService("Players")
 local WorldTags = require(Shared.World.Tags)
 local Markers = require(Shared.World.Markers)
@@ -25,6 +29,7 @@ local PlateController = require(script.Parent.Parent.PlateController)
 local PactSiteController = require(script.Parent.Parent.PactSiteController)
 local Budget = require(script.Parent.Parent.Parent.Parent.Util.Budget)
 local Sfx = require(script.Parent.Parent.Parent.Parent.Audio.Sfx)
+local Kit = require(script.Parent.Parent.Parent.Parent.Vfx.Kit)
 
 local A = EntityState.Attr
 local P = PlayerState.Attr
@@ -35,6 +40,7 @@ local function playerNum(attribute: string): number
 end
 local TEST_ENEMY = "Wretch"
 local SPREAD_RANGE = 30 -- studs: the SMG spread check's distance
+local BITE_RANGE = 3 -- studs: where the bite check stands its dummy
 local class = Registry.Class(Registry.DefaultClass)
 local saber = Registry.Weapon(class.Melee)
 local gun = Registry.Weapon(class.Ranged)
@@ -302,6 +308,185 @@ return {
 			t.Check("spends one charge", t.Num(slot.Charges) == skill.Charges - 1, `{t.Num(slot.Charges)}`)
 			t.Wait(1)
 			t.Near("projectile damage", before - t.DummyHp(), skill.Projectile.Hit.Damage, 0)
+		end,
+	},
+	{
+		Name = "Own hit feedback",
+		Run = function(t)
+			-- your own character's combat results arrive without change signals; their effects still play
+			-- (CombatFxController.listen): a hit on you flashes your body
+			local flashed = false
+			local watch = t.Character().DescendantAdded:Connect(function(added)
+				if added:IsA("Highlight") then
+					flashed = true
+				end
+			end)
+			t.Server("TestHitAfter", "Now", 0)
+			t.Check("a hit on you flashes your body", waitFor(function()
+				return flashed
+			end, 1.5))
+			watch:Disconnect()
+		end,
+	},
+	{
+		Name = "Stagger kneel",
+		Run = function(t)
+			-- a staggered body drops to one knee until the stagger ends (Config.Animations.Staggered, played by
+			-- AnimationSim from its StaggeredAt)
+			t.Server("TestDummyAt", BITE_RANGE)
+			t.Wait(0.3)
+			local dummy = assert(t.Dummy(), "no dummy")
+			local animator = (dummy:FindFirstChildOfClass("Humanoid") :: Humanoid):FindFirstChildOfClass("Animator") :: Animator
+			local function kneeling(): boolean
+				for _, track in animator:GetPlayingAnimationTracks() do
+					if track.Animation and track.Animation.AnimationId == Animations.Default.Staggered then
+						return true
+					end
+				end
+				return false
+			end
+			t.Server("TestStagger")
+			t.Check("a staggered body kneels", waitFor(kneeling, 1))
+			t.Wait(Combat.StaggerDuration + 0.5)
+			t.Check("and rises when the stagger ends", not kneeling())
+		end,
+	},
+	{
+		Name = "Bite whiff",
+		Run = function(t)
+			-- only a staggered body can be bitten: anything else the bite misses
+			local fx = t.Fx(t.Character())
+			local before = fx:GetAttribute(A.LastBiteAt)
+			t.Server("TestDummyAt", BITE_RANGE)
+			t.Wait(0.3)
+			t.Lock()
+			t.Press("Bite")
+			t.Wait(1)
+			t.Check("a dummy that isn't staggered isn't seized", fx:GetAttribute(A.LastBiteAt) == before
+				and EntityState.CurrentAction(t.Character()) ~= Bite.HoldAction)
+		end,
+	},
+	{
+		Name = "Bite hold",
+		Run = function(t)
+			-- owner, 2026-10-31: "a bit long, both can't move, i-frames for both, the one who bites recovers HP"
+			-- (Simulation/Bite). The gust is dark smoke and wind, never blood (AGENTS.md rule 4).
+			local timeline = Bite.Timeline
+			local bite = Registry.Action("Common.Bite").Hit
+			local character, fx = t.Character(), t.Fx(t.Character())
+			t.Server("TestDummyAt", BITE_RANGE) -- the bite reaches only a few studs (its lunge and short hitbox)
+			t.Wait(0.3)
+			t.Server("TestWound", 300) -- room for the heal
+			t.Lock()
+			t.Server("TestStagger")
+			t.Wait(0.15)
+			local dummy = assert(t.Dummy(), "no dummy")
+			local dummyFx = t.Fx(dummy)
+			local hpBefore, dummyBefore = t.Num(A.HP), t.DummyHp()
+			local seizedBefore, evadedBefore = fx:GetAttribute(A.LastBiteAt), fx:GetAttribute(A.LastEvadedAt)
+			local bittenBefore = dummyFx:GetAttribute(A.BittenAt)
+			t.Press("Bite")
+			t.Check("a staggered dummy is seized", waitFor(function()
+				return fx:GetAttribute(A.LastBiteAt) ~= seizedBefore
+			end, 1.5))
+			local seizedAt = os.clock()
+			local function at(seconds: number)
+				t.Wait(math.max(0, seconds - (os.clock() - seizedAt)))
+			end
+			t.Check("the bite becomes the hold", EntityState.CurrentAction(character) == Bite.HoldAction)
+			t.Check("the dummy is held", dummyFx:GetAttribute(A.BittenAt) ~= bittenBefore)
+			-- the smoke ribbons of the bite's wind (Vfx/BiteWind), each timed on the hold's own clock
+			local _, _, holdStart = EntityState.CurrentAction(character)
+			local ribbons: { number } = {}
+			local watch = workspace.DescendantAdded:Connect(function(added)
+				if added:IsA("Trail") and added.Texture == Kit.Textures.SmokeRibbon then
+					table.insert(ribbons, time() - holdStart)
+				end
+			end)
+
+			at(timeline.Fangs + 0.3)
+			t.Check("your camera narrows through the hold", workspace.CurrentCamera.FieldOfView < CameraConfig.BaseFov - 3,
+				`FOV {string.format("%.1f", workspace.CurrentCamera.FieldOfView)}`)
+			at(timeline.Pull + 0.25) -- the pull has settled (already, by now)
+			local mine, theirs = t.Root().Position, (Parts.Root(dummy) :: BasePart).Position
+			local apart = Vector3.new(mine.X - theirs.X, 0, mine.Z - theirs.Z).Magnitude
+			t.Near("pulled to the hold's distance", apart, timeline.Distance, 0.3)
+			local launched, dodged = t.Num(A.LaunchAt), t.Num(A.DodgeStart)
+			t.Press("Jump")
+			t.Press("Dodge")
+			t.Wait(0.2)
+			t.Check("Jump and Dodge do nothing while held", t.Num(A.LaunchAt) == launched and t.Num(A.DodgeStart) == dodged)
+			local hpHit = t.Num(A.HP)
+			t.Server("TestHitAfter", "Now", 0)
+			t.Server("TestStagger") -- a hit on the held dummy
+			t.Wait(0.3)
+			t.Check("hits on you do nothing", t.Num(A.HP) >= hpHit, `{hpHit} -> {t.Num(A.HP)}`)
+			t.Check("hits on the dummy do nothing", EntityState.Number(dummy, A.StaggerUntil, 0) <= time())
+			t.Check("no \"Evaded\" over a held body", fx:GetAttribute(A.LastEvadedAt) == evadedBefore)
+
+			at(timeline.Release - 0.1)
+			local held = (t.Root().Position - mine).Magnitude < 0.4
+				and ((Parts.Root(dummy) :: BasePart).Position - theirs).Magnitude < 0.4
+			t.Check("both bodies stay put through the drain", held)
+
+			at(timeline.Release + 0.35)
+			watch:Disconnect()
+			local heal = math.floor(t.Num(A.HPMax) * bite.Heal)
+			t.Near("you drink back the heal", t.Num(A.HP) - hpBefore, heal, 0)
+			t.Near("the dummy loses exactly the bite", dummyBefore - t.DummyHp(), math.floor(bite.Damage * Leveling.DamageMultiplier(1) + 0.5), 0)
+			local function between(from: number, to: number): number
+				local count = 0
+				for _, at in ribbons do
+					count += if at >= from and at < to then 1 else 0
+				end
+				return count
+			end
+			t.Check("the drain's smoke circles from the fangs", between(timeline.Fangs - 0.2, timeline.Fangs + 0.3) > 0)
+			t.Check("the release's gust sweeps out (its smoke ribbons)", between(timeline.Release - 0.2, timeline.Release + 0.4) > 0,
+				`{between(timeline.Release - 0.2, timeline.Release + 0.4)} ribbons`)
+			local thrown = (Parts.Root(dummy) :: BasePart).Position - theirs
+			t.Check("the release throws the dummy back", Vector3.new(thrown.X, 0, thrown.Z).Magnitude > timeline.Throw * 0.5,
+				`{string.format("%.1f", thrown.Magnitude)} studs`)
+
+			t.Check("the hold ends after its recovery", waitFor(function()
+				return EntityState.CurrentAction(character) ~= Bite.HoldAction
+			end, 1))
+			local free = t.Num(A.DodgeStart)
+			t.Press("Dodge")
+			t.Wait(0.15)
+			t.Check("and you move again", t.Num(A.DodgeStart) ~= free)
+			t.Wait(0.6)
+			t.Check("and your camera opens again", workspace.CurrentCamera.FieldOfView > CameraConfig.BaseFov - 1.5,
+				`FOV {string.format("%.1f", workspace.CurrentCamera.FieldOfView)}`)
+		end,
+	},
+	{
+		Name = "Bite hold on an enemy",
+		Run = function(t)
+			-- a held enemy stands still and can't attack until it's thrown
+			local timeline = Bite.Timeline
+			local fx = t.Fx(t.Character())
+			local name = t.Server("TestEnemy", TEST_ENEMY, BITE_RANGE)
+			local enemy = assert(t.Enemy(name), "no test enemy")
+			t.Server("TestStagger", name)
+			t.Lock(enemy)
+			t.Wait(0.1)
+			local before = fx:GetAttribute(A.LastBiteAt)
+			t.Press("Bite")
+			t.Check("a staggered enemy is seized", waitFor(function()
+				return fx:GetAttribute(A.LastBiteAt) ~= before
+			end, 1.5))
+			t.Wait(timeline.Pull + 0.25)
+			local root = Parts.Root(enemy) :: BasePart
+			local spot = root.Position
+			local acted = false
+			local deadline = os.clock() + timeline.Release - timeline.Pull - 0.45
+			while os.clock() < deadline do
+				acted = acted or EntityState.CurrentAction(enemy) ~= ""
+				task.wait()
+			end
+			t.Check("it stays put", (root.Position - spot).Magnitude < 0.4, `{string.format("%.2f", (root.Position - spot).Magnitude)} studs`)
+			t.Check("and never attacks while held", not acted)
 		end,
 	},
 	{

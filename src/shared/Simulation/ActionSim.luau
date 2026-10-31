@@ -2,9 +2,9 @@
 -- ActionSim: everything a character does besides moving, inside the simulation:
 --   melee chains (light on Attack, strong on Strong; buffering, chaining, lunge, tracking then commit), charging
 --   (hold Strong into a charge stance, release for a charged blow), guard (hold) with perfect-guard timing,
---   howl (strong while guarding), bite, the burst gun (ammo, auto-reload, aim), class skills (charges that
---   recharge, unlocked by level; all unlocked in the Manor), an input buffer near the end of every action, and
---   hitstun/stagger lockout.
+--   howl (strong while guarding), bite (its hold is started by Simulation/Bite), the burst gun (ammo, auto-reload, aim),
+--   class skills (charges that recharge, unlocked by level; all unlocked in the Manor), an input buffer near the end of
+--   every action, and hitstun/stagger lockout.
 -- Hit detection and damage are server-only (CombatService + CombatSim); this module only drives the actor.
 
 local Shared = script.Parent.Parent
@@ -107,6 +107,13 @@ local function start(character: Model, id: string, now: number, facing: Vector3)
 	}
 end
 
+-- Starts an action from outside the character's own step (Simulation/Bite turns a landed bite into its hold) and
+-- clears the input buffer.
+function ActionSim.Begin(character: Model, id: string, now: number, facing: Vector3)
+	start(character, id, now, facing)
+	EntityState.Set(character, A.Queued, "")
+end
+
 -- Fires the class's gun if a burst fits in the magazine; otherwise starts a reload.
 local function fire(character: Model, gun: any, now: number, aim: Vector3): Result?
 	local burst = Registry.Action(gun.Burst)
@@ -167,7 +174,9 @@ function ActionSim.Step(character: Model, look: Vector3, ctx: Context): Result
 	if EntityState.IsStunned(character, now) then
 		ActionSim.Cancel(character)
 		EntityState.Set(character, A.GuardStart, -1)
-		return { Stunned = true, Acting = false, Guarding = false, CanDodge = false, WalkSpeed = 0 }
+		-- a body held in a bite keeps facing its biter (Simulation/Bite set the direction)
+		local held = if EntityState.IsHeld(character, now) then character:GetAttribute(A.ActionFacing) :: Vector3 else nil
+		return { Stunned = true, Acting = false, Guarding = false, CanDodge = false, WalkSpeed = 0, Facing = held }
 	end
 
 	local id, action, startedAt = EntityState.CurrentAction(character)

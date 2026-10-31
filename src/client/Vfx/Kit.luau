@@ -33,6 +33,11 @@ Kit.Textures = {
 	-- texture's LEFT edge: their art is drawn moving left.
 	SlashEdge = "rbxassetid://102684460045011", -- the hot hairline the point leaves, same layout (white, additive)
 	BladeSmear = "rbxassetid://91511977557661", -- a blade's pale motion smear for a Trail, same layout (white: tint it)
+	-- Wind (the bite's gust): white, tint it
+	SmokeRibbon = "rbxassetid://74999541206773", -- a wisp of smoke for a Trail, frayed across, torn toward the tail
+	WindLine = "rbxassetid://78292040209531", -- a thin speed line for a Trail, breaking into dashes toward the tail
+	WindRing = "rbxassetid://139862174311558", -- a gust ring seen from above, for a flat expanding particle
+	WindStreak = "rbxassetid://124748249350949", -- a gust's soft bent streak, velocity-aligned
 	-- Creator Store art
 	Crescent = "rbxassetid://13138038111", -- slash crescent flipbook, Grid4x4
 	CrescentDark = "rbxassetid://13780268621", -- crescent arcs, Grid4x4

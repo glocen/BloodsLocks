@@ -28,7 +28,10 @@ return {
 		SaberCharged = "rbxassetid://128599242014306",
 		-- Kit: "" until published
 		Howl = "rbxassetid://139673450689337", -- published 2026-10-30 (AssetService:CreateAssetAsync from Studio)
-		Bite = "rbxassetid://88243077439906", -- published 2026-10-30
+		Bite = "rbxassetid://126304518903664", -- Blender (tools/blender/bite_anim.py), published 2026-10-31
+		BiteHold = "rbxassetid://126343564800671", -- the biter's hold (Simulation/Bite); Blender, 2026-10-31
+		Bitten = "rbxassetid://80678333219496", -- the bite's victim, any R6 body; Blender, 2026-10-31
+		Staggered = "rbxassetid://97201280138759", -- any R6 body: down on one knee while staggered; Blender, 2026-10-31
 		SMGBurst = "rbxassetid://128345868550616", -- the duelist burst, published 2026-10-30
 		BloodBlade = "",
 		LightBeam = "rbxassetid://135123828939357", -- Gustave: published 2026-10-29

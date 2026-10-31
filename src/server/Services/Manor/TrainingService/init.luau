@@ -34,7 +34,8 @@ local function spawnDummy(template: Model, spot: BasePart)
 end
 
 local function heal(model: Model, now: number)
-	local lastHit = num(EntityState.Fx(model), A.LastHitAt, 0)
+	local fx = EntityState.Fx(model)
+	local lastHit = math.max(num(fx, A.LastHitAt, 0), num(fx, A.BittenUntil, 0)) -- a bite's drain counts until it ends
 	local hp, max = num(model, A.HP, 0), num(model, A.HPMax, 0)
 	if (hp <= 0 and now - lastHit >= Config.ReviveAfter) or (hp < max and now - lastHit >= Config.RegenAfter) then
 		model:SetAttribute(A.HP, max)

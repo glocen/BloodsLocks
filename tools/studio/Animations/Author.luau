@@ -1,15 +1,21 @@
 --!strict
--- Author: body-space animation sources (Animations/<Kit>) turned into R6 KeyframeSequences, saved where the Animation
--- Editor finds them (ServerStorage.RBX_ANIMSAVES.R6) and published for the game. Studio, Edit mode, MCP execute_luau:
+-- Author: R6 KeyframeSequences, saved where the Animation Editor finds them (ServerStorage.RBX_ANIMSAVES.R6) and
+-- published for the game. Two sources:
+--   - clips animated in Blender (tools/blender/r6anim.py), baked to one pose per frame and copied to
+--     build/import/Anim_<Name>.txt, which Rojo syncs to ServerStorage.BL_Import. SaveBaked turns one into BL_<Name>.
+--   - body-space kits (Animations/<Kit>), the older clips not yet redone in Blender. Save turns their clips into BL_<Name>.
+-- Studio, Edit mode, MCP execute_luau:
 --   local Author = require(game.ServerStorage.BL_Tools.Animations.Author:Clone())
+--   Author.SaveBaked("BiteHold") -- (re)writes BL_BiteHold from BL_Import.Anim_BiteHold
 --   local kit = require(game.ServerStorage.BL_Tools.Animations.Gustave:Clone())
 --   Author.Save(kit, { "SMGBurst" }) -- (re)writes BL_SMGBurst
---   local id = Author.Publish(kit, "SMGBurst") -- yields; the id goes into Shared.Config.Animations
--- Angles are degrees in body space, converted through the rig's own joint bases (workspace.R6). Positive X raises an arm
--- forward and leans the torso or head forward (their pitch sign is flipped here so all parts read alike). The optional
--- 4th to 6th numbers move the part, in studs.
+--   local id = Author.Publish("Gustave", "SMGBurst") -- yields; the id goes into Shared.Config.Animations
+-- Kit angles are degrees in body space, converted through the rig's own joint bases (workspace.R6). Positive X raises an
+-- arm forward and leans the torso or head forward (their pitch sign is flipped here so all parts read alike). The
+-- optional 4th to 6th numbers move the part, in studs.
 
 local AssetService = game:GetService("AssetService")
+local HttpService = game:GetService("HttpService")
 local ServerStorage = game:GetService("ServerStorage")
 
 export type Pose = { number }
@@ -95,13 +101,68 @@ function Author.Save(kit: Kit, names: { string }?): { string }
 	return written
 end
 
+-- A clip baked in Blender (tools/blender/r6anim.py), from BL_Import.Anim_<name>: JSON with the clip's Character, its
+-- Legs weight, Frames ({ T, Poses = { [part] = the Motor6D Transform's 12 CFrame components } }, one per frame, so
+-- they're joined linearly) and Markers ({ T, Name }). Writes BL_<name> into RBX_ANIMSAVES.R6, replacing an earlier one.
+function Author.SaveBaked(name: string): KeyframeSequence
+	local source = ServerStorage:WaitForChild("BL_Import"):FindFirstChild("Anim_" .. name)
+	assert(source and source:IsA("StringValue"), `BL_Import.Anim_{name} is missing: copy the baked JSON to build/import`)
+	local clip = HttpService:JSONDecode(source.Value)
+	local seq = Instance.new("KeyframeSequence")
+	seq.Name = "BL_" .. name
+	seq.Priority = Enum.AnimationPriority.Action2
+	seq.Loop = false
+	seq:SetAttribute("Character", clip.Character)
+	seq:SetAttribute("Source", clip.Source)
+	local keyframes: { Keyframe } = {}
+	for _, frame in clip.Frames do
+		local keyframe = Instance.new("Keyframe")
+		keyframe.Name = "Pose"
+		keyframe.Time = frame.T
+		keyframe.Parent = seq
+		table.insert(keyframes, keyframe)
+		local root = Instance.new("Pose")
+		root.Name = "HumanoidRootPart"
+		root.Weight = 0
+		root.Parent = keyframe
+		local torsoPose = Instance.new("Pose")
+		for _, part in PARTS do
+			local pose = if part == "Torso" then torsoPose else Instance.new("Pose")
+			pose.Name = part
+			pose.Parent = if part == "Torso" then root else torsoPose
+			pose.CFrame = CFrame.new(table.unpack(frame.Poses[part]))
+			pose.Weight = if LEGS[part] then (clip.Legs or 1) else 1
+			pose.EasingStyle = Enum.PoseEasingStyle.Linear
+		end
+	end
+	for _, marker in clip.Markers or {} do
+		local nearest = keyframes[1]
+		for _, keyframe in keyframes do
+			if math.abs(keyframe.Time - marker.T) < math.abs(nearest.Time - marker.T) then
+				nearest = keyframe
+			end
+		end
+		local m = Instance.new("KeyframeMarker")
+		m.Name = marker.Name
+		m.Parent = nearest
+	end
+	local folder = saves()
+	local old = folder:FindFirstChild(seq.Name)
+	if old then
+		old:Destroy()
+	end
+	seq.Parent = folder
+	return seq
+end
+
 -- Publishes a saved clip as an Animation asset; returns its id. Yields.
-function Author.Publish(kit: Kit, name: string): number
+function Author.Publish(character: string, name: string): number
 	local seq = saves():FindFirstChild("BL_" .. name)
-	assert(seq and seq:IsA("KeyframeSequence"), `BL_{name} isn't saved; run Author.Save first`)
+	assert(seq and seq:IsA("KeyframeSequence"), `BL_{name} isn't saved; run Author.Save or Author.SaveBaked first`)
+	local source = seq:GetAttribute("Source") or `tools/studio/Animations/{character}`
 	local result, id = AssetService:CreateAssetAsync(seq:Clone(), Enum.AssetType.Animation, {
-		Name = `BL_{kit.Character}_{name}`,
-		Description = `BloodsLocks: {kit.Character}'s {name} (tools/studio/Animations/{kit.Character}).`,
+		Name = `BL_{character}_{name}`,
+		Description = `BloodsLocks: {character}'s {name} ({source}).`,
 	})
 	assert(result == Enum.CreateAssetResult.Success, `{name}: {result}`)
 	return id

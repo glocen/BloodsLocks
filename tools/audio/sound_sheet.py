@@ -274,13 +274,12 @@ def surface_hit(rng):
 
 
 def body_hit(rng):
-    """A round striking a body: a dull low thump and a muted slap with a little wet flutter (a hit, not gore)."""
+    """A round striking a body: a dull low thump and a muted cloth slap. Dry: nothing wet is ever heard (AGENTS.md
+    rule 4)."""
     d = 0.35
     thump = softclip(mul(tone(d, glide(125, 66, 0.05)), env(d, 0.002, 0.06)), 2.5)
     slap = mul(filt(white(d, rng), "lowpass", 2200), env(d, 0.0008, 0.03))
-    flutter = [0.6 + 0.4 * math.sin(2 * math.pi * 42 * i / SR) for i in range(samples(d))]
-    wet = mul(mul(filt(white(d, rng), "bandpass", 620, 1.5), env(d, 0.003, 0.06)), flutter)
-    dry = total(d, scale(thump, 0.8), scale(slap, 0.95), scale(wet, 0.35))
+    dry = total(d, scale(thump, 0.85), scale(slap, 0.95))
     return finish(filt(reverb(dry, size=0.2, damp=0.6, wet=0.12), "lowpass", 6000), 0.9)
 
 
@@ -348,28 +347,27 @@ def parry(rng):
 
 
 def blood_blade_cast(rng):
-    """The blood crescent leaving the blade: a wet, rising whoosh, a gurgling body, a low pulse and a thin sizzle."""
+    """The crimson crescent leaving the blade: a rising whoosh, a low pulse and a thin crackle of energy. Dry: nothing
+    wet is ever heard (AGENTS.md rule 4)."""
     d = 0.65
     shape = bell(d, 0.15, 1.5, 0.12)
     whoosh = mul(sweep(white(d, rng), "bandpass", lambda t: 300 + 1100 * math.exp(-((t - 0.15) / 0.12) ** 2), 1.6), shape)
-    wobble = [0.55 + 0.45 * math.sin(2 * math.pi * 28 * i / SR + 2 * math.sin(2 * math.pi * 3 * i / SR))
-              for i in range(samples(d))]
-    gurgle = mul(mul(filt(white(d, rng), "lowpass", 500), env(d, 0.02, 0.2)), wobble)
     pulse = mul(tone(d, lambda t: 72), env(d, 0.03, 0.25))
     gate = [1.0 if rng.random() < 0.08 else 0.15 for _ in range(samples(d))]
     sizzle = mul(mul(filt(white(d, rng), "highpass", 5000), env(d, 0.01, 0.15)), gate)
-    dry = total(d, scale(whoosh, 0.8), scale(gurgle, 0.35), scale(pulse, 0.5), scale(sizzle, 0.12))
+    dry = total(d, scale(whoosh, 0.9), scale(pulse, 0.5), scale(sizzle, 0.14))
     return finish(reverb(dry, size=0.45, damp=0.5, wet=0.2), 0.85)
 
 
 def blood_blade_impact(rng):
-    """The crescent bursting: a heavy thump, a wet splash, scattered droplets and a settling mist (stylized)."""
+    """The crescent bursting: a heavy thump, a burst of air, a crackle of sparks and a settling hiss. Dry: nothing wet
+    is ever heard (AGENTS.md rule 4)."""
     d = 0.7
     thump = softclip(mul(tone(d, glide(120, 58, 0.07)), env(d, 0.002, 0.08)), 2.5)
-    splash = mul(filt(white(d, rng), "lowpass", 3500), env(d, 0.002, 0.12))
-    drops = grains(d, 18, 0.02, 0.45, rng, band=(1200, 4000), length=(0.005, 0.012), q=4.0, amp=(0.3, 0.05))
-    mist = mul(filt(white(d, rng), "bandpass", 800, 0.7), env(d, 0.03, 0.3))
-    dry = total(d, thump, scale(splash, 0.7), drops, scale(mist, 0.15))
+    burst = mul(filt(white(d, rng), "bandpass", 1400, 0.8), env(d, 0.002, 0.09))
+    sparks = grains(d, 18, 0.02, 0.45, rng, band=(3000, 7000), length=(0.003, 0.007), q=5.0, amp=(0.25, 0.04))
+    hiss = mul(filt(white(d, rng), "highpass", 2500), env(d, 0.03, 0.3))
+    dry = total(d, thump, scale(burst, 0.6), sparks, scale(hiss, 0.12))
     return finish(reverb(dry, size=0.55, damp=0.45, wet=0.3), 0.92)
 
 
@@ -420,6 +418,52 @@ def light_beam_end(rng):
     return finish(reverb(dry, size=0.5, damp=0.4, wet=0.3), 0.75)
 
 
+def bite_lunge(rng):
+    """The bite's lunge: a short rush of air with a low whomp, peaking as the reach lands."""
+    return swing(rng, 0.4, 0.09, 380, 1900, 0.08, True)
+
+
+def bite_seize(rng):
+    """A bite taking hold: air rushing in, narrowing as it comes, then the grip's heavy cloth thud."""
+    d = 0.5
+    shape = bell(d, 0.2, 2.5, 0.05)
+    rush = mul(sweep(white(d, rng), "bandpass", lambda t: 2600 - 2000 * min(t / 0.2, 1.0), 1.4), shape)
+    thud = softclip(mul(tone(d, glide(110, 60, 0.05)), env(d, 0.002, 0.06, delay=0.2)), 2.0)
+    cloth = mul(filt(white(d, rng), "lowpass", 900), env(d, 0.002, 0.035, delay=0.2))
+    dry = total(d, scale(rush, 0.7), scale(thud, 0.85), scale(cloth, 0.5))
+    return finish(reverb(dry, size=0.4, damp=0.55, wet=0.2), 0.8)
+
+
+def bite_fangs(rng):
+    """The bite landing: a dull, close, low blow and a dark hiss of smoke bursting out. Dry, never wet."""
+    d = 0.6
+    blow = softclip(mul(tone(d, glide(90, 48, 0.06)), env(d, 0.002, 0.07)), 2.4)
+    knock = mul(filt(white(d, rng), "lowpass", 700), env(d, 0.001, 0.025))
+    hiss = mul(filt(white(d, rng), "bandpass", 3200, 0.8), env(d, 0.01, 0.18))
+    dry = total(d, scale(blow, 0.9), scale(knock, 0.5), scale(hiss, 0.3))
+    return finish(reverb(dry, size=0.5, damp=0.5, wet=0.25), 0.88)
+
+
+def bite_pulse(rng):
+    """A drain pulse: one deep throb with a low swell of air under it, like a slow heartbeat (never a swallow)."""
+    d = 0.45
+    throb = mul(tone(d, lambda t: 52 + 6 * math.exp(-t / 0.05)), env(d, 0.03, 0.12))
+    body = mul(tone(d, lambda t: 104), env(d, 0.03, 0.08))
+    air = mul(filt(white(d, rng), "bandpass", 420, 0.9), bell(d, 0.08, 1.5, 0.12))
+    dry = total(d, throb, scale(body, 0.35), scale(air, 0.35))
+    return finish(reverb(dry, size=0.45, damp=0.6, wet=0.2), 0.7)
+
+
+def bite_release(rng):
+    """The throw: a gust bursting outward over a deep boom, settling into a dark tail."""
+    d = 0.9
+    shape = bell(d, 0.07, 1.2, 0.2)
+    gust = mul(sweep(white(d, rng), "bandpass", lambda t: 380 + 2200 * min(t / 0.1, 1.0) * math.exp(-t / 0.35), 1.2), shape)
+    boom = softclip(mul(tone(d, glide(78, 40, 0.12)), env(d, 0.003, 0.18)), 2.6)
+    dry = total(d, scale(gust, 0.85), scale(boom, 0.9))
+    return finish(reverb(dry, size=0.7, damp=0.45, wet=0.3), 0.9)
+
+
 # Cue name -> (maker, extra region data). Peak: when a swing's whoosh peaks, so the game can line it up with the hit.
 CUES = [
     ("GunShot", gun_shot, {}),
@@ -436,6 +480,11 @@ CUES = [
     ("LightBeamCharge", light_beam_charge, {}),
     ("LightBeamLoop", light_beam_loop, {"Loop": True}),
     ("LightBeamEnd", light_beam_end, {}),
+    ("BiteLunge", bite_lunge, {"Peak": 0.09}),
+    ("BiteSeize", bite_seize, {}),
+    ("BiteFangs", bite_fangs, {}),
+    ("BitePulse", bite_pulse, {}),
+    ("BiteRelease", bite_release, {}),
 ]
 
 

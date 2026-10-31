@@ -36,6 +36,8 @@ local function step(dt: number)
 			Gunfire.Update(model, action, startedAt, now, onHit)
 		elseif action.Hit then
 			Melee.Update(model, id, action, startedAt, now, onHit)
+		else
+			Melee.Stop(model) -- an action with no hit window: a bite that took hold ends its hitbox
 		end
 	end
 	Projectiles.Step(dt)

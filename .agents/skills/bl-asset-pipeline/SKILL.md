@@ -44,7 +44,20 @@ The pipeline Claude built in C1 for Gustave's machine pistol. Everything is scri
 
 ## Animations
 
-- Sources live in `tools/studio/Animations/<Kit>` (body-space poses). In Edit mode through MCP: `local Author = require(game.ServerStorage.BL_Tools.Animations.Author:Clone())`; `Author.Save(kit, { "<Name>" })` writes `BL_<Name>` into `ServerStorage.RBX_ANIMSAVES.R6`; `Author.Publish(kit, "<Name>")` publishes it and returns the id for `Shared.Config.Animations`.
+Animate in Blender (owner, 2026-10-31: "do the animation in Blender, it should be better"):
+- A clip script `tools/blender/<name>_anim.py` builds on `tools/blender/r6anim.py`:
+  - an exact R6 rig from Roblox's own Motor6Ds;
+  - poses in the body-space angles of `Author`, keyed with Blender's curves (Bezier, BACK overshoot, EXPO snaps);
+  - `plant` keeps feet on the floor, and `contacts` solves arms, head and torso onto points of another body (`reach`, `gaze`, `lean_to`);
+  - `render_sheet` reviews from the game's player camera;
+  - `export` bakes one pose per frame.
+- Time clips from the game's definitions (`luau_table`), never retyped numbers. Run it headless (`review`, `export` or `all`) and Read every sheet; print the contact distances and fix them.
+- Copy the baked `Anim_<Name>.txt` to `build/import/`. In Edit mode through MCP:
+  - `local Author = require(game.ServerStorage.BL_Tools.Animations.Author:Clone())`;
+  - `Author.SaveBaked("<Name>")` writes `BL_<Name>` into `ServerStorage.RBX_ANIMSAVES.R6`;
+  - `Author.Publish("<Character>", "<Name>")` returns the id for `Shared.Config.Animations`.
+- Review the live clip from the player's camera: freeze tracks with `AdjustSpeed(0)` and emitters with `TimeScale = 0`, then capture.
+- Older clips are body-space kits in `tools/studio/Animations/<Kit>` (`Author.Save(kit, { "<Name>" })`); they move to Blender as they're redone.
 - Fallback when publishing from MCP fails: the owner publishes (Animation Editor on `workspace.R6` → Load from `RBX_ANIMSAVES.R6` → Publish).
 
 ## Always

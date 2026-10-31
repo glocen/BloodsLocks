@@ -16,7 +16,7 @@ Measured references in [vfx.md](vfx.md) and [animation.md](animation.md). Our cu
 | **SMG burst** | One thin pale tracer at 700 studs/s | 5–6 thick orange-gold rays at once, fanned by the spread, fading in ≈0.2 s; a big orange-white muzzle bloom; brass casings | Instant thick rays per round with a white-hot core, fanned by the real spread; a bigger layered muzzle bloom; ejected casings |
 | **Blood Blade** (players see "Crimson Crescent") | A crescent effect (`Vfx/BloodBlade`, its drips and splatter removed 2026-10-31), animation unpublished | The free hand rises (≈0.3–0.5 s); a huge crescent thrown from it, thinning to a streak in ≈0.5 s | A new cast animation (the raised free hand) and a stylized crimson energy crescent (light, sparks, mist; never liquid). **Ask the owner about its look before building it** |
 | **Light Beam** | A warm gold beam from the crystal (the brief's direction) | Raise overhead (≈0.2 s); a white star flare at the crystal (≈1.1 s); aim (≈0.2 s); a white burst; a thin straight white ray with swirl rings at its root; planted | A cold white beam (owner to confirm, §2): the raise-hold-aim animation, the star flare with long streaks, the root rings, the planted brace |
-| **Bite** | A heal number over the biter; no effect of its own | Grab; a white-glitter drain; white smoke ribbons on release (their blood: never reproduced) | **Ask the owner first** (the action itself is a bite). If approved: grab, a white-glitter drain, white smoke ribbons; no blood |
+| **Bite** | A heal number over the biter; no effect of its own | Grab; a white-glitter drain; white smoke ribbons on release (their blood: never reproduced) | **Owner, 2026-10-31:** the animation, plus a wind effect of dark smoke instead of blood. No blood |
 | **Guard, howl** | Call-outs and flashes in `CombatFxController`; no layered effect | A dark-red translucent disc (a sphere for some); an orange-gold block flash; the howl a pale shockwave sphere with a heat-haze edge | Rebuild both as layered effects |
 | **Movement** | No trails | White streak bursts under air jumps, ribbon trails on high jumps, afterimages on dodges | Add all three |
 | **Sound** | 14 synthesized cues, waiting for the owner's upload | Not assessed: the study looked at frames only | A listening pass on the recording's audio before we redo the cues |
@@ -27,7 +27,8 @@ Measured references in [vfx.md](vfx.md) and [animation.md](animation.md). Our cu
 2. **The Light Beam's colour:** cold white (2026-10-30).
 3. **Floor splatter: never** (2026-10-31).
 4. **"Blood Blade"** is shown to players as **"Crimson Crescent"** (`Definitions/Skills/Gustave.luau`); internal ids keep `BloodBlade` (2026-10-30).
-5. **Open: the Blood Blade's look and the bite's effect.** Ask the owner before building either.
+5. **The bite** (2026-10-31): just the animation, plus a wind effect of dark smoke instead of blood. Then: a long hold (both locked and invulnerable, the biter drinks HP back), and the staggered body down on one knee before it's grabbed. Built in C1.5 (`docs/combat-rework.md`).
+6. **Open: the Blood Blade's look.** Ask the owner before building it.
 
 ## 3. The match screens (U2 and polish)
 

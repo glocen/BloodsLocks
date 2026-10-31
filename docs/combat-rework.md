@@ -59,6 +59,63 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
 - **Light Beam:** cold white (owner, 2026-10-30): raise the gun overhead, a star flare at the crystal, aim, a white burst, a thin straight white ray with swirl rings at its root; planted while firing.
 - **Every C1 effect is redone to the network-test study** (owner, 2026-10-30): the sabre hit, the SMG, the Blood Blade, the Light Beam, the bite, guard, howl and the movement trails. **No blood effects, ever** (AGENTS.md rule 4; owner, 2026-10-31): a hit is the body's red flash with a white outline. The order and the gaps are in `docs/reference/network-test/takeaways.md` §1.
 
+## C1.5 · The bite (owner, 2026-10-31)
+
+The owner's words: "for the bite it js the animation and let make a wind effect with darky smoke instead of blood", then "it gotta be a bit long both character cant move and it cause iframe for both and the one who bite recover hp ... make it perfect". The reference is the network-test bite, measured at 10 fps ([vfx.md](reference/network-test/vfx.md) §3: grab ≈0.5 s, bite ≈0.4, drain ≈1.5, release, burst ≈0.6). Ours keeps that rhythm with our own beats, and no blood.
+
+**The flow.** A stagger drops its body to one knee, head bowed (the reference's manual, 9:34; owner: "down on his knee, then grabbed, and the bite starts"). The bite lunges as before, and against anything not staggered it whiffs (0.75 s). A hit on a staggered target seizes it: the bite becomes a paired hold (`Common.BiteHold`), run on the server by `Simulation/Bite`, and the victim is hauled up off its knee.
+
+| Beat | From the seize | The biter | The victim | Effect |
+|---|---|---|---|---|
+| Seize | 0–0.4 s | grips the shoulders and pulls | is yanked in (a short pull through `Knock`), arches back, arms flung wide | dark smoke and wind drawn in |
+| Fangs | 0.55 | head to the neck | head thrown aside | the victim's red flash, a dark puff, a camera kick |
+| Drain | 0.85–2.05 | holds; the shoulders heave on each pulse | hangs, trembling | 5 pulses 0.3 s apart. Half the bite's damage drains from the victim (never below 1 HP), and the heal flows to the biter in equal parts. Slow dark ribbons circle both; cold-white motes rise round the biter on each pulse |
+| Release | 2.35 | shoves the victim off with the gun arm, twisting away | is thrown back 6 studs, turned 25° to the biter's left (so the player's camera sees it fly), and knocked down to a knee for 1 s | the rest of the damage lands (it can kill); the gust: wide ribbons and ground rings |
+| Recovery | 2.35–2.75 | back to stance; can dodge from 2.55 | down until 3.35 | |
+
+**Rules:**
+- **Both locked:** the biter's hold is an action with no walking, jumping or dodging until 2.55. The victim is in hitstun until the release, then knocked down.
+- **Both invulnerable:** i-frames on both from the seize, the victim's to the release and the biter's to 2.55 (when it can act again). Hits on a held body do nothing, and no "Evaded" pops over it.
+- **The heal:** the bite's `Heal` (0.12 of the biter's max HP) comes in five equal pulses; the total shows once, at the release.
+- **One victim:** a biter holds one body, and a held body can't be seized by another biter.
+- **Ends early, cleanly:** the hold ends at once if either body dies or leaves, the two get more than 6 studs apart (a teleport, a phase change), the victim becomes protected (the match guard), or the biter's hold is cancelled. Both are freed and no further damage lands.
+- **Facing:** both face each other for the whole hold.
+- **Sizes:** tuned on equal-height bodies (players, Wretches, dummies). The Butcher (1.35×) gets checked from the player's camera; if the pose fails on it, its definition refuses the bite.
+- **Never an embrace** (Roblox's Community Standards ban romantic or flirtatious gestures): the gun hand seizes the victim's side, the sabre arm stays low and back, the victim claws at the gripping arm, each pulse is a convulsion, the release is a throw, and the chests stay about 0.9 studs apart.
+- **The bodies don't shove each other:** their solid parts ignore each other while held (their animated heads and torsos would push them apart), and the pull is re-aimed every step so it lands on the hold's distance.
+
+**What players see** (`Vfx/BiteWind`): it reads the hold's clock every frame, like the beams and charges, so a late joiner or an early end shows correctly.
+- The pull at the seize; at the fangs a dark puff, a cold flash lighting both faces and the victim's red flash; through the drain a slow orbit of smoke rising round the upper bodies, and on each pulse cold-white motes streaming into the biter with a soft glow; at the release the sweep and the ground gust.
+- The biter's camera (`Config.Camera.Bite`) eases 40° round to its right (the side of the bite), in to 9 studs and to FOV 62, then back out as the victim is thrown. sleitnick's CameraShaker gives a kick at the seize and the fangs, a low rumble through the drain that heaves on each pulse, and a hard shake at the release.
+- No blood, no wounds and no wet sounds (AGENTS.md rule 4).
+
+**Animations**, animated in Blender (owner: "do the animation in Blender, it should be better"): `tools/blender/bite_anim.py` on the R6 toolkit `tools/blender/r6anim.py` (an exact R6 rig from the live Motor6Ds, Blender's curves, reach/gaze/lean solvers for the contacts, a floor solver for planted feet, review renders from the player's camera), baked to `build/import/Anim_<Name>.txt` and saved and published by `Author.SaveBaked`:
+- `Staggered` (any body, 2.6 s): rocked back, down on one knee, heaving. `AnimationSim` plays it from `StaggeredAt` while the stagger lasts; the body rises over 0.3 s as it ends.
+- `Bite` (0.73 s): the coil, the lunge with the gun hand reaching, the snap.
+- `BiteHold` (2.73 s) and `Bitten` (3.33 s, any R6 body, from the victim's `BittenAt`).
+
+**Sounds** (synthesized cues in the sheet, heard once it's uploaded): `BiteLunge`, `BiteSeize` (air rushing in, a grip's thud), `BiteFangs` (a dull blow, a hiss of smoke), `BitePulse` (one deep throb, like a slow heartbeat) and `BiteRelease` (a gust over a deep boom, the hold's Hit). No wet or swallowing sounds; the older body-hit and crescent cues lost their wet layers in the same pass.
+
+**Proof:**
+- Self-test "Bite hold", on the pad dummy:
+  - the hold starts, and Jump and Dodge do nothing during it;
+  - both bodies stay put;
+  - a hit on you during the hold does nothing;
+  - your HP rises by the heal, and the dummy loses exactly the bite's damage;
+  - the gust plays after the release, and you can move again after the recovery.
+- Self-test "Bite hold on an enemy": a staggered Wretch is held still and can't attack.
+- Self-test "Bite whiff": a dummy that isn't staggered isn't seized.
+- Logic test "Bite pulses": for awkward totals the pulses add up exactly to the heal and the drain share, and never take the victim below 1 HP.
+- Captures from the player's camera at each beat, frozen and live.
+
+**Critique before building:**
+1. **Too long to be locked in a PvPvE fight?** 2.75 s is long, but both bodies are invulnerable and the biter acts again at 2.55. The cost is time: the posture break is spent and other foes close in. That's the owner's ask, and close to the reference (≈3 s).
+2. **Unfair on a PvP victim?** The victim already lost the posture duel. The hold also protects them from third parties piling on, and the knockdown (1 s) gives the biter one follow-up, no more.
+3. **Snaps or slides?** No teleports. The victim is pulled in through the knockback path (velocity, so it stops at walls), and the biter stays where its lunge put it. The biter's client predicts the whiff for one round trip before the hold arrives; both clips start from the same pose, so the switch blends.
+4. **Visuals out of sync:** they read the hold's clock (the action's start), never timers, so they end when the hold does.
+5. **Gore:** smoke, wind and cold light only, and the hit feedback is the victim's red flash with a white outline. A neck bite with no blood is common in Roblox vampire games; nothing wet is drawn or heard.
+6. **Track budget:** one one-shot per body (`BiteHold` or `Bitten`), within `AnimationSim`'s two.
+
 ## Later in C1 (owner's earlier asks)
 
 - **Level-ups that matter:** a time-to-kill table per level, then damage and HP growth tuned to it.
@@ -94,6 +151,11 @@ These come after C1.1 and C1.2. First a capture of the current effects and a wri
   - **Points:** `Grip`, `BladeBase`, `BladeTip` and `Jewel` are named in `Equipment.Points`.
 - **The slash** (`Vfx/SlashTrail`, from each melee action's start; rebuilt 2026-10-31 after the network-test study): a short pale motion smear between `BladeBase` and `BladeTip` that takes the scene's light, and a bright line on the point's path, for the swing's fast frames only. A swing cancelled first draws nothing; heavy blows smear a little longer. The textures are drawn by `tools/blender/vfx_sprites.py` (`blade_smear`, `slash_edge`).
 - **Reviewed:** captures in the Manor's test pad, from the player's camera and from the side, frozen mid-swing.
+
+**C1.5 done (2026-10-31): the bite and the stagger kneel.** Self-test 100–101 of 100–101 in the Manor and in the Victorian place (the count varies with the screen the UI lint finds), logic 63/63, world report clean.
+- **Built:** the hold (`Simulation/Bite`), the kneel, the four Blender clips, `Vfx/BiteWind` on the hold's clock, the bite camera, five sound cues.
+- **Reviewed:** Blender sheets from the player's camera and the side, and live captures frozen at the kneel, the fangs, the drain and the release.
+- **Open:** the owner's look in play. The Butcher (1.35×) isn't checked yet. The sounds wait for the sheet's upload.
 
 **Next:**
 1. C1.3 and C1.4: the Blood Blade and the Light Beam. The beam leaves from the gun's crystal (`CrystalTip`), raised overhead the way Albert raises his (the owner's video).

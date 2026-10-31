@@ -199,6 +199,10 @@ return {
 		Dust = Color3.fromRGB(122, 112, 104), -- stone dust a round kicks up (blended toward the surface's colour)
 		BladeSmear = Color3.fromRGB(236, 232, 226), -- a blade's motion smear: pale; the scene's light tints the rest
 		BladeEdge = Color3.fromRGB(255, 250, 244), -- the bright line on the point's path
+		WindSmoke = Color3.fromRGB(34, 30, 44), -- the bite's gust: near-black smoke, a cold violet cast
+		WindSmokeDeep = Color3.fromRGB(14, 12, 20),
+		Wind = Color3.fromRGB(196, 202, 218), -- its wind lines: pale, cool
+		Drain = Color3.fromRGB(226, 234, 255), -- the life a bite drinks: cold white motes (magic's colour role)
 	},
 
 	-- Class portraits (Blood Table, Bloodsworn tab): ViewportFrame lighting and card shading.

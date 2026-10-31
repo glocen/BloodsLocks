@@ -12,6 +12,8 @@ local Rewards = require(Shared.Match.Rewards)
 local Ledger = require(Shared.Match.Ledger)
 local Regions = require(Shared.Match.Regions)
 local WorldTags = require(Shared.World.Tags)
+local Bite = require(Shared.Simulation.Bite)
+local Combat = require(Shared.Config.Combat)
 
 local standard = Registry.DefaultRuleDef()
 
@@ -169,6 +171,28 @@ return {
 			local victorian = Registry.Map("Victorian")
 			t.Check("the Victorian map has the four regions (D8)", victorian ~= nil and victorian.Zones.LamplightersReach ~= nil
 				and victorian.Zones.Cloister ~= nil and victorian.Zones.BellWorks ~= nil and victorian.Zones.ChapterClose ~= nil)
+		end,
+	},
+	{
+		Name = "Bite pulses",
+		Run = function(t)
+			-- the drain's pulses (Simulation/Bite) move whole points, never go back, and add up to the total exactly
+			local timeline = Bite.Timeline
+			local count = timeline.Pulses
+			for _, total in { 0, 1, 7, 90, 121, 999 } do
+				local steady, last = true, 0
+				for done = 1, count do
+					local share = Bite.Share(total, done, count)
+					steady = steady and share >= last and share == math.floor(share)
+					last = share
+				end
+				t.Check(`{total} in {count} pulses: whole and rising`, steady)
+				t.Equal(`{total} in {count} pulses adds up`, last, total)
+			end
+			t.Check("the pulses all land before the release", timeline.FirstPulse + (count - 1) * timeline.PulseEvery < timeline.Release)
+			local hold = Registry.Action(Bite.HoldAction)
+			t.Check("the biter recovers after the release", timeline.Release < hold.DodgeCancelFrom and hold.DodgeCancelFrom < hold.Duration)
+			t.Check("the victim's clip ends with its knockdown", timeline.VictimClip <= timeline.Release + Combat.Hitstun.Knockdown)
 		end,
 	},
 }

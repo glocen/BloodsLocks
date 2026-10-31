@@ -12,5 +12,7 @@ Receipts for everything that ships (owner's IP Safety List): who made each asset
 | VFX textures (blood crescent, glows, beam bands, glint) | ids in `Client.Vfx.Kit.Textures` | Claude | `tools/vfx_textures.py` | Original |
 | Menu images (Hunt card, ritual circle) | ids in `Theme.Images` | Claude | `tools/ui_textures.py` | Original |
 | Melted-wax candles | Manor | ChatGPT | Blender, `tools/art/build_melted_candles.py` | Original |
+| The bite's animations: `Staggered`, `Bite`, `BiteHold`, `Bitten` | ids in `Shared.Config.Animations` | Claude | Animated in Blender by script (`tools/blender/bite_anim.py` on `tools/blender/r6anim.py`), baked and published by `tools/studio/Animations/Author.SaveBaked` | Original |
+| The bite's sound cues (`BiteLunge`, `BiteSeize`, `BiteFangs`, `BitePulse`, `BiteRelease`) | the combat sound sheet (`Definitions/SoundSheet`) | Claude | Synthesized from scratch by `tools/audio/sound_sheet.py` (no samples) | Original |
 
 <!-- To backfill: every .rbxm in src/shared/Assets, the Gustave animations, the Manor and Victorian art kits, uploaded texture maps. -->

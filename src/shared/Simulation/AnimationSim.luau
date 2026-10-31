@@ -11,12 +11,15 @@ local Shared = script.Parent.Parent
 local Config = require(Shared.Config.Animations)
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(script.Parent.EntityState)
+local Bite = require(script.Parent.Bite)
 
 local A = EntityState.Attr
 local num = EntityState.Number
 
 local FADE_FAST = 0.06
 local FADE_LOOP = 0.15
+local FADE_RISE = 0.3 -- a stagger's end: the body rises from its knee
+local STAGGER_CLIP = 2.55 -- seconds the Staggered clip lasts, less a margin (it outlasts every stagger)
 
 -- Animation instances, created once outside the simulation: sets[setName][clipName].
 local sets: { [string]: { [string]: Animation } } = {}
@@ -90,6 +93,13 @@ function AnimationSim.Step(animator: Animator, character: Model, now: number, gr
 	local dashEnd = num(character, A.DashEnd, 0)
 	local landAt = num(character, A.LandAt, -10)
 	local _, action, actionStart = EntityState.CurrentAction(character)
+	-- a bite's victim (Simulation/Bite): from the seize through its knockdown, unless the hold broke and freed it
+	local fx = EntityState.Fx(character)
+	local bittenAt = num(fx, A.BittenAt, -10)
+	local bitten = now - bittenAt < Bite.Timeline.VictimClip and now < num(character, A.HitstunUntil, 0)
+	-- a stagger drops the body to a knee; a bite takes it from there at once, else it rises as the stagger ends
+	local staggeredAt = num(fx, A.StaggeredAt, -10)
+	local staggered = now < num(character, A.StaggerUntil, 0) and now - staggeredAt < STAGGER_CLIP
 
 	play("ChargeCrouch", character:GetAttribute(A.Charging) == true, nil, FADE_LOOP)
 	play("HighJumpLaunch", kind == "high" and now - launchAt < 0.46, launchAt, FADE_FAST)
@@ -98,6 +108,8 @@ function AnimationSim.Step(animator: Animator, character: Model, now: number, gr
 	play("Dodge", dodging and not back, dodgeStart, FADE_FAST)
 	play("Backstep", dodging and back, dodgeStart, FADE_FAST)
 	play("Land", grounded and now - landAt < 0.3, landAt, FADE_FAST)
+	play("Staggered", staggered, staggeredAt, if bitten then FADE_FAST else FADE_RISE)
+	play("Bitten", bitten, bittenAt, FADE_FAST)
 	for _, clip in ACTION_CLIPS do
 		play(clip, action ~= nil and action.Anim == clip, actionStart, FADE_FAST)
 	end

@@ -2,9 +2,10 @@
 -- CombatSim: the server's damage pipeline. CombatService queues hits detected outside the simulation
 -- (MuchachoHitbox for melee, raycasts for bullets); ServerStep applies them inside the server's simulation step
 -- so HP, stagger, guard and hitstun change on the shared timeline. Order of checks per hit:
---   allegiance -> i-frames (evaded) -> howl window (melee attacker staggered) -> bite (staggered targets only,
---   heals the biter) -> guard from the front (perfect guard = parry; else chip damage + stamina drain, guard
---   break at 0) -> damage, stagger meter, hitstun or stagger, knockback.
+--   allegiance -> i-frames (evaded) -> howl window (melee attacker staggered) -> bite (staggered targets only: it
+--   seizes them into a hold, Simulation/Bite) -> guard from the front (perfect guard = parry; else chip damage +
+--   stamina drain, guard break at 0) -> damage, stagger meter, hitstun or stagger, knockback.
+-- Each step then runs the bite holds (their drain and release).
 -- Feedback events go on the Humanoid (EntityState.Fx) for CombatFxController.
 
 local Players = game:GetService("Players")
@@ -21,6 +22,7 @@ local PlaceRole = require(Shared.Util.PlaceRole)
 local Signal = require(Shared.Util.Signal)
 local Leveling = require(script.Parent.Leveling)
 local Knock = require(script.Parent.Knock)
+local Bite = require(script.Parent.Bite)
 
 local A = EntityState.Attr
 local num = EntityState.Number
@@ -92,15 +94,17 @@ function CombatSim.CanDamage(attacker: Model, target: Model): boolean
 	return not (a and b and PlaceRole.IsManor and not Config.PvPInManor)
 end
 
--- Cancels what the model was doing and puts it into hitstun, or into a stagger.
+-- Cancels what the model was doing and puts it into hitstun, or into a stagger. A lighter hit never cuts a longer
+-- hitstun short (a knockdown stays down).
 local function interrupt(model: Model, now: number, hitstun: number, stagger: number?)
 	ActionSim.Cancel(model)
 	model:SetAttribute(A.GuardStart, -1)
 	if stagger then
 		model:SetAttribute(A.Stagger, 0)
 		model:SetAttribute(A.StaggerUntil, now + stagger)
+		EntityState.Fx(model):SetAttribute(A.StaggeredAt, now)
 	elseif hitstun > 0 then
-		model:SetAttribute(A.HitstunUntil, now + hitstun)
+		model:SetAttribute(A.HitstunUntil, math.max(num(model, A.HitstunUntil, 0), now + hitstun))
 	end
 end
 
@@ -120,11 +124,12 @@ local function facesAttacker(target: Model, attacker: Model): boolean
 	return root ~= nil and (direction == nil or root.CFrame.LookVector:Dot(direction) > Config.Guard.ArcDot)
 end
 
-local function damage(request: HitRequest, now: number, amount: number)
+-- `shown` is the damage clients are told the hit dealt (a bite's release reports the whole bite); default `amount`.
+local function damage(request: HitRequest, now: number, amount: number, shown: number?)
 	local target, attacker, hit = request.Target, request.Attacker, request.Hit
 	local fx = EntityState.Fx(target)
 	loseHp(target, attacker, amount)
-	fx:SetAttribute(A.LastHitDamage, amount)
+	fx:SetAttribute(A.LastHitDamage, shown or amount)
 	fx:SetAttribute(A.LastHitBy, attacker.Name)
 	fx:SetAttribute(A.LastHitRanged, hit.Ranged == true)
 	fx:SetAttribute(A.LastHitAt, now) -- last: clients read the others when this one changes
@@ -141,7 +146,7 @@ local function damage(request: HitRequest, now: number, amount: number)
 		end
 	end
 
-	Knock.Apply(target, attacker, Knock.Distance(hit), now)
+	Knock.Apply(target, attacker, Knock.Distance(hit), now, hit.KnockTurn)
 end
 
 local function apply(request: HitRequest, now: number)
@@ -155,7 +160,9 @@ local function apply(request: HitRequest, now: number)
 	local power = math.floor(hit.Damage * Leveling.DamageMultiplier(num(attacker, A.Level, 1)) + 0.5)
 
 	if EntityState.IsInvincible(target, now) then
-		fx:SetAttribute(A.LastEvadedAt, now)
+		if not Bite.Holds(target) then -- a held body isn't dodging: no "Evaded" over it
+			fx:SetAttribute(A.LastEvadedAt, now)
+		end
 		return
 	end
 
@@ -170,19 +177,9 @@ local function apply(request: HitRequest, now: number)
 		end
 	end
 
-	-- Bite: only staggered targets. Ends the stagger and heals the biter.
+	-- Bite: only a staggered target, seized into a hold that drains it and heals the biter (Simulation/Bite).
 	if hit.Bite then
-		if now >= num(target, A.StaggerUntil, 0) then
-			return
-		end
-		target:SetAttribute(A.StaggerUntil, now)
-		damage(request, now, power)
-		local maxHealth = num(attacker, A.HPMax, 0)
-		local heal = math.floor(maxHealth * (hit.Heal or 0))
-		attacker:SetAttribute(A.HP, math.min(maxHealth, num(attacker, A.HP, 0) + heal))
-		local attackerFx = EntityState.Fx(attacker)
-		attackerFx:SetAttribute(A.LastBiteHeal, heal)
-		attackerFx:SetAttribute(A.LastBiteAt, now)
+		Bite.Seize(attacker, target, hit, power, now)
 		return
 	end
 
@@ -208,8 +205,21 @@ local function apply(request: HitRequest, now: number)
 	damage(request, now, power)
 end
 
+-- What a bite's hold takes from the pipeline: quiet HP loss for its pulses, a full hit for its release, and the
+-- match's protection.
+local biteHooks: Bite.Hooks = {
+	Hurt = loseHp,
+	Strike = function(attacker: Model, target: Model, hit: any, now: number, amount: number, shown: number)
+		damage({ Attacker = attacker, Target = target, Hit = hit }, now, amount, shown)
+	end,
+	Protected = function(target: Model, now: number): boolean
+		return guard ~= nil and guard(target, now)
+	end,
+}
+
 -- Server only, called at the start of each simulation step. Hits from attackers that were already dead (or gone)
 -- when the step began are dropped; attackers alive at the start all land, so two hits in the same step trade.
+-- The bite holds run after the hits.
 function CombatSim.ServerStep(now: number)
 	if #losses > 0 then
 		local pending = losses
@@ -220,23 +230,23 @@ function CombatSim.ServerStep(now: number)
 			end
 		end
 	end
-	if #queue == 0 then
-		return
-	end
-	local pending = queue
-	queue = {}
-	local aliveAtStart: { [Model]: boolean } = {}
-	for _, request in pending do
-		local attacker = request.Attacker
-		if aliveAtStart[attacker] == nil then
-			aliveAtStart[attacker] = attacker.Parent ~= nil and num(attacker, A.HP, 0) > 0
+	if #queue > 0 then
+		local pending = queue
+		queue = {}
+		local aliveAtStart: { [Model]: boolean } = {}
+		for _, request in pending do
+			local attacker = request.Attacker
+			if aliveAtStart[attacker] == nil then
+				aliveAtStart[attacker] = attacker.Parent ~= nil and num(attacker, A.HP, 0) > 0
+			end
+		end
+		for _, request in pending do
+			if aliveAtStart[request.Attacker] then
+				apply(request, now)
+			end
 		end
 	end
-	for _, request in pending do
-		if aliveAtStart[request.Attacker] then
-			apply(request, now)
-		end
-	end
+	Bite.Step(now, biteHooks)
 end
 
 -- Stagger meter drain, for any entity (players in the simulation, NPCs by their owner).

@@ -1,8 +1,9 @@
 --!strict
 -- CombatFxController: combat feedback for every entity, read from the events CombatSim and the enemy brains write on
 -- each entity's Humanoid (EntityState.Fx): hit flashes, call-outs (Evaded, Blocked, PARRY, Guard broken, HOWL, bite
--- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, gunshots
--- (Vfx/Gunshot: muzzle, tracer, impact), skill projectiles, channeled beams and charge telegraphs, and their sounds
+-- heals, STAGGERED) for what's near you, the glint of an enemy noticing you, camera shakes for you, a bite's smoke and
+-- wind through its hold (Vfx/BiteWind), gunshots (Vfx/Gunshot: muzzle, tracer, impact), skill projectiles, channeled
+-- beams and charge telegraphs, and their sounds
 -- (Audio/Sfx, cues named in Definitions/Sounds). Damage itself reads on the plates (PlateController: HP bars and the
 -- running total of what you dealt), so hits pop no numbers.
 
@@ -24,6 +25,7 @@ local Vfx = script.Parent.Parent.Parent.Vfx
 local Gunshot = require(Vfx.Gunshot)
 local Hitstop = require(Vfx.Hitstop)
 local SlashTrail = require(Vfx.SlashTrail)
+local BiteWind = require(Vfx.BiteWind)
 local Projectile = require(Vfx.Projectile)
 local BloodBlade = require(Vfx.BloodBlade)
 local LightBeam = require(Vfx.LightBeam)
@@ -31,6 +33,7 @@ local BloodCharge = require(Vfx.BloodCharge)
 local FireNova = require(Vfx.FireNova)
 local Parts = require(Shared.Util.Parts)
 local Combat = require(Shared.Config.Combat)
+local Bite = require(Shared.Simulation.Bite)
 local Muzzle = require(Shared.Util.Muzzle)
 local Raycast = require(Shared.Util.Raycast)
 local CameraController = require(script.Parent.CameraController)
@@ -212,8 +215,68 @@ end
 
 local player = Players.LocalPlayer
 
-local function isMe(model: Model): boolean
-	return model == player.Character
+local function isMe(model: Model?): boolean
+	return model ~= nil and model == player.Character
+end
+
+-- A bite's beat (Vfx/BiteWind) on top of its smoke and wind: the victim's red flash at the fangs (the hit feedback, never
+-- blood), and for the two bodies' own players the camera: a kick at the seize and the fangs, a low rumble through the
+-- drain that heaves with each pulse, a hard shake at the release.
+local function biteBeat(hold: BiteWind.Hold, beat: string)
+	local mine = isMe(hold.Biter) or isMe(hold.Victim)
+	local cue = (SOUNDS.Actions[Bite.HoldAction] or {})[beat] -- the release's sound is the hold's Hit (meleeHit)
+	local root = Parts.Root(hold.Victim) or Parts.Root(hold.Biter)
+	if cue and root then
+		Sfx.Play(cue, root)
+	end
+	if beat == "Seize" and mine then
+		CameraController.Shake(0.8, 14, 0.2)
+	elseif beat == "Fangs" then
+		if hold.Victim then
+			Flash.Pulse(hold.Victim, Theme.Colors.Health)
+		end
+		if mine then
+			CameraController.Shake(1.6, 12, 0.35)
+			CameraController.Rumble(true)
+		end
+	elseif beat == "Pulse" and mine then
+		CameraController.Shake(0.45, 9, 0.15)
+	elseif beat == "Release" and mine then
+		CameraController.Rumble(false)
+		CameraController.Shake(2.4, 10, 0.5)
+	end
+end
+
+local bites: { [Model]: BiteWind.Hold } = {}
+
+-- Drives the smoke and wind of every bite being held, from each hold's own clock; a hold that ends (released or broken)
+-- stops its drain.
+local function updateBites()
+	local now = time()
+	local active: { [Model]: boolean } = {}
+	for _, model in CollectionService:GetTagged(EntityState.Tag) do
+		local id, _, startedAt = EntityState.CurrentAction(model)
+		if id == Bite.HoldAction and model:IsA("Model") then
+			active[model] = true
+			local hold = bites[model]
+			if not hold then
+				hold = BiteWind.Begin(model, entityNamed(EntityState.Fx(model):GetAttribute(A.BiteVictim)), now - startedAt)
+				bites[model] = hold
+			end
+			for _, beat in BiteWind.Update(hold, now - startedAt) do
+				biteBeat(hold, beat)
+			end
+		end
+	end
+	for model, hold in bites do
+		if not active[model] then
+			BiteWind.Finish(hold)
+			bites[model] = nil
+			if isMe(hold.Biter) or isMe(hold.Victim) then
+				CameraController.Rumble(false)
+			end
+		end
+	end
 end
 
 -- Call-outs only for what concerns you: yourself, your lock, or anything within CALLOUT_RANGE.
@@ -225,12 +288,46 @@ local function near(model: Model): boolean
 	return mine ~= nil and theirs ~= nil and (mine.Position - theirs.Position).Magnitude <= CALLOUT_RANGE
 end
 
+-- On your own character, the server's combat results (hits, blocks, bites, stagger...) update its attributes without
+-- firing their change signals (Server Authority: this client simulates that character itself; tested 2026-10-31).
+-- So every handler is a watch that runs once per new value, whichever notices it first: the change signal, or the
+-- per-frame check of your own character (pollOwn).
+type Watch = { Instance: Instance, Attribute: string, Last: any, Handler: () -> () }
+local watches: { [Model]: { Watch } } = setmetatable({}, { __mode = "k" }) :: any
+
+local function fire(entry: Watch)
+	local value = entry.Instance:GetAttribute(entry.Attribute)
+	if value ~= entry.Last then
+		entry.Last = value
+		entry.Handler()
+	end
+end
+
+local function listen(model: Model, instance: Instance, attribute: string, handler: () -> ())
+	local entry: Watch = { Instance = instance, Attribute = attribute, Last = instance:GetAttribute(attribute), Handler = handler }
+	local list = watches[model] or {}
+	watches[model] = list
+	table.insert(list, entry)
+	instance:GetAttributeChangedSignal(attribute):Connect(function()
+		fire(entry)
+	end)
+end
+
+local function pollOwn()
+	local list = player.Character and watches[player.Character]
+	if list then
+		for _, entry in list do
+			fire(entry)
+		end
+	end
+end
+
 local function watch(model: Instance)
 	if not model:IsA("Model") then
 		return
 	end
 	local fx = EntityState.Fx(model)
-	model:GetAttributeChangedSignal(A.ActionStart):Connect(function()
+	listen(model, model, A.ActionStart, function()
 		local id, action, startedAt = EntityState.CurrentAction(model)
 		local look = action and action.Fx and ACTION_FX[action.Fx]
 		if look then
@@ -239,11 +336,11 @@ local function watch(model: Instance)
 		playSwing(model, id, action, startedAt)
 		SlashTrail.Play(model, id, action, startedAt)
 	end)
-	model:GetAttributeChangedSignal(A.ReloadUntil):Connect(function()
+	listen(model, model, A.ReloadUntil, function()
 		playReload(model)
 	end)
 	local function on(name: string, handler: () -> ())
-		fx:GetAttributeChangedSignal(A[name]):Connect(handler)
+		listen(model, fx, A[name], handler)
 	end
 
 	on("LastHitAt", function()
@@ -299,12 +396,10 @@ local function watch(model: Instance)
 			FloatingText.Pop(model, "Guard broken", Theme.Colors.Health, true)
 		end
 	end)
-	on("LastBiteAt", function()
-		if near(model) then
-			FloatingText.Pop(model, `+{num(fx, A.LastBiteHeal, 0)}`, HEAL_COLOR, true)
-		end
-		if isMe(model) then
-			CameraController.Shake(2, 10, 0.3)
+	on("BiteReleaseAt", function() -- a bite's hold ended: what it drank shows once
+		local healed = num(fx, A.LastBiteHeal, 0)
+		if healed > 0 and near(model) then
+			FloatingText.Pop(model, `+{healed}`, HEAL_COLOR, true)
 		end
 	end)
 	on("AlertAt", function()
@@ -314,7 +409,7 @@ local function watch(model: Instance)
 	end)
 	-- A stagger starts when StaggerUntil jumps well past the last hit/howl (simulation times). A bite ending
 	-- the stagger sets it back to the hit time, which doesn't count.
-	model:GetAttributeChangedSignal(A.StaggerUntil):Connect(function()
+	listen(model, model, A.StaggerUntil, function()
 		local latest = math.max(num(fx, A.LastHitAt, 0), num(fx, A.LastHowlAt, 0))
 		if num(model, A.StaggerUntil, 0) > latest + 0.5 and near(model) then
 			FloatingText.Pop(model, "STAGGERED", Theme.Colors.Warm, true)
@@ -369,6 +464,8 @@ function CombatFxController.Start()
 		end
 		updateBeams()
 		updateCharges()
+		updateBites()
+		pollOwn()
 	end)
 end
 

@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
 local EntityState = require(Shared.Simulation.EntityState)
 local CombatSim = require(Shared.Simulation.CombatSim)
+local Combat = require(Shared.Config.Combat)
 local Parts = require(Shared.Util.Parts)
 local Zones = require(Shared.Util.Zones)
 local DebugService = require(script.Parent.DebugService)
@@ -157,6 +158,33 @@ local function testHitAfter(who: any, trigger: string, delay: number, actionId: 
 	return true
 end
 
+-- The combat entity called `name`, or nil.
+local function entityNamed(name: string): Model?
+	for _, model in CollectionService:GetTagged(EntityState.Tag) do
+		if model:IsA("Model") and model.Name == name then
+			return model
+		end
+	end
+	return nil
+end
+
+-- Staggers the pad dummy, or the entity called `name` (a test enemy): a hit from the player that fills its stagger
+-- meter and deals no damage, so it can be bitten (the bite's checks and its review).
+local function testStagger(who: any, name: string?): boolean
+	local _, character = characterOf(who)
+	local target = assert(if name then entityNamed(name) else padDummy(), "nothing to stagger")
+	local fill = { Damage = 0, Stagger = Combat.StaggerMax, Reaction = "None" }
+	CombatSim.Queue({ Attacker = character, Target = target, Hit = fill })
+	return true
+end
+
+-- Takes `amount` HP from the player (inside the next simulation step), so a heal can be measured.
+local function testWound(who: any, amount: number): boolean
+	local _, character = characterOf(who)
+	CombatSim.QueueLoss(character, amount)
+	return true
+end
+
 -- Spawns an enemy `distance` studs in front of the player on the pad, facing them. Returns its name.
 local function testEnemy(who: any, enemyId: string, distance: number): string?
 	local _, _, root = characterOf(who)
@@ -241,6 +269,8 @@ function SelfTestService.Init()
 		return dummy and dummy.Name
 	end)
 	DebugService.Register("TestHitAfter", testHitAfter)
+	DebugService.Register("TestStagger", testStagger)
+	DebugService.Register("TestWound", testWound)
 	DebugService.Register("TestPadClear", testPadClear)
 	DebugService.Register("TestEnemy", testEnemy)
 	DebugService.Register("TestEnemySpawn", testEnemySpawn)

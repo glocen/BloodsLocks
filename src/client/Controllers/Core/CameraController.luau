@@ -1,7 +1,8 @@
 --!strict
 -- CameraController: mouse-locked third-person camera. Free orbit with the mouse; while locked on (see
 -- LockOnController) it swings to frame the target. Collides with solid geometry only, widens the FOV for
--- sprint and air dash, and exposes Shake (the owner's CameraShaker) for hit feedback.
+-- sprint and air dash, frames your bite (Config.Bite), and exposes Shake and Rumble (the owner's CameraShaker, by
+-- sleitnick) for hit feedback.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,6 +16,7 @@ local Parts = require(Shared.Util.Parts)
 local Raycast = require(Shared.Util.Raycast)
 local Vector = require(Shared.Util.Vector)
 local EntityState = require(Shared.Simulation.EntityState)
+local Bite = require(Shared.Simulation.Bite)
 local CameraShaker = require(ReplicatedStorage.Modules.SharedModules.CameraShaker)
 local LockOnController = require(script.Parent.LockOnController)
 local Focus = require(script.Parent.Parent.Parent.UI.Core.Focus)
@@ -53,6 +55,32 @@ function CameraController.Shake(magnitude: number, roughness: number, fadeOut: n
 	if shaker then
 		shaker:ShakeOnce(magnitude, roughness, 0, fadeOut)
 	end
+end
+
+local rumble: any = nil -- the bite drain's sustained shake while it lasts
+
+-- A bite's low rumble through its drain (CombatFxController): on starts it, off fades it out.
+function CameraController.Rumble(on: boolean)
+	local spec = Config.Bite.Rumble
+	if on and not rumble and shaker then
+		rumble = shaker:StartShake(spec[1], spec[2], spec[3])
+	elseif not on and rumble then
+		rumble:StartFadeOut(spec[4])
+		rumble = nil
+	end
+end
+
+-- How far the bite's framing is in (0..1): eased in from the seize, back out from the release.
+local function biteWeight(character: Model): number
+	local id, _, startedAt = EntityState.CurrentAction(character)
+	if id ~= Bite.HoldAction then
+		return 0
+	end
+	local elapsed = time() - startedAt
+	local into = math.clamp(elapsed / Config.Bite.Ease, 0, 1)
+	local out = math.clamp((elapsed - Bite.Timeline.Release) / Config.Bite.Ease, 0, 1)
+	local w = into * (1 - out)
+	return w * w * (3 - 2 * w)
 end
 
 local function wantedFov(character: Model): number
@@ -99,12 +127,17 @@ local function update(dt: number)
 		pitch = math.clamp(pitch - delta.Y * Config.Sensitivity, Config.PitchMin, Config.PitchMax)
 	end
 
-	local rotation = CFrame.fromEulerAnglesYXZ(pitch, yaw, 0)
-	local offset = rotation:VectorToWorldSpace(Vector3.new(Config.ShoulderOffset, 0, distance))
+	-- your bite eases the view round to your right, closer and narrower (the yaw offset never touches your own yaw)
+	local bite = biteWeight(character)
+	local rotation = CFrame.fromEulerAnglesYXZ(pitch, yaw + bite * math.rad(Config.Bite.Yaw), 0)
+	local reach = distance + (Config.Bite.Distance - distance) * bite
+	local offset = rotation:VectorToWorldSpace(Vector3.new(Config.ShoulderOffset, 0, reach))
 	local hit = workspace:Spherecast(currentFocus, Config.CollisionRadius, offset, Raycast.Exclude({ character }, true))
 	local length = if hit then math.max(hit.Distance - 0.1, 0.5) else offset.Magnitude
 	camera.CFrame = CFrame.new(currentFocus + offset.Unit * length) * rotation
-	camera.FieldOfView += (wantedFov(character) - camera.FieldOfView) * Vector.Smooth(Config.FovSharpness, dt)
+	local fov = wantedFov(character)
+	fov += (Config.Bite.Fov - fov) * bite
+	camera.FieldOfView += (fov - camera.FieldOfView) * Vector.Smooth(Config.FovSharpness, dt)
 end
 
 function CameraController.Start()

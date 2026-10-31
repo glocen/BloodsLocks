@@ -19,6 +19,11 @@ return {
 	DashFov = 84,
 	FovSharpness = 8,
 
+	-- The bite's camera: while you hold a bite the view eases Yaw degrees round to your right (the side the bite is on),
+	-- in to Distance studs and to a narrower Fov, Ease seconds in and back out as the victim is thrown. Rumble is the
+	-- drain's sustained shake: magnitude, roughness, fade in, fade out (seconds).
+	Bite = { Yaw = 40, Distance = 9, Fov = 62, Ease = 0.35, Rumble = { 0.35, 3, 0.4, 0.3 } },
+
 	LockRange = 60, -- studs; nearest valid target in front of the camera
 	LockBreakRange = 80,
 	LockSharpness = 12, -- how fast the camera swings to the target

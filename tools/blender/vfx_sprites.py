@@ -8,6 +8,10 @@
   tracer        64x512: a pale thin core in a faint glow, tapered at both ends, for a Beam (white: tint it)
   slash_edge    64x512: the hot hairline the point leaves, for a Trail (same layout; white, additive)
   blade_smear   256x256: a blade's pale motion smear for a Trail (base left, point right, newest at the top; white)
+  smoke_ribbon  256x512: a wisp of smoke for a Trail, frayed band across, torn toward the tail (white: tint it)
+  wind_line     64x512: a thin speed line of wind for a Trail, breaking into dashes toward the tail (white)
+  wind_ring     512x512: a gust ring seen from above, streaked around, for a flat expanding particle (white)
+  wind_streak   256x64: a gust's soft bent streak, velocity-aligned (white)
 No gore, ever (AGENTS.md rule 4: Roblox ToS): nothing here draws blood (no drops, sprays, splatter or stains), and
 nothing that could read as gore is ever uploaded (it went to the owner's account and drew a moderation warning).
 Velocity-aligned art is drawn moving toward the top, then turned (lead_left) so it moves toward the LEFT: a particle
@@ -179,6 +183,68 @@ def blade_smear(width=256, height=256, seed=41):
     edge = np.exp(-((u - 0.93) / 0.025) ** 2) * (1 - v) ** 3
     alpha = np.clip((0.55 * body * (0.7 + 0.3 * streaks) + 0.6 * edge) * life, 0, 1)
     return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
+
+
+# --- wind (the bite's gust: dark smoke and pale wind; numpy) ---------------------------------------------------------
+
+def smoke_ribbon(width=256, height=512, seed=53):
+    """For a Trail: a wisp of smoke the trail drags through the air, the newest edge at the top. Across (Attachment0 at
+    the left, Attachment1 at the right) a soft band with frayed edges; along, streaked like smoke pulled by wind,
+    dense at the head and tearing into wisps toward the tail (white: the trail's colour tints it)."""
+    rng = np.random.default_rng(seed)
+    v = (np.arange(height) + 0.5)[:, None] / height  # 0 the newest edge .. 1 the tail
+    u = (np.arange(width) + 0.5)[None, :] / width
+    fibres = streak_noise(height, width, 260, 7, rng)
+    billows = value_noise((height, width), 40, rng)
+    fray = (value_noise((height, width), 22, rng) - 0.5) * 0.35  # the band's edges wander
+    band = np.exp(-((u - 0.5 + fray * v) / (0.3 + 0.12 * v)) ** 2 * 2.2)
+    torn = smoothstep(0.7 * v, 0.7 * v + 0.35, 0.6 * fibres + 0.4 * billows)  # toward the tail only wisps survive
+    life = (1 - v) ** 1.2 * smoothstep(0.0, 0.04, v)
+    alpha = np.clip(band * (0.45 + 0.55 * fibres) * torn * life * 1.25, 0, 1)
+    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
+
+
+def wind_line(width=64, height=512, seed=59):
+    """For a Trail: a thin speed line of wind, the newest edge at the top: a crisp core in a soft halo, whole at the
+    head, breaking into dashes toward the tail (white: tint it)."""
+    rng = np.random.default_rng(seed)
+    v = (np.arange(height) + 0.5)[:, None] / height
+    u = (np.arange(width) + 0.5)[None, :] / width
+    line = np.exp(-((u - 0.5) / 0.07) ** 2) + 0.35 * np.exp(-((u - 0.5) / 0.25) ** 2)
+    gaps = value_noise((height, 1), 18, rng)  # one value per row: the dashes
+    dashes = smoothstep(0.85 * v, 0.85 * v + 0.12, gaps)
+    life = (1 - v) ** 1.5 * smoothstep(0.0, 0.03, v)
+    alpha = np.clip(line * dashes * life, 0, 1)
+    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
+
+
+def wind_ring(size=512, seed=61):
+    """A gust ring seen from above, for a flat expanding particle: a band of wind at 70 % of the radius made of fine
+    lines running around the circle, broken into long arcs (the air sweeping round), its outer edge crisp, its inner
+    edge fading into a faint haze (white)."""
+    rng = np.random.default_rng(seed)
+    x, y = grid(size)
+    r, theta = np.hypot(x, y), np.arctan2(y, x)
+    wobble = (value_noise((size, size), size / 10, rng) - 0.5) * 0.05
+    lines = 0.5 + 0.5 * np.cos(2 * math.pi * 26 * (r + wobble) + 0.6 * np.sin(3 * theta + rng.uniform(0, 6)))
+    arcs = sum(np.sin(k * theta + rng.uniform(0, 6.283)) / k for k in (2, 3, 5, 7))  # where each line breaks
+    breaks = smoothstep(-0.2, 0.5, arcs + 1.2 * (r - 0.7))
+    band = np.exp(-((r - 0.7 + wobble) / 0.08) ** 2)
+    outer = 1 - smoothstep(0.75, 0.81, r + wobble)
+    haze = 0.07 * smoothstep(0.2, 0.62, r) * (1 - smoothstep(0.62, 0.72, r))
+    alpha = np.clip((band * (0.35 + 0.65 * lines * breaks) + haze) * outer, 0, 1)
+    return np.concatenate([np.ones((size, size, 3)), alpha[..., None]], axis=-1)
+
+
+def wind_streak(width=64, height=256):
+    """A gust's streak for velocity-aligned particles: a thin soft line bending a little, tapered at both ends,
+    turned to lead with its left edge (white: tint it)."""
+    v = np.linspace(-1, 1, height)[:, None]
+    u = np.linspace(-1, 1, width)[None, :]
+    bend = 0.25 * (1 - v ** 2)  # a gentle arc
+    along = np.sin(np.clip((v + 1) / 2, 0, 1) * math.pi) ** 0.8
+    intensity = (np.exp(-((u - bend) / 0.12) ** 2) + 0.3 * np.exp(-((u - bend) / 0.35) ** 2)) * along
+    return lead_left(np.concatenate([np.ones((height, width, 3)), np.clip(intensity, 0, 1)[..., None]], axis=-1))
 
 
 def streak(width, height, core, glow, glow_strength):
@@ -384,6 +450,10 @@ DRAWN = {
     "tracer": lambda: streak(64, 512, core=0.07, glow=0.30, glow_strength=0.25),
     "slash_edge": slash_edge,
     "blade_smear": blade_smear,
+    "smoke_ribbon": smoke_ribbon,
+    "wind_line": wind_line,
+    "wind_ring": wind_ring,
+    "wind_streak": wind_streak,
 }
 RENDERED = {"smoke_puff": smoke_puff, "mist_burst": mist_burst}
 

@@ -95,8 +95,13 @@ local A = {
 	LastParryAt = "pryT",
 	LastHowlAt = "hwlT",
 	GuardBrokenAt = "gbT",
-	LastBiteAt = "bitT",
-	LastBiteHeal = "bitH",
+	LastBiteAt = "bitT", -- a bite took hold (Simulation/Bite): the seize
+	LastBiteHeal = "bitH", -- what the hold healed, written when it ends
+	BiteVictim = "bitV", -- whom it holds (model name)
+	BiteReleaseAt = "bitE", -- the hold ended: its release, or the moment it broke
+	StaggeredAt = "stgT", -- a stagger began (its body drops to a knee until StaggerUntil)
+	BittenAt = "bnT", -- on the victim: seized by a bite
+	BittenUntil = "bnU", -- on the victim: held until then (the release, or the moment the hold broke)
 }
 EntityState.Attr = A
 
@@ -129,6 +134,7 @@ EntityState.Defaults = {
 	Fx = {
 		LastHitAt = -10, LastHitDamage = 0, LastHitBy = "", LastHitRanged = false, LastEvadedAt = -10, LastBlockAt = -10,
 		LastParryAt = -10, LastHowlAt = -10, GuardBrokenAt = -10, LastBiteAt = -10, LastBiteHeal = 0, AlertAt = -10, AlertTarget = "",
+		BiteVictim = "", BiteReleaseAt = -10, StaggeredAt = -10, BittenAt = -10, BittenUntil = 0,
 	},
 }
 
@@ -179,6 +185,11 @@ end
 
 function EntityState.IsStunned(model: Model, now: number): boolean
 	return now < EntityState.Number(model, A.HitstunUntil, 0) or now < EntityState.Number(model, A.StaggerUntil, 0)
+end
+
+-- Held in a bite (Simulation/Bite) as its victim.
+function EntityState.IsHeld(model: Model, now: number): boolean
+	return now < EntityState.Number(EntityState.Fx(model), A.BittenUntil, 0)
 end
 
 return EntityState

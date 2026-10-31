@@ -19,8 +19,9 @@ function Knock.Distance(hit: any): number
 	return hit.Knockback or Config.Knock.ByReaction[hit.Reaction or "Flinch"] or 0
 end
 
--- Pushes `target` `distance` studs straight away from `attacker`.
-function Knock.Apply(target: Model, attacker: Model, distance: number, now: number)
+-- Pushes `target` `distance` studs away from `attacker`: straight away, or turned `turn` degrees to the attacker's left
+-- (a bite's throw, Hit.KnockTurn).
+function Knock.Apply(target: Model, attacker: Model, distance: number, now: number, turn: number?)
 	local targetRoot, attackerRoot = Parts.Root(target), Parts.Root(attacker)
 	if distance <= 0 or not targetRoot or not attackerRoot then
 		return
@@ -31,6 +32,9 @@ function Knock.Apply(target: Model, attacker: Model, distance: number, now: numb
 	end
 	if away == Vector3.zero then
 		return
+	end
+	if turn then
+		away = CFrame.Angles(0, math.rad(turn), 0):VectorToWorldSpace(away)
 	end
 	target:SetAttribute(A.Knock, away * (distance / Config.Knock.Time))
 	target:SetAttribute(A.KnockUntil, now + Config.Knock.Time)

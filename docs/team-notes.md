@@ -19,12 +19,17 @@ The full rule is AGENTS.md rule 4.
 **Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done:
 - C1.1: SMG spread, the Blender-built machine pistol, the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload).
 - C1.2, the M1: knockback, hitstop, the black-and-gold sabre, the slash trail.
+- C1.5, the bite: the long hold (both locked and invulnerable, the biter drinks HP back), the stagger kneel, four clips animated in Blender (the new R6 pipeline, `tools/blender/r6anim.py`), the smoke-and-wind beats, the bite camera and its sounds.
 
 - The network-test reference study: one full playthrough of the owner's 4K recording, read one frame a second, now in `docs/reference/network-test/` (topic files and the owner's open decisions in `takeaways.md`).
 
-Next:
-- Redo the C1 effects and animations to the study and the owner's bar (Type Soul-like depth; "the VFX and animation you made are bad"): sabre hit, SMG, Blood Blade, Light Beam, bite, guard, howl, movement trails.
-- Then U2.
+Next, in this order (owner, 2026-10-31):
+1. A tracked VFX and texture pipeline.
+2. Whether Claude can upload sounds itself (else the owner bulk-imports).
+3. The SMG burst, the guard's shield model and a parry that costs no stamina.
+4. Push.
+5. Combat, movement and camera, piece by piece from the reference with full effort ("one of the core systems").
+6. Then the whole UI, close to the reference's but our own.
 
 The combat framework rework waits until C1 is at the bar, then gets planned with the owner. Sound, effects and animations are made inside each slice as it needs them (owner, 2026-10-30).
 
@@ -50,11 +55,21 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 
 **Waiting on the owner**
 
-- Upload the combat sound sheet: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
+- Upload the combat sound sheet (regenerated 10-31: 19 cues, the bite's added, the wet layers removed), unless Claude finds it can do it itself: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
+- Optional cleanup: archive the bite's superseded animation uploads (Bite 88243077439906 and 112074793092588, BiteHold 89274358889196, Bitten 119235946587850).
+- Play the bite in the Manor's yard: stagger a dummy (it kneels), bite it (E) and judge the hold, the camera and the effect.
 - Review Q0: match screens v2, plates, Kurogane's pact site.
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-31 · Claude · The long bite and the stagger kneel (C1.5)
+
+- **What:** a stagger now drops the body to one knee. The bite seizes it from there into a 2.75 s hold (`Simulation/Bite`): both bodies locked and invulnerable, 5 drain pulses heal the biter, then the victim is thrown and knocked down. Owner's asks: "a bit long, both can't move, iframes for both, the one who bites recovers HP"; "down on his knee then grabbed".
+- **Animations:** made in Blender, through a new R6 pipeline (`tools/blender/r6anim.py`, `bite_anim.py` → `Author.SaveBaked`). `Staggered`, `Bite`, `BiteHold` and `Bitten` are published.
+- **ToS:** no blood. It's staged as a hostile grab, never an embrace (Roblox bans romantic gestures).
+- **Effects and sound:** dark smoke and cold light run on the hold's clock (`Vfx/BiteWind`), with the bite camera (sleitnick's CameraShaker). Five synthesized cues were added, and the old wet sound layers were removed.
+- **Tests:** self-test 100–101/100–101 in both places, logic 63/63. Spec and the open items: `docs/combat-rework.md` C1.5.
 
 ### 2026-10-31 · Claude · No gore: every blood effect scrapped
 
