@@ -48,7 +48,6 @@ local CALLOUT_RANGE = 35 -- studs: call-outs show for what's this close to you (
 local BEAM_FADE = 0.12 -- seconds a beam's held sound takes to fade as it ends
 
 local SOUNDS = Registry.Sounds()
-local SHEET = Registry.SoundSheet()
 
 local CombatFxController = {}
 
@@ -75,7 +74,7 @@ local function playSwing(model: Model, id: string, action: any, startedAt: numbe
 	local cues = SOUNDS.Actions[id]
 	local root = Parts.Root(model)
 	if cues and cues.Swing and action and action.Hit and root then
-		local lead = action.Hit.From - SHEET.Regions[cues.Swing].Peak
+		local lead = action.Hit.From - (Sfx.Peak(cues.Swing) or 0)
 		Sfx.Play(cues.Swing, root, lead - (time() - startedAt))
 	end
 end

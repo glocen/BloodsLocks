@@ -138,7 +138,12 @@ The owner's words: "for the bite it js the animation and let make a wind effect 
 - **The burst:** a duelist's stance. The body blades with the gun shoulder forward, the arm snaps to shoulder height, and each round kicks a little higher with the bloom. Published as `Config.Animations.SMGBurst`.
 - **The effect** (`Vfx/Gunshot`, from `ShotFx`): a star flash and flame cone at the gun's real muzzle, a light, and gun smoke. A pale tracer flies at 700 studs/s, and the impact waits for it to land. Surfaces get sparks, dust in the surface's colour and a light. A struck body flashes red with a white outline (no blood effect: AGENTS.md rule 4). `Kit.TimeScale` slows effects for frozen review captures.
 - **Lighting** (owner's OK): the Manor's grade now has violet shadows, warm lamp bloom and a light violet haze. The old values are in `ServerStorage.WorldBackups.Lighting_PreDuskbloodsGrade_20261030`.
-- **Sound** (2026-10-30): 14 combat cues synthesized from scratch by `tools/audio/sound_sheet.py` (no samples): the shot, reload, surface and body hits, two swings, the saber hit, block, parry, the Blood Blade's cast and impact, and the Light Beam's charge, loop and end. They're packed into one sheet so a batch costs one upload. `Definitions/Sounds` says which cue plays when (Registry checks it at load); `Client.Audio.Sfx` plays them in 3D, and swings peak as their hit window opens. Silent until the owner uploads the sheet. The gunshot's body hit is now dark wet mist (the VFX rule).
+- **Sound** (2026-10-31): the 19 combat cues are slices of sounds from Roblox's audio library (AGENTS.md rule 2).
+  - `tools/studio/Audio` finds them, measures them and slices them, aimed at the reference's measured feel (`docs/reference/network-test/audio.md`).
+  - `Sfx` levels every slice to the same loudness.
+  - The owner picks each one in the audition panel. Until then, each cue holds its shortlist's top slice.
+  - `Definitions/Sounds` says which cue plays when (Registry checks it at load); swings peak as their hit window opens.
+  - The synthesized sheet of 2026-10-30 was rejected by the owner and deleted.
 
 **C1.2 done.** Self-test 72/72 and logic tests pass in the Manor.
 - **Knockback** (data `Hit.Knockback`, held by the movement step) and **hitstop** (client `AdjustSpeed(0)`, 0.06 s; longer for heavy blows), and the struck body's red flash with a white outline (`UI/Components/Flash`; no blood effects, AGENTS.md rule 4).

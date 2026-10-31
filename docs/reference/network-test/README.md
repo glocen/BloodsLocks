@@ -17,7 +17,7 @@ The monolith (owner, 2026-10-30): what we learned from the full Duskbloods netwo
 - **Ignore the VOSAIR mark** in the lower right (the uploader's watermark, not game UI) and the scrolling network-test notice (test-only).
 - **Limits:**
   - Stills can't show motion between samples; timings come from bursts and are stated with their frame rate.
-  - Audio wasn't listened to; nothing here describes sound.
+  - Audio is never listened to: [audio.md](audio.md) describes it by measurement (`tools/reference/audio.py`), with the study's own limits.
   - Dialogue and item texts are paraphrased, never transcribed; short UI labels are quoted as seen.
 
 **Labels:** **OBSERVED** (seen in a frame; with its timestamp), **MANUAL** (the game's own tutorial cards, paraphrased), **WIKI** (Fextralife), **DESIGN** (our adaptation for BloodsLocks). Unknowns stay unknown: no guess is written as a measurement.
@@ -38,6 +38,7 @@ The monolith (owner, 2026-10-30): what we learned from the full Duskbloods netwo
 | [scenery.md](scenery.md) | Time of day by phase; every region and space; light, props, verticality |
 | [combat.md](combat.md) | The controls, Albert's kit, defence, posture and drinking blood, damage feedback, growth, the kin, the rivals, items |
 | [movement.md](movement.md) | Jumps, air jumps, dodges, climbing, falls, travel, the camera |
+| [audio.md](audio.md) | The music and effects, measured: the mix, music by moment, the shapes of hits, what we take |
 | [vfx.md](vfx.md) | Every effect broken into its layers; the measured ones in detail; against ours |
 | [animation.md](animation.md) | Poses and measured timings; what reads well |
 | [ui.md](ui.md) | The style, the match HUD element by element, banners, every screen |

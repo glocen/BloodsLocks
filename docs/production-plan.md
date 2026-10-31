@@ -1,6 +1,6 @@
 # BloodsLocks production plan
 
-Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (C1.1 and C1.2 done; `docs/combat-rework.md`, "Progress"); the network-test reference study is done for one full playthrough (`docs/reference/network-test/`), and C1's effects and animations are redone to it next; then U2.**
+Claude, 2026-10-29. **Status: approved by the owner (all decisions and approvals confirmed as recommended; recorded in engineering-plan §3). Session 0, F1, F2, W1 (blockout), L1, U1 and Q0 done (Q0 waits on the owner's review). In progress, by the owner's order (2026-10-30): C1, the combat rework (C1.1, C1.2 and C1.5 done; `docs/combat-rework.md`, "Progress"; the combat sounds are provisional library slices the owner will replace); the network-test reference study is done for one full playthrough (`docs/reference/network-test/`, its audio measured in `audio.md`), and C1's effects and animations are redone to it next; then U2.**
 
 > Roles, ownership and the team mode: AGENTS.md. D11 and every other owner decision: [engineering-plan.md](engineering-plan.md) §3.
 
@@ -144,8 +144,10 @@ Eighteen slices take the game to a full playable proof of concept (M1–M5). Eac
   - Proof: the same gates, plus one interruption per screen (death or phase change).
 - **S1 · Sound foundation** (owner: right after U2).
   - A cue registry with priorities and ducking.
-  - Our own sounds made by script: UI, the countdown, the phase bell, hits, parry, Renown.
-  - The owner uploads them.
+  - Sounds from Roblox's audio library (AGENTS.md rule 2): UI, the countdown, the phase bell, hits, parry, Renown.
+    - Briefed, searched and ranked by `tools/studio/Audio`, aimed at the reference's measured feel (`docs/reference/network-test/audio.md`).
+    - The owner picks them in the audition panel; `Sfx` levels them.
+    - No uploads needed.
 - **UI-R · HUD and plates remade** (owner: they "lack depth"). The top-left vitals, the plates and the Shinigami card, rebuilt from the Duskbloods palette and screenshots: layered fills, engraved frames, our own textures.
 - **U3 · In-match menu.** Standings, the rule card, "Leave the hunt" with D9's consequence spelled out.
 - **A1 · Admission.**
@@ -220,7 +222,7 @@ X1 minions (spellbound fodder; cap and duration as data) · X2 forges and status
 ### M7 · Quality passes (any can be pulled forward on request)
 
 - **Q1 · VFX revisit:** Gōka with a real lingering fire zone (server ticks and expiry), Blood Blade, Light Beam, the summon, a saber trail with capped hitstop. A leak check: 50 casts leave no growing count of parts, lights or sounds.
-- **Q2 · Audio:** a cue registry and our own sounds. Uploads need the owner.
+- **Q2 · Audio:** the cue registry, plus library sounds the owner picks in the audition panel (combat cues first, 2026-10-31).
 - **Q3 · Lag compensation** (audit H3).
 - **Q4 · Performance and anti-exploit:** 8 players and 60 enemies, streaming, a review of every remote.
 - **Q5 · Real models and animations:** enemies, the boss, Kurogane, Gustave's look; animation publishing in batches.

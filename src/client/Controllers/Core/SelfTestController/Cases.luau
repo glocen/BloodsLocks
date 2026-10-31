@@ -7,7 +7,10 @@
 -- Not covered yet: sprint (its input has no Scriptable binding), howl, the charged attack, Light Beam, enemy leashing
 -- and the two-attackers limit. "Player kill credit" kills the player, so it stays last.
 
+local ContentProvider = game:GetService("ContentProvider")
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 
 local Shared = ReplicatedStorage.Shared
 local Movement = require(Shared.Config.Movement)
@@ -30,6 +33,8 @@ local PactSiteController = require(script.Parent.Parent.PactSiteController)
 local Budget = require(script.Parent.Parent.Parent.Parent.Util.Budget)
 local Sfx = require(script.Parent.Parent.Parent.Parent.Audio.Sfx)
 local Kit = require(script.Parent.Parent.Parent.Parent.Vfx.Kit)
+local Layers = require(script.Parent.Parent.Parent.Parent.UI.Core.Layers)
+local Focus = require(script.Parent.Parent.Parent.Parent.UI.Core.Focus)
 
 local A = EntityState.Attr
 local P = PlayerState.Attr
@@ -528,29 +533,107 @@ return {
 	{
 		Name = "Sounds",
 		Run = function(t)
-			-- every cue is a region of the combat sound sheet, and Sfx plays exactly that region (or nothing at all
-			-- until the owner uploads the sheet)
-			local sounds, sheet = Registry.Sounds(), Registry.SoundSheet()
-			local missing = {}
-			for name in sounds.Cues do
-				local region = sheet.Regions[name]
-				if not region or region.To <= region.From then
-					table.insert(missing, name)
-				end
+			-- every cue's library sound still loads (one taken down or made private goes silent), and Sfx plays exactly
+			-- the cue's slice
+			local sounds = Registry.Sounds()
+			local probes = {}
+			for _, cue in sounds.Cues do
+				local probe = Instance.new("Sound")
+				probe.SoundId = cue.Id
+				table.insert(probes, probe)
 			end
-			t.Check("every cue has a region on the sheet", #missing == 0, table.concat(missing, ", "))
+			local failed = {}
+			ContentProvider:PreloadAsync(probes, function(id: string, status: Enum.AssetFetchStatus)
+				if status ~= Enum.AssetFetchStatus.Success then
+					table.insert(failed, id)
+				end
+			end)
+			for _, probe in probes do
+				probe:Destroy()
+			end
+			t.Check(`every cue's sound loads ({#probes})`, #failed == 0, table.concat(failed, ", "))
 			local root = t.Root()
+			local function played(cueName: string): Sound?
+				local sound = root:FindFirstChild(cueName)
+				return if sound and sound:IsA("Sound") and sound.Playing then sound else nil
+			end
+			local gun = sounds.Cues.GunShot
 			Sfx.Play("GunShot", root)
-			local sound = root:FindFirstChild("GunShot")
-			if sheet.Id == "" then
-				t.Check("silent until the sheet is uploaded", sound == nil)
+			local own = played("GunShot")
+			local range = if own then own.PlaybackRegion else NumberRange.new(0)
+			t.Check("a cue plays its own slice", own ~= nil and own.SoundId == gun.Id and math.abs(range.Min - gun.From) < 1e-3
+				and math.abs(range.Max - gun.To) < 1e-3, `{range.Min}-{range.Max}`)
+			if own then
+				own:Destroy()
+			end
+			-- the audition panel's swap: the swapped slice plays, levelled by its measured loudness (6 dB quieter
+			-- plays at twice the volume), and the cue's own sound comes back when the swap is cleared
+			local swap = { Id = "rbxassetid://9119749145", From = 0.05, To = 0.4, Level = -20 } -- a licensed sword swish
+			local function swapVolume(level: number): (number?, NumberRange?)
+				Sfx.Audition("GunShot", { Id = swap.Id, From = swap.From, To = swap.To, Level = level })
+				Sfx.Play("GunShot", root)
+				local sound = played("GunShot")
+				local volume, slice = if sound then sound.Volume else nil, if sound then sound.PlaybackRegion else nil
+				if sound then
+					t.Check("a swap plays the swapped sound", sound.SoundId == swap.Id, sound.SoundId)
+					sound:Destroy()
+				end
+				return volume, slice
+			end
+			local quiet, slice = swapVolume(swap.Level)
+			local loud = swapVolume(swap.Level + 6)
+			t.Check("a swap plays its own slice", slice ~= nil and math.abs(slice.Min - swap.From) < 1e-3
+				and math.abs(slice.Max - swap.To) < 1e-3)
+			t.Check("slices are levelled by loudness", quiet ~= nil and loud ~= nil and math.abs(quiet / loud - 10 ^ (6 / 20)) < 0.02,
+				`{quiet} vs {loud}`)
+			Sfx.Audition("GunShot", nil)
+			Sfx.Play("GunShot", root)
+			local back = played("GunShot")
+			t.Check("clearing the swap restores the cue", back ~= nil and back.SoundId == gun.Id)
+			if back then
+				back:Destroy()
+			end
+		end,
+	},
+	{
+		Name = "Audition panel",
+		Run = function(t)
+			-- the Studio sound audition (AuditionController): it lists every open shortlist, Play previews a candidate
+			-- and swaps it in, Pick records it, and closing gives the input back
+			local shortlists = Registry.Audition()
+			local bridge = ReplicatedStorage:FindFirstChild("BL_Audition") :: BindableFunction?
+			if next(shortlists) == nil then
+				t.Check("no open shortlists, no panel", bridge == nil)
 				return
 			end
-			local region = sheet.Regions.GunShot
-			local playing = sound ~= nil and sound:IsA("Sound") and (sound :: Sound).Playing
-			local range = if playing then (sound :: Sound).PlaybackRegion else NumberRange.new(0)
-			t.Check("a cue plays its own region of the sheet", playing and math.abs(range.Min - region.From) < 1e-3
-				and math.abs(range.Max - region.To) < 1e-3, `{range.Min}-{range.Max}`)
+			t.Check("the panel's bridge exists", bridge ~= nil)
+			if not bridge then
+				return
+			end
+			bridge:Invoke("Open")
+			local panel = Layers.Get("Menus"):FindFirstChild("BL_Audition", true)
+			local unlisted = {}
+			for cue in shortlists do
+				if not (panel and panel:FindFirstChild(cue, true)) then
+					table.insert(unlisted, cue)
+				end
+			end
+			t.Check("every open shortlist is listed", panel ~= nil and #unlisted == 0, table.concat(unlisted, ", "))
+			t.Check("it owns the input while open", Focus.Current() == "Audition", Focus.Current())
+			local cue = next(shortlists) :: string
+			local first = shortlists[cue].Candidates[1]
+			bridge:Invoke("Play", cue, 1)
+			local preview = SoundService:FindFirstChild("BL_SfxPreview") :: Sound?
+			t.Check("Play previews the candidate", preview ~= nil and preview.SoundId == first.Id and preview.Playing)
+			bridge:Invoke("Pick", cue, 1)
+			local picks = HttpService:JSONDecode(bridge:Invoke("Picks"))
+			t.Check("Pick records the choice", picks[cue] ~= nil and picks[cue].Id == first.Id)
+			bridge:Invoke("Reset")
+			t.Check("closing gives the input back", Focus.Current() ~= "Audition", Focus.Current())
+			t.Check("Reset forgets the picks", next(HttpService:JSONDecode(bridge:Invoke("Picks"))) == nil)
+			if preview then
+				preview:Destroy()
+			end
 		end,
 	},
 	{

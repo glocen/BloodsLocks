@@ -17,7 +17,8 @@ The full rule is AGENTS.md rule 4.
 **Next design task:** the Victorian map ([map brief](../worlds/Victorian/map-brief.md), from Claudius), after C1 and U2 (owner, 2026-10-30). Steps 1 and 2 (reference study, three concepts) change no code or place.
 
 **Claude:** C1, the combat rework (`docs/combat-rework.md`, "Progress"). Done:
-- C1.1: SMG spread, the Blender-built machine pistol, the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade, the combat sounds (wired; silent until the owner's upload).
+- C1.1: SMG spread, the Blender-built machine pistol, the duelist burst, `Vfx/Gunshot`, the Manor's lighting grade.
+- Sounds (2026-10-31): the 19 combat cues play slices of Roblox audio library sounds (provisional until the owner's audition); the reference's audio is measured in `docs/reference/network-test/audio.md`.
 - C1.2, the M1: knockback, hitstop, the black-and-gold sabre, the slash trail.
 - C1.5, the bite: the long hold (both locked and invulnerable, the biter drinks HP back), the stagger kneel, four clips animated in Blender (the new R6 pipeline, `tools/blender/r6anim.py`), the smoke-and-wind beats, the bite camera and its sounds.
 
@@ -25,7 +26,7 @@ The full rule is AGENTS.md rule 4.
 
 Next, in this order (owner, 2026-10-31):
 1. A tracked VFX and texture pipeline.
-2. Whether Claude can upload sounds itself (else the owner bulk-imports).
+2. Sounds: Claude can't upload audio (it needs a permission scripts don't have), so sounds come from Roblox's audio library. Done: the measured reference, the shortlists, the audition panel, provisional cues. The owner's picks are pending.
 3. The SMG burst, the guard's shield model and a parry that costs no stamina.
 4. Push.
 5. Combat, movement and camera, piece by piece from the reference with full effort ("one of the core systems").
@@ -61,7 +62,10 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
   - **In both:** the third-party `Assets.Vfx.Crescent`.
 - **Were these made by you?** Two Manor models built from plain parts, so their origin can't be read from asset ids: a cart with a hay bale (`Workspace.Model`, about (456, -7, -530)) and a 211-piece model (about (395, -5, -446)). If they're downloads, Claude deletes them.
 
-- Upload the combat sound sheet (regenerated 10-31: 19 cues, the bite's added, the wet layers removed), unless Claude finds it can do it itself: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
+- **Better sounds, from tomorrow** (owner, 2026-10-31): the provisional library sounds are "really bad, not up to our standard"; they stay until replaced.
+  - The owner gathers non-copyrighted music and sound effects. Zero budget: nothing that costs money.
+  - After a free upload, the owner gives Claude the ids. Claude measures each one and slices and levels it for its cue (`Shortlist.CueLine`), then swaps it into `Definitions/Sounds`.
+  - The audition panel (F2 in a Manor playtest) stays available for comparing candidates.
 - **Delete these uploads from your account** (owner, 2026-10-31: "we don't archive, just delete"). Only the account owner can, in the Creator Hub (create.roblox.com → Creations → Development Items); if Roblox offers only Archive for a type, that's as far as it goes.
   - Blood images (rule 4): 73716442107985, 132527224441651, 89451782214064, 92466747845719, 96856818725735, 85186176840498, 76864841147756, 97751459305668, and the old "wet blood" crescent 114481905428903 with its glow 127264027665322.
   - Superseded bite animations: 88243077439906, 112074793092588, 89274358889196, 119235946587850.
@@ -70,6 +74,20 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-31 · Claude · Sounds from Roblox's library, measured against the reference
+- **The reference's audio, measured** (23 minutes of the recording plus the whole Albert clip): `docs/reference/network-test/audio.md`, made with `tools/reference/audio.py` (run with Blender's Python). Inspiration only.
+- **`tools/studio/Audio`:**
+  - Briefs: what each cue should sound like.
+  - Library: the search.
+  - Waveform: `GetWaveformAsync` measures events, attack, decay, bands and loudness.
+  - Shortlist: filters out gore, other games' rips and paid libraries, then ranks and slices.
+- **`Definitions/Audition`:** 19 shortlists, 140 candidates, all loading. The Studio-only panel is `AuditionController` with `UI/Dev/Audition` (F2).
+- **`Sfx`:** levels every slice (`Level`), and handles swaps and previews.
+- **Cues:** every cue is now a library slice (provisional), and the synthesized sheet pipeline is deleted.
+- **Tests:** self-test 116/116 (Manor) and 117/117 (Victorian), logic tests 63/63 in both. One full Victorian run failed "Strong attack" once (0 damage); it passed 3 of 3 alone, so it's a timing flake to watch.
+- **Owner's verdict:** the provisional sounds are below the bar; they stay until the owner's gathered sounds replace them (from 2026-11-01). `Shortlist.CueLine(id, cue)` prints the line to paste for any sound.
+- **Open:** the replacements and their asset-log rows. For glocen.
 
 ### 2026-10-31 · Claude · The effect texture pipeline; rule-breaking art deleted
 

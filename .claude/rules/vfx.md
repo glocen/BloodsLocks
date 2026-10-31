@@ -19,6 +19,11 @@ paths:
   - In doubt, ask the owner first.
   - The reference footage's blood is never reproduced.
 - **Colour roles:** cold white for the Light Beam and for magic and passage (travel, deaths); gold for objectives and rites; warm orange for fire and gunfire.
+- **Blood-themed looks** (owner, 2026-10-31):
+  - The Crimson Crescent stays red with some black gradient.
+  - Black (ink, shadow) may stand where the reference has blood.
+  - Never spill: no drops, drips, splatter or pools.
+  - If it could read as gore, even in black, ask the owner first.
 - Client code can't see `ServerStorage`: VFX templates live in `ReplicatedStorage.Shared.Assets.Vfx`.
 - Beam textures run their vertical image axis along the beam's length: draw beam art tall (the band runs down the image, tileable top to bottom); a horizontal band shows up as a row of beads. A textured Beam draws as a solid band until its texture loads: preload it (`ContentProvider:PreloadAsync`) before enabling it.
 - Glow textures with a black background only work additive (`LightEmission = 1`); otherwise they render as black slabs. Additive dark red disappears against the bright red sky: darkness has to come from alpha-textured particles or opaque or glass meshes.

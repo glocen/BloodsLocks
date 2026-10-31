@@ -10,6 +10,7 @@ description: Test and inspect BloodsLocks in Roblox Studio through the Studio MC
 - `list_roblox_studios` first: the `studio_id` changes when Studio restarts.
 - Check Studio has your latest code (search a script's `Source` for your new line). A playtest runs the code it started with: restart it after edits.
 - A playtest locks the place's Edit DataModel, so MCP edits fail while it runs: never playtest a place a teammate is editing.
+- One playtest at a time across both places. Both load the same account's profile from the "Test" ProfileStore, which only one server may hold, so a second playtest kicks the first ("Data error occurred", 2026-10-31). Stop one before starting the other.
 - If the owner is playing during a test, their inputs show up in the logs: ask them to step away for timed tests.
 - Read logs and reports for what matters (counts, FAIL lines, errors); don't pull whole logs into the conversation.
 - Known output noise to ignore: the ZonitoVisuals plugin's HTTP warning and `rbxassetid://203785492 ... Asset type does not match`.

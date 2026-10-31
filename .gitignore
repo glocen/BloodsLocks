@@ -13,8 +13,6 @@ sourcemap.json
 # so the folder Rojo maps exists in every clone.
 build/import/*
 !build/import/Imports.txt
-# Rendered sound sheets (tools/audio) waiting for the owner's upload
-build/audio/
 build/vfx/
 
 # Python
