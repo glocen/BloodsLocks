@@ -55,6 +55,12 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 
 **Waiting on the owner**
 
+- **Save both places** (File → Save to Roblox): the rule cleanup lives in their open Edit copies until then. Deleted:
+  - **In the Manor:** the downloaded street-lamp, castle-tower, chest and wind-spiral models, one loose mesh, two unnamed models of downloaded parts, and the downloaded sky textures in two old Lighting backups.
+  - **In the Victorian place:** downloaded skies and a baseplate texture in its backups.
+  - **In both:** the third-party `Assets.Vfx.Crescent`.
+- **Were these made by you?** Two Manor models built from plain parts, so their origin can't be read from asset ids: a cart with a hay bale (`Workspace.Model`, about (456, -7, -530)) and a 211-piece model (about (395, -5, -446)). If they're downloads, Claude deletes them.
+
 - Upload the combat sound sheet (regenerated 10-31: 19 cues, the bite's added, the wet layers removed), unless Claude finds it can do it itself: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
 - **Delete these uploads from your account** (owner, 2026-10-31: "we don't archive, just delete"). Only the account owner can, in the Creator Hub (create.roblox.com → Creations → Development Items); if Roblox offers only Archive for a type, that's as far as it goes.
   - Blood images (rule 4): 73716442107985, 132527224441651, 89451782214064, 92466747845719, 96856818725735, 85186176840498, 76864841147756, 97751459305668, and the old "wet blood" crescent 114481905428903 with its glow 127264027665322.

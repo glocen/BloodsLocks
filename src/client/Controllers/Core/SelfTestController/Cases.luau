@@ -597,7 +597,7 @@ return {
 		Name = "Parry",
 		Run = function(t)
 			local dummy = t.Dummy()
-			local hp = t.Num(A.HP)
+			local hp, stamina = t.Num(A.HP), t.Num(A.Stamina)
 			local parriedBefore = EntityState.Number(t.Fx(), A.LastParryAt, -10)
 			t.Server("TestHitAfter", "Guard", Combat.Guard.PerfectWindow / 3)
 			t.Hold("Guard", true)
@@ -607,6 +607,7 @@ return {
 			t.Hold("Guard", false)
 			t.Check("a hit right after raising guard is parried", parried)
 			t.Check("and does no damage", t.Num(A.HP) == hp)
+			t.Check("and costs no stamina (owner, 2026-10-31)", t.Num(A.Stamina) >= stamina, `{stamina} -> {t.Num(A.Stamina)}`)
 			t.Check("the attacker is stunned", dummy ~= nil and EntityState.Number(dummy, A.HitstunUntil, 0) > 0)
 		end,
 	},
