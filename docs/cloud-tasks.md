@@ -43,7 +43,7 @@ Read this file once, fully. Read `AGENTS.md` (loaded for you) and the "Now" boar
 ## 3. How you work
 
 - **Branches:** one task, one branch `cloud/<task-slug>` from the latest `main`, one pull request. Keep it small enough to review in ten minutes. Never push to `main`, and never merge your own pull request.
-- **Checks:** from task 1 on, run `tools/check/run.sh` before every commit; it must pass.
+- **Checks:** once task 2 has built them, run `tools/check/run.sh` before every commit; it must pass.
 - **The pull request says:**
   - what changed and why;
   - how you checked it;
@@ -70,7 +70,28 @@ Read this file once, fully. Read `AGENTS.md` (loaded for you) and the "Now" boar
 
 Do them in order: each builds on the last. When a task is done (its pull request is open), start the next one; you don't need the earlier one merged first, unless the task says so.
 
-### Task 1 · Static checks and the CI (first: it's how you verify code without Studio)
+### Task 1 · Core-feel code inventory (first: Claude (local)'s combat, movement and camera plan waits on it)
+
+- **Goal:** a precise map of what our code does today, so the plan starts from facts.
+- **Read:**
+  - `src/shared/Config/Movement.luau`, `Combat.luau`, `Camera.luau` and `Stamina.luau`;
+  - `src/shared/Simulation/` (ActionSim, CombatSim, Knock, Bite, the movement code);
+  - `src/client/Controllers/Core/CameraController.luau`, `LockOnController.luau` and `CombatFxController.luau`;
+  - `src/shared/Definitions/Weapons/`, `Skills/` and `Common.luau`;
+  - the self-test case names in `src/client/Controllers/Core/SelfTestController/Cases.luau`.
+- **Do:** write `docs/core-feel-inventory.md`, one table per system:
+  - **The systems:** movement, jumps and air jumps, dodge, sprint, the M1 chain, strong and charged attacks, guard, parry and howl, the bite, stagger, knockback and hitstop, lock-on, the camera.
+  - **The columns:**
+    - the behaviour;
+    - our numbers, with file:line;
+    - the code path;
+    - its self-test cases;
+    - known gaps or TODOs in the code.
+
+  Leave the reference side empty: Claude (local) fills it from the video.
+- **Done when:** every number in the doc carries its file:line, and the doc invents nothing.
+
+### Task 2 · Static checks and the CI (before any change to `src/`: it's how you verify code without Studio)
 
 - **Goal:** one command that type-checks and lints every Luau file, run on every pull request by a free GitHub Action. It catches errors before anyone opens Studio.
 - **Read:**
@@ -95,7 +116,7 @@ Do them in order: each builds on the last. When a task is done (its pull request
   6. Add the command to `CLAUDE.md` under "Done means": run `tools/check/run.sh` locally too, if the owner installs the tools. Put the install as an "Owner's call", since the owner decides what goes on their PC.
 - **Done when:** the workflow passes on your pull request, and the description lists every finding and what you did with it.
 
-### Task 2 · Docs diet (the owner: "delete the bloat, keep one copy")
+### Task 3 · Docs diet (the owner: "delete the bloat, keep one copy")
 
 - **Goal:** every fact lives in one file, nothing superseded is left lying around, and the files every session loads stay lean.
 - **Do:**
@@ -109,7 +130,7 @@ Do them in order: each builds on the last. When a task is done (its pull request
   6. `AGENTS.md` and `CLAUDE.md` load in every session. Cut repeated or outdated lines without changing any rule's meaning. Keep the supreme rules word for word, and put each cut in the pull request so the owner can check it.
 - **Done when:** the link check passes, the pull request lists every deletion with where its content went, and nothing unique is lost.
 
-### Task 3 · Compact test reports
+### Task 4 · Compact test reports
 
 - **Goal:** every test run costs fewer tokens.
 - **Read:** `src/client/Controllers/Core/SelfTestController/init.luau` and `src/server/Services/Core/LogicTestService/init.luau` (the report building, near the "SELF-TEST" and "LOGIC TESTS" lines), and `.agents/skills/bl-studio-test/SKILL.md`.
@@ -120,7 +141,7 @@ Do them in order: each builds on the last. When a task is done (its pull request
   - Update the skill text.
 - **Done when:** the checks pass, and the pull request carries the Studio test steps for both places.
 
-### Task 4 · Names and stale words sweep
+### Task 5 · Names and stale words sweep
 
 - **Do:**
   - Search all player-visible text for the AGENTS.md rule 3 list: UI strings, `DisplayName`, `Title`, tips, objective text, notices.
@@ -128,7 +149,7 @@ Do them in order: each builds on the last. When a task is done (its pull request
   - Report any locked or player-visible name that breaks the rule under "Owner's call", with an original alternative. Never rename a locked name yourself.
 - **Done when:** the pull request lists every hit and what you did with it.
 
-### Task 5 · Review of the recent code
+### Task 6 · Review of the recent code
 
 - **Read:** `git log --since=2026-10-29 --stat` on `main`. Then the diffs of every commit that touched `src/`, file by file.
 - **Check against:** `.claude/rules/code-standards.md` and `server-authority.md`. Above all:
@@ -140,7 +161,7 @@ Do them in order: each builds on the last. When a task is done (its pull request
 - **Do:** fix the clear, low-risk findings, each with Studio test steps. List the rest in the pull request by file:line, with severity and a proposed fix. Claude (local) takes them.
 - **Done when:** the checks pass and every finding is either fixed or listed.
 
-### Task 6 · Time to kill, and growth per level (the C1 ask "level-ups that matter")
+### Task 7 · Time to kill, and growth per level (the C1 ask "level-ups that matter")
 
 - **Read:**
   - `src/shared/Config/` (combat, progression, stamina);
@@ -156,34 +177,13 @@ Do them in order: each builds on the last. When a task is done (its pull request
     - a proposed Config change that reaches them. Don't apply it: the owner and Claude (local) decide.
 - **Done when:** the script runs in your sandbox, its output is in the doc, and every target cites its source.
 
-### Task 7 · Original names, a proposal for the owner
+### Task 8 · Original names, a proposal for the owner
 
 - **Goal:** the companions now called "Shinigami" use Bleach's core term, which is player-visible. The owner asked for 3–4 original names, and for notes on the title "BloodsLocks", which sits close to "Duskbloods" and "Deadlock".
 - **Do:**
   - Research each candidate: a web search for other games, trademarks or franchises using it, and the fan test.
   - Give each one a sentence on why it fits our gothic Victorian world.
   - Put the proposal under "Owner's call" in the team notes' Now board. Nothing is renamed until the owner picks.
-
-### Task 8 · Core-feel code inventory (feeds Claude (local)'s combat, movement and camera plan)
-
-- **Goal:** a precise map of what our code does today, so the plan starts from facts.
-- **Read:**
-  - `src/shared/Config/Movement.luau`, `Combat.luau`, `Camera.luau` and `Stamina.luau`;
-  - `src/shared/Simulation/` (ActionSim, CombatSim, Knock, Bite, the movement code);
-  - `src/client/Controllers/Core/CameraController.luau`, `LockOnController.luau` and `CombatFxController.luau`;
-  - `src/shared/Definitions/Weapons/`, `Skills/` and `Common.luau`;
-  - the self-test case names in `src/client/Controllers/Core/SelfTestController/Cases.luau`.
-- **Do:** write `docs/core-feel-inventory.md`, one table per system:
-  - **The systems:** movement, jumps and air jumps, dodge, sprint, the M1 chain, strong and charged attacks, guard, parry and howl, the bite, stagger, knockback and hitstop, lock-on, the camera.
-  - **The columns:**
-    - the behaviour;
-    - our numbers, with file:line;
-    - the code path;
-    - its self-test cases;
-    - known gaps or TODOs in the code.
-
-  Leave the reference side empty: Claude (local) fills it from the video.
-- **Done when:** every number in the doc carries its file:line, and the doc invents nothing.
 
 ### Task 9 · The UI rework spec (a draft for after combat, movement and camera)
 
