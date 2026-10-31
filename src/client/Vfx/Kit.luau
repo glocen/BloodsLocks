@@ -5,6 +5,8 @@
 local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
 
+local Textures = require(script.Parent.Textures)
+
 export type Spec = { [string]: any }
 
 local Kit = {}
@@ -13,40 +15,14 @@ local Kit = {}
 -- fast effects set it on their own copy of this module from the Client context; the game never changes it.
 Kit.TimeScale = 1
 
--- Texture ids for the effect library (harvested Creator Store art).
-Kit.Textures = {
-	-- Drawn for BloodsLocks (tools/vfx_textures.py)
-	BloodCrescent = "rbxassetid://114481905428903", -- 512x192 wet blood moon-slash, convex edge up
-	BloodGlow = "rbxassetid://127264027665322", -- halo along that crescent's outer rim (white, tint it)
-	BeamCore = "rbxassetid://134206352319065", -- soft beam band; beams run a texture's vertical axis along their length
-	BeamEnergy = "rbxassetid://125771507708728", -- energy strands, tileable along the beam (white)
-	Glint = "rbxassetid://101126423932013", -- four-point glint (white)
-	SoftGlow = "rbxassetid://75560931237584", -- round soft glow (white)
-	-- Rendered for BloodsLocks in Blender (tools/blender/vfx_sprites.py)
-	MuzzleFlash = "rbxassetid://124670609876463", -- four star-flash variants, Grid2x2 (coloured: use white)
-	MuzzleCone = "rbxassetid://94054541399503", -- side flame for a Beam, muzzle end at the bottom (coloured)
-	Spark = "rbxassetid://108622929695285", -- thin hot streak, velocity-aligned (white)
-	TracerStreak = "rbxassetid://109264662547912", -- pale core in a faint glow, for a Beam (white)
-	SmokePuff = "rbxassetid://140359744386400", -- lit volumetric puff, Grid4x4 one-shot (white: tint it)
-	-- Trails run a texture's vertical axis along their length (the top is the newest edge) and its horizontal axis
-	-- from Attachment0 (left) to Attachment1 (right). Velocity-aligned particles (VelocityParallel) lead with the
-	-- texture's LEFT edge: their art is drawn moving left.
-	SlashEdge = "rbxassetid://102684460045011", -- the hot hairline the point leaves, same layout (white, additive)
-	BladeSmear = "rbxassetid://91511977557661", -- a blade's pale motion smear for a Trail, same layout (white: tint it)
-	-- Wind (the bite's gust): white, tint it
-	SmokeRibbon = "rbxassetid://74999541206773", -- a wisp of smoke for a Trail, frayed across, torn toward the tail
-	WindLine = "rbxassetid://78292040209531", -- a thin speed line for a Trail, breaking into dashes toward the tail
-	WindRing = "rbxassetid://139862174311558", -- a gust ring seen from above, for a flat expanding particle
-	WindStreak = "rbxassetid://124748249350949", -- a gust's soft bent streak, velocity-aligned
-	-- Creator Store art
-	Crescent = "rbxassetid://13138038111", -- slash crescent flipbook, Grid4x4
-	CrescentDark = "rbxassetid://13780268621", -- crescent arcs, Grid4x4
-	Smoke = "rbxassetid://18369727963", -- smoke wisps flipbook, Grid4x4
-	Dot = "rbxassetid://11197917329", -- soft dot
-	Wisp = "rbxassetid://15253860988", -- wispy energy column
-	Fire = "rbxassetid://16850891267", -- fire flipbook, Grid4x4
-	Glow = "rbxassetid://1075864321", -- soft radial glow
-}
+-- Texture ids for the effect library, every one ours: built, reviewed, uploaded and recorded by tools/vfx/textures.py
+-- (Vfx/Textures; its registry says what each texture is and how it's laid out). Trails run a texture's vertical axis
+-- along their length (the top is the newest edge) and its horizontal axis from Attachment0 (left) to Attachment1
+-- (right). Velocity-aligned particles (VelocityParallel) lead with the texture's LEFT edge: their art is drawn moving left.
+Kit.Textures = {} :: { [string]: string }
+for name, entry in Textures do
+	Kit.Textures[name] = entry.Id
+end
 
 -- NumberSequence from a single value, two values, or a list of {time, value[, envelope]} keypoints.
 function Kit.Seq(a: any, b: number?): NumberSequence

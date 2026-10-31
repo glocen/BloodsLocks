@@ -42,6 +42,15 @@ The pipeline Claude built in C1 for Gustave's machine pistol. Everything is scri
 - Studio's 3D Importer, if ever needed (FBX): scale 0.01 and a Y 180° correction; Escape cancels the importer.
 - A Blender MCP may be set up in `.mcp.json` for live sessions; prefer scripts, which can be rerun and reviewed.
 
+## Effect textures (sprites, flipbooks, trail and beam strips)
+
+Different from a model's maps: each is a standalone image an effect references by id. Every one is tracked by `tools/vfx/textures.py`; its registry says what each texture is, which generator draws it and how it's laid out.
+1. **Draw:** add or retune the generator in `tools/blender/vfx_sprites.py` (Blender: numpy shapes, Cycles volumes) or `tools/vfx_textures.py` (plain Python), and register the texture in `textures.py`. Draw art white and let the game tint it, so an uploaded image never carries a colour that could read as blood.
+2. **Build:** `py tools/vfx/textures.py build [Name ...]` writes `build/vfx/` and the numbered review sheet `build/vfx/review.png`. Read the sheet and critique it; rebuild until it passes. Check every texture against AGENTS.md rules 2 and 4 before going on: uploads land on the owner's account and are moderated.
+3. **Upload:** copy what's new or changed to the served scratchpad folder and call MCP `upload_image` with the `http://127.0.0.1:8765/...` URLs.
+4. **Record:** `py tools/vfx/textures.py record Name=<id> ...` writes the ids, with each built file's hash, into the generated `src/client/Vfx/Textures.luau`; `Vfx/Kit` reads it (`Kit.Textures.Name`).
+5. **Check:** `py tools/vfx/textures.py status` lists every texture as current, changed since its upload, never uploaded or not built. Effects use only registered textures: no Creator Store art (rule 2).
+
 ## Animations
 
 Animate in Blender (owner, 2026-10-31: "do the animation in Blender, it should be better"):

@@ -10,6 +10,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ScriptContext = game:GetService("ScriptContext")
 
 local Shared = ReplicatedStorage.Shared
 local Net = require(Shared.Net)
@@ -140,6 +141,15 @@ local function run(filter: string?): string
 	}
 
 	local started = os.clock()
+	-- Script errors anywhere during the run fail it, on both sides: a case can pass while something it doesn't look at
+	-- breaks (a simulation step erroring once, 2026-10-31).
+	pcall(serverCall, "TestErrorsClear")
+	local clientErrors: { string } = {}
+	local watch = ScriptContext.Error:Connect(function(message: string, _trace: string, origin: Instance?)
+		if origin and origin:IsDescendantOf(game) then -- the game's own scripts, not Studio plugins
+			table.insert(clientErrors, `{message} ({origin:GetFullName()})`)
+		end
+	end)
 	for _, case in Cases do
 		if filter == nil or string.find(case.Name, filter, 1, true) then
 			current = case.Name
@@ -156,6 +166,12 @@ local function run(filter: string?): string
 	end
 	LockOnController.SetTarget(nil)
 	pcall(serverCall, "TestPadClear")
+	watch:Disconnect()
+	current = "Script errors"
+	local ok, serverErrors = pcall(serverCall, "TestErrors")
+	local serverList = if ok and type(serverErrors) == "table" then serverErrors else {}
+	record(#serverList == 0, "none on the server", serverList[1])
+	record(#clientErrors == 0, "none on the client", clientErrors[1])
 
 	table.insert(lines, 1, `SELF-TEST {if failed == 0 then "PASSED" else "FAILED"}: {passed} passed, {failed} failed ({string.format("%.1f", os.clock() - started)} s)`)
 	return table.concat(lines, "\n")

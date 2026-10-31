@@ -8,6 +8,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService")
+local ScriptContext = game:GetService("ScriptContext")
 
 local Shared = ReplicatedStorage.Shared
 local Registry = require(Shared.Definitions.Registry)
@@ -292,6 +293,20 @@ function SelfTestService.Start()
 	if not RunService:IsStudio() then
 		return
 	end
+	-- Script errors on the server since the self-test began (TestErrorsClear / TestErrors): a run fails on any.
+	local errors: { string } = {}
+	ScriptContext.Error:Connect(function(message: string, _trace: string, origin: Instance?)
+		if origin and origin:IsDescendantOf(game) then -- the game's own scripts, not Studio plugins
+			table.insert(errors, `{message} ({origin:GetFullName()})`)
+		end
+	end)
+	DebugService.Register("TestErrorsClear", function()
+		table.clear(errors)
+		return true
+	end)
+	DebugService.Register("TestErrors", function()
+		return table.clone(errors)
+	end)
 	EntityService.PlayerDied:Connect(function(player: Player, killer: number?, shares: { [number]: number })
 		lastDeath = { Victim = player.Name, Killer = killer, Shares = shares }
 	end)

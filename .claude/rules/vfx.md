@@ -5,6 +5,7 @@ paths:
   - "src/shared/Assets/Vfx/**"
   - "tools/vfx_textures.py"
   - "tools/blender/vfx_sprites.py"
+  - "tools/vfx/**"
   - "assets/vfx/**"
 ---
 
@@ -24,5 +25,5 @@ paths:
 - **Velocity-aligned particles** (`Orientation = VelocityParallel`) lead with the texture's **left** edge (tested 2026-10-31: a streak drawn upright flew sideways). Draw their art moving left: `tools/blender/vfx_sprites.py` draws it moving up, then turns it with `lead_left`.
 - Trail textures run the same way (tested 2026-10-30): the vertical image axis along the trail, its top the newest edge; the horizontal axis from Attachment0 (left) to Attachment1 (right).
 - Crescents face the camera (perpendicular to travel); flat in the travel plane they vanish edge-on from behind.
-- Our textures are drawn by our scripts into the scratchpad. Upload them by serving that folder (`py -m http.server 8765 --bind 127.0.0.1 --directory <dir>`) and passing the `http://127.0.0.1:8765/<file>.png` URLs to MCP `upload_image`; the ids go in `Client.Vfx.Kit.Textures`.
+- Every effect texture is ours and goes through the tracked pipeline: `tools/vfx/textures.py` (build, review sheet, MCP upload, record, status; `.agents/skills/bl-asset-pipeline`, "Effect textures"). Its ids live in the generated `Client.Vfx.Textures`, which `Kit.Textures` reads; never paste an id by hand or use a Creator Store texture. Draw art white and tint it in the game.
 - Capturing fast effects frozen: `/bl-studio-test`, "Captures".

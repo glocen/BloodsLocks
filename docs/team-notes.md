@@ -56,12 +56,22 @@ The combat framework rework waits until C1 is at the bar, then gets planned with
 **Waiting on the owner**
 
 - Upload the combat sound sheet (regenerated 10-31: 19 cues, the bite's added, the wet layers removed), unless Claude finds it can do it itself: Studio, View → Asset Manager → Bulk Import → `C:\Users\gloce\BloodsLocks\build\audio\bl_combat_sounds.wav`; then right-click it under Audio → Copy Asset ID, and give Claude the id (it goes in `Definitions/SoundSheet`).
-- Optional cleanup: archive the bite's superseded animation uploads (Bite 88243077439906 and 112074793092588, BiteHold 89274358889196, Bitten 119235946587850).
+- **Delete these uploads from your account** (owner, 2026-10-31: "we don't archive, just delete"). Only the account owner can, in the Creator Hub (create.roblox.com → Creations → Development Items); if Roblox offers only Archive for a type, that's as far as it goes.
+  - Blood images (rule 4): 73716442107985, 132527224441651, 89451782214064, 92466747845719, 96856818725735, 85186176840498, 76864841147756, 97751459305668, and the old "wet blood" crescent 114481905428903 with its glow 127264027665322.
+  - Superseded bite animations: 88243077439906, 112074793092588, 89274358889196, 119235946587850.
 - Play the bite in the Manor's yard: stagger a dummy (it kneels), bite it (E) and judge the hold, the camera and the effect.
 - Review Q0: match screens v2, plates, Kurogane's pact site.
 - Carried over from 10-29, confirm or close: a 2-player PvP test. (The animation batch: Howl, Bite and SMGBurst are published from Studio; BloodBlade is re-authored and published in C1.)
 
 ## Entries
+
+### 2026-10-31 · Claude · The effect texture pipeline; rule-breaking art deleted
+
+- **Pipeline:** `tools/vfx/textures.py` tracks every effect texture: build, numbered review sheet, MCP upload, ids with build hashes in the generated `Client.Vfx.Textures`, and a status that flags anything stale. Procedure in `bl-asset-pipeline`, "Effect textures".
+- **Deleted** (owner: "delete everything that violates our rules"): the seven Creator Store textures (rule 2) and the "wet blood" crescent with its glow (rule 4).
+- **Replaced** with our own: an energy crescent and halo (drawn white, tinted crimson), an energy wisp and a Cycles fire flipbook. The Crimson Crescent, its charge, the Light Beam, Gōka's fire nova, the arrival and the pact site now use only our textures.
+- **Uploads on the owner's account:** listed in "Waiting on the owner" for deletion.
+- **Self-test:** fails a run on any script error on either side. It caught `Destroy`/`Debris` throwing inside simulation callbacks (rule in `server-authority.md`). 103–104 pass in both places, logic 63/63.
 
 ### 2026-10-31 · Claude · The long bite and the stagger kneel (C1.5)
 

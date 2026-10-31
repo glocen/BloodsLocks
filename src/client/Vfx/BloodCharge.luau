@@ -90,7 +90,7 @@ function BloodCharge.Spawn(model: Model): Visual
 		Shape = Enum.ParticleEmitterShape.Sphere,
 		ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward,
 		ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface,
-		Texture = T.Dot,
+		Texture = T.SoftGlow,
 		Color = Kit.Colors(P.BloodCore),
 		Size = Kit.Seq({ { 0, 0 }, { 0.3, 0.22 }, { 1, 0.05 } }),
 		Lifetime = NumberRange.new(0.3, 0.38),
@@ -98,7 +98,7 @@ function BloodCharge.Spawn(model: Model): Visual
 		LightEmission = 1,
 	})
 	local mist = Kit.Emitter(center, {
-		Texture = T.Smoke,
+		Texture = T.SmokePuff,
 		FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
 		FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 		Color = Kit.Colors(P.Blood, P.BloodDark),
@@ -158,9 +158,9 @@ function BloodCharge.Update(visual: Visual, progress: number, armed: boolean, cl
 			{ Count = 1, Texture = T.Glint,
 				Color = Kit.Colors(P.BloodCore), Size = Kit.Seq({ { 0, 1 }, { 0.3, 5 }, { 1, 0 } }), Lifetime = NumberRange.new(0.22),
 				Rotation = NumberRange.new(0, 45), LightEmission = 1, ZOffset = 2 },
-			{ Count = 1, Texture = T.Glow, Color = Kit.Colors(P.Blood), Size = Kit.Seq(1, 6), Transparency = Kit.Seq(0.2, 1),
+			{ Count = 1, Texture = T.SoftGlow, Color = Kit.Colors(P.Blood), Size = Kit.Seq(1, 6), Transparency = Kit.Seq(0.2, 1),
 				Lifetime = NumberRange.new(0.25), LightEmission = 1, ZOffset = 1 },
-			{ Count = 14, Texture = T.Dot, Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.22, 0),
+			{ Count = 14, Texture = T.SoftGlow, Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.22, 0),
 				Lifetime = NumberRange.new(0.18, 0.3), Speed = NumberRange.new(10, 20), SpreadAngle = Vector2.new(180, 180),
 				Drag = 6, LightEmission = 1 },
 		})
@@ -175,7 +175,7 @@ function BloodCharge.Release(visual: Visual, fired: boolean)
 		local forward = if root then root.CFrame.LookVector else Vector3.zAxis
 		local at = visual.Tip.WorldPosition
 		Kit.Burst(CFrame.lookAt(at, at + forward), {
-			{ Count = 1, Texture = T.Crescent, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
+			{ Count = 1, Texture = T.CrescentArc,
 				Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(8), Lifetime = NumberRange.new(0.2),
 				Rotation = NumberRange.new(-30, 30), LightEmission = 0.8 },
 			{ Count = 14, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,

@@ -384,6 +384,7 @@ return {
 			local dummyFx = t.Fx(dummy)
 			local hpBefore, dummyBefore = t.Num(A.HP), t.DummyHp()
 			local seizedBefore, evadedBefore = fx:GetAttribute(A.LastBiteAt), fx:GetAttribute(A.LastEvadedAt)
+			local releasedBefore = fx:GetAttribute(A.BiteReleaseAt)
 			local bittenBefore = dummyFx:GetAttribute(A.BittenAt)
 			t.Press("Bite")
 			t.Check("a staggered dummy is seized", waitFor(function()
@@ -433,6 +434,8 @@ return {
 			watch:Disconnect()
 			local heal = math.floor(t.Num(A.HPMax) * bite.Heal)
 			t.Near("you drink back the heal", t.Num(A.HP) - hpBefore, heal, 0)
+			t.Check("the release is marked, with what you drank", fx:GetAttribute(A.BiteReleaseAt) ~= releasedBefore
+				and fx:GetAttribute(A.LastBiteHeal) == heal, `heal {tostring(fx:GetAttribute(A.LastBiteHeal))}`)
 			t.Near("the dummy loses exactly the bite", dummyBefore - t.DummyHp(), math.floor(bite.Damage * Leveling.DamageMultiplier(1) + 0.5), 0)
 			local function between(from: number, to: number): number
 				local count = 0

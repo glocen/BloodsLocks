@@ -123,7 +123,7 @@ local function moonlight(site: Site)
 	end)
 	local motes = holder(site, "Motes", CFrame.new(site.Floor + Vector3.new(0, K.Motes.Height / 2, 0)), Vector3.new(K.Motes.Radius * 2, K.Motes.Height, K.Motes.Radius * 2))
 	local drift = Kit.Emitter(motes, {
-		Texture = Kit.Textures.Dot,
+		Texture = Kit.Textures.SoftGlow,
 		Color = ColorSequence.new(K.Moonlight),
 		LightEmission = 1,
 		Transparency = Kit.Seq({ { 0, 1 }, { 0.25, 0.35 }, { 0.75, 0.45 }, { 1, 1 } }),

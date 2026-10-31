@@ -20,7 +20,7 @@ function Arrival.Play(model: Model)
 	Kit.Burst(CFrame.new(feet), {
 		{ -- the ring: mist rolling outward along the ground
 			Count = 26,
-			Texture = T.Smoke,
+			Texture = T.SmokePuff,
 			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
 			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 			Color = Kit.Colors({ { 0, V.BloodWet }, { 1, V.SmokeDark } }),
@@ -40,7 +40,7 @@ function Arrival.Play(model: Model)
 		},
 		{ -- a soft column that lifts and fades: the body taking shape
 			Count = 10,
-			Texture = T.Wisp,
+			Texture = T.EnergyWisp,
 			Color = Kit.Colors(V.BloodDeep, V.Smoke),
 			Transparency = Kit.Seq({ { 0, 1 }, { 0.3, 0.55 }, { 1, 1 } }),
 			Size = Kit.Seq({ { 0, 2.5 }, { 1, 4 } }),

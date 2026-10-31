@@ -1,7 +1,8 @@
 --!strict
 -- CombatService: server-side hit detection. Every Heartbeat it looks at each entity's current action and hands
 -- it to Projectiles (Blood Blade, ...), Gunfire (gun shots, beam ticks) or Melee (MuchachoHitbox per Hit
--- window). Hits are queued into CombatSim, which applies them inside the next simulation step.
+-- window). Hits are queued into CombatSim, which applies them inside the next simulation step. It also keeps a bite's
+-- held pair from colliding (Apart).
 
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
@@ -14,6 +15,7 @@ local DebugService = require(script.Parent.DebugService)
 local Melee = require(script.Melee)
 local Gunfire = require(script.Gunfire)
 local Projectiles = require(script.Projectiles)
+local Apart = require(script.Apart)
 
 local CombatService = {}
 
@@ -41,6 +43,7 @@ local function step(dt: number)
 		end
 	end
 	Projectiles.Step(dt)
+	Apart.Update() -- a bite's held pair doesn't collide (Simulation/Bite)
 end
 
 function CombatService.Init()

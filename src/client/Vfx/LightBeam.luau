@@ -68,7 +68,7 @@ function LightBeam.new(): Ray
 			Shape = Enum.ParticleEmitterShape.Sphere,
 			ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward,
 			ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface,
-			Texture = T.Dot,
+			Texture = T.SoftGlow,
 			Color = Kit.Colors(P.Radiance, P.RadianceCore),
 			Size = Kit.Seq({ { 0, 0 }, { 0.3, 0.28 }, { 1, 0.1 } }),
 			Lifetime = NumberRange.new(0.22, 0.3),
@@ -80,7 +80,7 @@ function LightBeam.new(): Ray
 			Shape = Enum.ParticleEmitterShape.Sphere,
 			ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward,
 			ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface,
-			Texture = T.Wisp,
+			Texture = T.WindStreak,
 			Orientation = Enum.ParticleOrientation.VelocityParallel,
 			Color = Kit.Colors(P.RadianceDeep, P.Radiance),
 			Size = Kit.Seq({ { 0, 0 }, { 0.4, 0.6 }, { 1, 0.2 } }),
@@ -92,7 +92,7 @@ function LightBeam.new(): Ray
 		}),
 	}
 	local muzzleGlow = Kit.Emitter(muzzle, {
-		Texture = T.Glow,
+		Texture = T.SoftGlow,
 		Color = Kit.Colors(P.Radiance),
 		Size = Kit.Seq(1),
 		Transparency = Kit.Seq(0.15, 1),
@@ -125,7 +125,7 @@ function LightBeam.new(): Ray
 	end
 	local firing: { Instance } = {
 		Kit.Emitter(span, {
-			Texture = T.Dot,
+			Texture = T.SoftGlow,
 			Color = Kit.Colors(P.RadianceCore, P.Radiance),
 			Size = Kit.Seq({ { 0, 0.22 }, { 1, 0 } }),
 			Lifetime = NumberRange.new(0.4, 0.7),
@@ -149,7 +149,7 @@ function LightBeam.new(): Ray
 			Enabled = false,
 		}),
 		Kit.Emitter(impact, {
-			Texture = T.Glow,
+			Texture = T.SoftGlow,
 			Color = Kit.Colors(P.Radiance),
 			Size = Kit.Seq(3, 4),
 			Transparency = Kit.Seq(0.35, 1),
@@ -171,7 +171,7 @@ function LightBeam.new(): Ray
 			Enabled = false,
 		}),
 		Kit.Emitter(impact, {
-			Texture = T.Dot,
+			Texture = T.SoftGlow,
 			Color = Kit.Colors(P.RadianceCore, P.RadianceDeep),
 			Size = Kit.Seq(0.26, 0),
 			Lifetime = NumberRange.new(0.25, 0.5),
@@ -185,7 +185,7 @@ function LightBeam.new(): Ray
 			Enabled = false,
 		}),
 		Kit.Emitter(impact, {
-			Texture = T.Smoke,
+			Texture = T.SmokePuff,
 			FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
 			FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
 			Color = Kit.Colors(P.Radiance, P.RadianceDeep),
@@ -228,9 +228,9 @@ local function fire(ray: Ray)
 		layer.Beam.Enabled = true
 	end
 	Kit.Burst(ray.Muzzle.WorldCFrame, {
-		{ Count = 1, Texture = T.Glow, Color = Kit.Colors(P.RadianceCore), Size = Kit.Seq(2, 9), Transparency = Kit.Seq(0, 1),
+		{ Count = 1, Texture = T.SoftGlow, Color = Kit.Colors(P.RadianceCore), Size = Kit.Seq(2, 9), Transparency = Kit.Seq(0, 1),
 			Lifetime = NumberRange.new(0.22), LightEmission = 1 },
-		{ Count = 24, Texture = T.Dot, Color = Kit.Colors(P.RadianceCore, P.Radiance), Size = Kit.Seq(0.25, 0),
+		{ Count = 24, Texture = T.SoftGlow, Color = Kit.Colors(P.RadianceCore, P.Radiance), Size = Kit.Seq(0.25, 0),
 			Lifetime = NumberRange.new(0.2, 0.4), Speed = NumberRange.new(16, 30), SpreadAngle = Vector2.new(180, 180), Drag = 5, LightEmission = 1 },
 	})
 end

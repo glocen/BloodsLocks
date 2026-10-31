@@ -4,16 +4,14 @@
 -- CombatSim calls it. The timeline is the hold action's Seize table (Definitions/Common, Common.BiteHold).
 --   Seize: the bite lands on a staggered body. The biter's action becomes the hold, facing the victim; the victim is
 --     stunned until the release, turned to face the biter and pulled to the hold's distance (a push its own movement
---     step holds, Knock, re-aimed every step so it lands exactly). Both get i-frames, and their bodies stop colliding
---     with each other (their animated heads and torsos would shove them apart).
+--     step holds, Knock, re-aimed every step so it lands exactly). Both get i-frames. While held, the two bodies don't
+--     collide (their animated heads and torsos would shove them apart): CombatService sees to that from Pairs.
 --   Step: the drain's pulses move HP from the victim (never below 1) to the biter; at the release the rest of the
 --     damage lands as a full hit that throws the victim back and knocks it down. A hold that breaks (a body dies or
 --     leaves, the two end up apart, the victim becomes protected, the biter's hold is cancelled) ends at once, frees
 --     both and deals nothing more.
 -- Clients read it from the Humanoids (EntityState.Fx): the victim's BittenAt and BittenUntil; the biter's LastBiteAt,
 -- BiteVictim, LastBiteHeal and BiteReleaseAt.
-
-local Debris = game:GetService("Debris")
 
 local Shared = script.Parent.Parent
 local Registry = require(Shared.Definitions.Registry)
@@ -37,7 +35,6 @@ type Hold = {
 	Biter: Model,
 	Victim: Model,
 	Start: number,
-	Apart: { NoCollisionConstraint }, -- keeps the two bodies from shoving each other while held
 	Damage: number, -- the whole bite
 	Drain: number, -- the part the pulses take
 	Heal: number, -- what the pulses give
@@ -54,28 +51,9 @@ local HOLD = Registry.Action(Bite.HoldAction)
 Bite.Timeline = HOLD.Seize
 local T = Bite.Timeline
 local PULL_TOP_SPEED = 30 -- studs/s: the pull's push never goes faster, however late it is
-local APART_LINGER = 0.3 -- seconds the bodies keep ignoring each other after the release, while the throw parts them
 
 local byBiter: { [Model]: Hold } = {}
 local byVictim: { [Model]: Hold } = {}
-
--- No collisions between two bodies' solid parts (on R6, head and torso).
-local function keepApart(a: Model, b: Model): { NoCollisionConstraint }
-	local constraints = {}
-	for _, partA in a:GetChildren() do
-		if partA:IsA("BasePart") and partA.CanCollide then
-			for _, partB in b:GetChildren() do
-				if partB:IsA("BasePart") and partB.CanCollide then
-					local constraint = Instance.new("NoCollisionConstraint")
-					constraint.Part0, constraint.Part1 = partA, partB
-					constraint.Parent = partA
-					table.insert(constraints, constraint)
-				end
-			end
-		end
-	end
-	return constraints
-end
 
 -- The victim's push toward the hold's distance, re-aimed from the gap left; stopped once the pull's time is up.
 local function pull(hold: Hold, now: number)
@@ -107,6 +85,16 @@ end
 -- Whether `model` is in a hold, as the biter or the victim.
 function Bite.Holds(model: Model): boolean
 	return byBiter[model] ~= nil or byVictim[model] ~= nil
+end
+
+-- The holds now: biter -> victim (server). CombatService keeps each pair from colliding while it lasts, outside the
+-- simulation (its callbacks may not destroy instances).
+function Bite.Pairs(): { [Model]: Model }
+	local pairs = {}
+	for biter, hold in byBiter do
+		pairs[biter] = hold.Victim
+	end
+	return pairs
 end
 
 -- The bite's hit on `victim` (after CombatSim's allegiance, protection and i-frame checks). Takes hold only of a
@@ -152,7 +140,6 @@ function Bite.Seize(biter: Model, victim: Model, hit: any, power: number, now: n
 		Biter = biter,
 		Victim = victim,
 		Start = now,
-		Apart = keepApart(biter, victim),
 		Damage = power,
 		Drain = math.floor(power * T.DrainShare),
 		Heal = math.floor(num(biter, A.HPMax, 0) * (hit.Heal or 0)),
@@ -208,9 +195,6 @@ end
 local function close(hold: Hold, now: number, released: boolean)
 	local biter, victim = hold.Biter, hold.Victim
 	byBiter[biter], byVictim[victim] = nil, nil
-	for _, constraint in hold.Apart do
-		Debris:AddItem(constraint, APART_LINGER)
-	end
 	if not released then
 		victim:SetAttribute(A.HitstunUntil, math.min(num(victim, A.HitstunUntil, 0), now))
 		victim:SetAttribute(A.IFrameTo, math.min(num(victim, A.IFrameTo, 0), now))

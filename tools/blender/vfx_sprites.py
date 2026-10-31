@@ -1,7 +1,6 @@
 """Renders BloodsLocks' gunfire and hit sprites (our own art) with Blender, headless:
   smoke_puff    4x4 flipbook of 256 px cells: a lit volumetric puff that billows out and thins (white: tint it)
-  mist_burst    4x4 flipbook of 256 px cells: a fibrous burst thrown toward the left of the cell, for velocity-aligned
-                particles (white: tint it)
+  fire_burst    4x4 flipbook of 256 px cells: an emissive flame that kindles, licks upward and thins (white: tint it)
   muzzle_flash  2x2 sheet of 256 px variants: a star flash, white-hot core to orange rim (one variant a shot)
   muzzle_cone   128x512: the side flash, for a Beam (a Beam runs its texture's vertical axis along its length)
   spark         256x64: a thin hot streak tapered at both ends, for velocity-aligned particles (white: tint it)
@@ -12,6 +11,9 @@
   wind_line     64x512: a thin speed line of wind for a Trail, breaking into dashes toward the tail (white)
   wind_ring     512x512: a gust ring seen from above, streaked around, for a flat expanding particle (white)
   wind_streak   256x64: a gust's soft bent streak, velocity-aligned (white)
+  crescent_arc  512x192: an energy crescent, convex edge up: a hard bright edge, a streaked body fading inward (white)
+  crescent_halo 512x192: the soft glow around that crescent (white, additive)
+  energy_wisp   128x256: a soft wavering column of energy, tapered at both ends (white)
 No gore, ever (AGENTS.md rule 4: Roblox ToS): nothing here draws blood (no drops, sprays, splatter or stains), and
 nothing that could read as gore is ever uploaded (it went to the owner's account and drew a moderation warning).
 Velocity-aligned art is drawn moving toward the top, then turned (lead_left) so it moves toward the LEFT: a particle
@@ -376,69 +378,119 @@ def smoke_puff(cell=256, frames=16):
     return render_frames(scene, frames, update, "smoke")
 
 
-def mist_burst(cell=256, frames=16):
-    """Fibres thrown from the bottom of the cell upward. Noise sampled on the direction from the origin is constant
-    along each ray, so it streaks; a second direction noise gives each fibre its own reach (so the front is ragged)
-    and frays the cone's edge; a misty knot billows at the origin. The front rushes out, then everything thins."""
+def crescent_masks(width, height):
+    """The crescent's geometry on a (height, width) grid, convex edge up: how deep inside the outer edge (d_out) and
+    how far beyond the inner edge (d_in) each pixel is, in the grid's units (x across -1..1), and its angle round the
+    outer arc's centre."""
+    aspect = height / width
+    x = np.linspace(-1, 1, width)[None, :]
+    y = np.linspace(aspect * 1.6, -aspect * 0.4, height)[:, None]  # row 0 is the top
+    # both arcs pass through the tips at (+-0.95, 0): the outer one peaks at 0.55, the inner (larger, lower) at 0.37, so
+    # the band is thickest in the middle and comes to a point at each tip
+    outer_c, outer_r = -0.545, 1.095
+    inner_c, inner_r = -1.035, 1.405
+    d_out = outer_r - np.hypot(x, y - outer_c)
+    d_in = np.hypot(x, y - inner_c) - inner_r
+    angle = np.arctan2(x, y - outer_c)
+    return d_out, d_in, angle
+
+
+def crescent_arc(width=512, height=192, seed=71):
+    """An energy crescent like a sword wave (the Crimson Crescent): a hard bright edge along the convex side, a body of
+    streaks running along the arc that fades toward the inner edge. Clean energy, never liquid: no drips, no
+    droplets (AGENTS.md rule 4). White; the game tints it."""
+    rng = np.random.default_rng(seed)
+    d_out, d_in, angle = crescent_masks(width, height)
+    inside = smoothstep(0.0, 0.012, d_out) * smoothstep(0.0, 0.02, d_in)
+    edge = np.exp(-(d_out / 0.014) ** 2)
+    body = np.exp(-np.clip(d_out, 0, None) / 0.16)
+    inner_glow = np.exp(-(np.clip(d_in, 0, None) / 0.03) ** 2) * 0.35  # a faint second line along the inner edge
+    streaks = 0.5 + 0.5 * streak_noise(width, height, 110, 5, rng).T  # long along the arc
+    along = np.clip(np.abs(angle) / 1.05, 0, 1)
+    taper = 1 - smoothstep(0.6, 1.0, along)  # the tips thin out
+    alpha = np.clip((edge * 1.2 + body * 0.85 * streaks + inner_glow) * inside * (0.3 + 0.7 * taper), 0, 1)
+    white = np.ones((height, width, 3)) * np.clip(0.8 + 0.2 * edge, 0, 1)[..., None]
+    return np.concatenate([white, alpha[..., None]], axis=-1)
+
+
+def crescent_halo(width=512, height=192):
+    """The soft glow round the crescent: brightest along its outer edge, spreading a little past both edges."""
+    d_out, d_in, angle = crescent_masks(width, height)
+    outside = np.clip(-d_out, 0, None) + np.clip(-d_in, 0, None)
+    near = np.exp(-(outside / 0.07) ** 2)
+    rim = np.exp(-(d_out / 0.08) ** 2)
+    along = np.clip(np.abs(angle) / 1.1, 0, 1)
+    taper = 1 - smoothstep(0.55, 1.0, along)
+    alpha = np.clip((0.5 * near + 0.55 * rim) * taper, 0, 1)
+    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
+
+
+def energy_wisp(width=128, height=256, seed=79):
+    """A soft column of energy wavering as it rises, streaked along its length, tapered at both ends (white)."""
+    rng = np.random.default_rng(seed)
+    v = np.linspace(1, 0, height)[:, None]  # 1 at the top
+    u = np.linspace(-1, 1, width)[None, :]
+    centre = 0.32 * np.sin(math.tau * (0.9 * v + 0.1)) * (0.3 + 0.7 * v)  # sways more as it rises
+    width_at = 0.22 + 0.38 * np.sin(np.clip(v, 0, 1) * math.pi) ** 0.9
+    core = np.exp(-((u - centre) / (width_at * 0.3)) ** 2)
+    glow = np.exp(-((u - centre) / width_at) ** 2)
+    streaks = streak_noise(height, width, 60, 6, rng)
+    breakup = smoothstep(0.25, 0.75, value_noise((height, width), 24, rng))  # holes torn through it
+    ends = np.sin(np.clip(v, 0, 1) * math.pi) ** 0.6
+    alpha = np.clip((core * 0.8 + glow * 0.55 * (0.35 + 0.65 * streaks)) * (0.45 + 0.55 * breakup) * ends, 0, 1)
+    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
+
+
+def fire_burst(cell=256, frames=16):
+    """Flame, the smoke puff's method made to burn: swirling noise inside a lumpy body stretched upward, emissive, its
+    noise drifting down through it so tongues lick up. It kindles small and bright, swells and rises, then breaks up and
+    dims. White emission (the game tints it), so the texture never carries a colour of its own."""
     scene, tree, volume = volume_stage(cell)
     links = tree.links
+    volume.inputs["Color"].default_value = (1, 1, 1, 1)
+    volume.inputs["Emission Color"].default_value = (1, 1, 1, 1)
+    volume.inputs["Anisotropy"].default_value = 0.0
     coords = node(tree, "ShaderNodeTexCoord")
-    offset = node(tree, "ShaderNodeVectorMath", operation="SUBTRACT")
-    offset.inputs[1].default_value = (0, 0, -0.6)  # high enough that the knot never touches the cell's edge
-    links.new(coords.outputs["Object"], offset.inputs[0])
-    distance = node(tree, "ShaderNodeVectorMath", operation="LENGTH")
-    links.new(offset.outputs["Vector"], distance.inputs[0])
-    direction = node(tree, "ShaderNodeVectorMath", operation="NORMALIZE")
-    links.new(offset.outputs["Vector"], direction.inputs[0])
-
-    def direction_noise(scale, detail):
-        n = node(tree, "ShaderNodeTexNoise", Scale=scale, Detail=detail, Roughness=0.55)
-        n.noise_dimensions = "4D"
-        links.new(direction.outputs["Vector"], n.inputs["Vector"])
-        return n
-
-    fibres = direction_noise(13.0, 4.0)
-    reach_noise = direction_noise(4.0, 2.0)
-    fray = direction_noise(3.0, 2.0)
-    wisps = node(tree, "ShaderNodeTexNoise", Scale=5.0, Detail=8.0, Roughness=0.65)
-    wisps.noise_dimensions = "4D"
-    links.new(coords.outputs["Object"], wisps.inputs["Vector"])
-
-    up = node(tree, "ShaderNodeSeparateXYZ")
-    links.new(direction.outputs["Vector"], up.inputs[0])
-    frayed = math_node(tree, "ADD", up.outputs["Z"], math_node(tree, "MULTIPLY", math_node(tree, "SUBTRACT", fray.outputs["Fac"], 0.5), 0.5))
-    cone = node(tree, "ShaderNodeMapRange", interpolation_type="SMOOTHSTEP")
-    links.new(frayed, cone.inputs["Value"])
-    cone.inputs["From Min"].default_value = math.cos(math.radians(42))
-    cone.inputs["From Max"].default_value = math.cos(math.radians(14))
-
-    # each fibre's reach: the front's distance times about 0.45..1.45 (noise mostly spans 0.25..0.75)
-    own_reach = math_node(tree, "MULTIPLY", math_node(tree, "ADD", math_node(tree, "MULTIPLY", reach_noise.outputs["Fac"], 2.0), -0.05), 1.0)
-    reach = own_reach.node
-    ratio = math_node(tree, "DIVIDE", distance.outputs["Value"], math_node(tree, "MAXIMUM", own_reach, 0.05))
-    front = node(tree, "ShaderNodeMapRange", interpolation_type="SMOOTHSTEP")
-    links.new(ratio, front.inputs["Value"])
-    front.inputs["From Min"].default_value, front.inputs["From Max"].default_value = 1.05, 0.7
-
-    strands = math_node(tree, "POWER", fibres.outputs["Fac"], 3.0)
-    body = math_node(tree, "MULTIPLY", math_node(tree, "MULTIPLY", strands, cone.outputs["Result"]), front.outputs["Result"])
-    body = math_node(tree, "MULTIPLY", body, math_node(tree, "ADD", wisps.outputs["Fac"], 0.25))
-    knot = node(tree, "ShaderNodeMapRange", interpolation_type="SMOOTHSTEP")  # the mist at the origin
-    links.new(distance.outputs["Value"], knot.inputs["Value"])
-    mist = math_node(tree, "MULTIPLY", knot.outputs["Result"], math_node(tree, "MAXIMUM", math_node(tree, "SUBTRACT", wisps.outputs["Fac"], 0.35), 0.0))
-    density = math_node(tree, "MULTIPLY", math_node(tree, "ADD", body, math_node(tree, "MULTIPLY", mist, 1.6)), 70.0)
+    tall = node(tree, "ShaderNodeVectorMath", operation="MULTIPLY")  # squashed vertically: the body reads tall
+    links.new(coords.outputs["Object"], tall.inputs[0])
+    tall.inputs[1].default_value = (1.0, 1.0, 0.62)
+    lift = node(tree, "ShaderNodeVectorMath", operation="SUBTRACT")  # the body's centre rises over time
+    links.new(tall.outputs["Vector"], lift.inputs[0])
+    drift = node(tree, "ShaderNodeVectorMath", operation="SUBTRACT")  # the noise falls through it: tongues lick up
+    links.new(coords.outputs["Object"], drift.inputs[0])
+    noise = node(tree, "ShaderNodeTexNoise", Scale=1.6, Detail=2.5, Roughness=0.45, Distortion=1.4)  # broad tongues, no grain
+    noise.noise_dimensions = "4D"
+    links.new(drift.outputs["Vector"], noise.inputs["Vector"])
+    lumps = node(tree, "ShaderNodeTexNoise", Scale=1.5, Detail=2.0, Roughness=0.5)
+    lumps.noise_dimensions = "4D"
+    links.new(drift.outputs["Vector"], lumps.inputs["Vector"])
+    radius = node(tree, "ShaderNodeVectorMath", operation="LENGTH")
+    links.new(lift.outputs["Vector"], radius.inputs[0])
+    lumpy = math_node(tree, "ADD", radius.outputs["Value"], math_node(tree, "MULTIPLY", math_node(tree, "SUBTRACT", lumps.outputs["Fac"], 0.5), -0.9))
+    falloff = node(tree, "ShaderNodeMapRange", interpolation_type="SMOOTHSTEP")
+    links.new(lumpy, falloff.inputs["Value"])
+    detail = math_node(tree, "SUBTRACT", noise.outputs["Fac"], 0.3)
+    threshold = detail.node
+    core = math_node(tree, "MULTIPLY", falloff.outputs["Result"], falloff.outputs["Result"])  # brightest deep inside
+    flame = math_node(tree, "MULTIPLY", math_node(tree, "ADD", math_node(tree, "MAXIMUM", detail, 0.0), math_node(tree, "MULTIPLY", core, 0.25)), falloff.outputs["Result"])
+    density = math_node(tree, "MULTIPLY", flame, 6.0)
     links.new(density, volume.inputs["Density"])
+    glow = math_node(tree, "MULTIPLY", flame, 40.0)
+    links.new(glow, volume.inputs["Emission Strength"])
 
     def update(t):
-        reach.inputs[1].default_value = 0.3 + 0.85 * t ** 0.6
-        knot.inputs["From Min"].default_value = 0.18 + 0.17 * t  # the knot spreads ...
-        knot.inputs["From Max"].default_value = 0.0
-        fibres.inputs["W"].default_value = t * 0.5
-        reach_noise.inputs["W"].default_value = t * 0.3
-        wisps.inputs["W"].default_value = t * 1.2
-        density.node.inputs[1].default_value = 95 * (1 - t) ** 1.8 + 2.0  # ... and everything thins
+        lift.inputs[1].default_value = (0, 0, -0.35 + 0.55 * t)  # the centre starts low and rises
+        drift.inputs[1].default_value = (0, 0, -1.1 * t)
+        noise.inputs["W"].default_value = t * 1.4
+        lumps.inputs["W"].default_value = t * 0.7
+        size = 0.32 + 0.48 * t ** 0.5
+        falloff.inputs["From Min"].default_value = size
+        falloff.inputs["From Max"].default_value = size * 0.4
+        threshold.inputs[1].default_value = 0.26 + 0.24 * t ** 1.2  # tongues break apart as it ages
+        glow.node.inputs[1].default_value = 55 * (1 - t) ** 1.3 + 4
+        density.node.inputs[1].default_value = 7 * (1 - t) + 1.0
 
-    return render_frames(scene, frames, update, "mist", lead_left)
+    return render_frames(scene, frames, update, "fire")
 
 
 # --- main ------------------------------------------------------------------------------------------------------------
@@ -454,8 +506,11 @@ DRAWN = {
     "wind_line": wind_line,
     "wind_ring": wind_ring,
     "wind_streak": wind_streak,
+    "crescent_arc": crescent_arc,
+    "crescent_halo": crescent_halo,
+    "energy_wisp": energy_wisp,
 }
-RENDERED = {"smoke_puff": smoke_puff, "mist_burst": mist_burst}
+RENDERED = {"smoke_puff": smoke_puff, "fire_burst": fire_burst}
 
 for name, make in {**DRAWN, **RENDERED}.items():
     if wanted(name):
