@@ -14,6 +14,8 @@ sourcemap.json
 build/import/*
 !build/import/Imports.txt
 build/vfx/
+# Claude (assets)' deliveries to the builder (docs/asset-maker.md)
+build/handoff/
 
 # Python
 __pycache__/
