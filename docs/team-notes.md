@@ -77,6 +77,13 @@ Item 5 is the combat framework rework. Sound, effects and animations are made in
 
 ## Entries
 
+### 2026-10-31 · Claude · A quality check against Type Soul 2; the crescent bolder; two test flakes fixed
+- **Type Soul 2 is a quality check only** (owner; Duskbloods stays the inspiration): the owner's 3 clips extracted to `build/reference/type-soul/`, findings and checklist in `docs/reference/type-soul/README.md`, the bar line in `.claude/rules/vfx.md`.
+- **Checked:** the ward passes. The crescent failed (its black inside vanished on a night sky) and is rebuilt: a bold band, crimson-black inside with an outline, its light short of the floor. The SMG burst's layers pass, but it fires ~1.5× too fast (measured: 8 rounds ~0.086 s apart, bursts ≥0.5 s apart) and the gun is up only ~0.2 s a burst.
+- **Fixes:** `Kit.Tween` shows a flash's first frame whole (Studio renders a background window at 15 fps); the Ward case checks flashes by their peak; TestPad ends a running push (the Guard case's 60–80° flake).
+- **Tests:** self-test 132/132 (Manor) and 135/135 (Victorian); logic 63/63 both; world report 0 problems. One unrelated flake, once in four full runs: "Bite hold · pulled to the hold's distance" (1.54, want 1.90 ±0.3).
+- **For the owner:** the SMG pass next (`docs/combat-rework.md`, "Next: the SMG pass"); the crescent's 10-stud look against its 1.4-stud hit (C1.3).
+
 ### 2026-10-31 · Claude · The combat, movement and camera plan; the cloud teammate parked
 - **The plan** for item 5, the combat framework rework: `docs/core-feel-plan.md`. Thirteen pieces, the camera first. Each is measured from the reference, built, tested, reviewed side by side and accepted by the owner before the next.
 - **The camera's first readings** (the Albert clip and the recording): `docs/reference/network-test/movement.md` §3.

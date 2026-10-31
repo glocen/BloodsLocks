@@ -27,16 +27,54 @@ The rules it follows:
 
 Lock-on aims at the target but keeps the spread. Stagger still builds per landed round. The numbers live in `Definitions/Weapons/BurstSMG` (`Spread = { Base, Bloom, Max }`).
 
-**The bullet effect** (`Vfx/Gunshot`). The server sends the surface normal and whether a body was hit with each shot. The layers:
-- **Muzzle:** a flash sprite from a rendered flipbook (one frame per shot, warm core) with a 0.06 s light, and a wisp of smoke that lingers.
-- **Tracer:** a short streak flying from the muzzle to the hit point at 700 studs/s, not a full-length line.
-- **Surface hit:** sparks thrown out along the normal (rendered streak sprites, velocity-aligned, falling), a dust puff (rendered flipbook) and a brief light.
-- **Body hit:** a dark-red mist puff and a few dark sparks: a hit, not a wound.
-- **Miss:** only the tracer, passing the target.
+**The bullet effect** (`Vfx/Gunshot`): the server sends the surface normal and whether a body was hit with each shot. Rebuilt from the reference on 2026-10-31 (below); the first version's thin tracer and body-hit puff are gone (a body shows only its red flash, AGENTS.md rule 4).
 
 **Proof:**
 - Self-test "SMG spread": five bursts at 30 studs land some rounds but not all; one burst at close range lands every round.
 - Captures from behind the shooter, frozen mid-burst.
+
+### The burst, rebuilt from the reference (2026-10-31; owner: thicker orange-gold rays, a bigger muzzle bloom, casings)
+
+**Reference (OBSERVED; 30 fps bursts 40:19.05–40:19.65 and 19:22.95–19:23.55, cropped):**
+- **The rays (40:19.333):** all of a burst's rays appear in one frame: five or six thick orange-gold rays over the whole path from the gun to the target, each with a white-hot core, a little fanned. They last 4–5 frames (about 0.15 s), fading first at the gun's end. A bright orange-white bloom shows where they strike.
+- **The muzzle under steady fire (19:22.97–19:23.53):**
+  - every shot is a white-orange bloom bigger than the hand, about the size of the head and shoulders;
+  - one thick golden ray follows each shot, the earlier ones fading;
+  - small brass streaks (the casings) fly up and out from the hand;
+  - a puff of white smoke shows between shots.
+
+**Ours (DESIGN):**
+- **A ray per round**, the whole way from the muzzle to where the round stopped (a miss runs the weapon's range), shown at once and fading out over 0.18 s. Our four rounds 0.06 s apart overlap three or four rays at a time. Its layers:
+  - a white-hot core: thin, gone in 0.1 s;
+  - an orange-gold glow band: wider, a little thinner toward the far end;
+  - energy strands running along it.
+- **A bigger muzzle bloom:**
+  - an orange-white glow 2.6 studs across that swallows the hand;
+  - the star flash at 1.6 studs;
+  - a longer side flame;
+  - a few hot sparks thrown forward;
+  - a brighter light for 0.07 s;
+  - the smoke wisp, as now.
+- **Casings:** one brass casing a round, ejected up and to the gun's right from just behind the crystal, spinning. It's a small real part that falls, bounces once or twice and is gone after 1.6 s.
+- **The impact on a surface:** a small bright bloom where the ray ends, plus the sparks, dust and light it has now. A body shows only its red flash with the white outline (AGENTS.md rule 4).
+- The round's sound and its impact land at once, as the rays do.
+
+**Critique:**
+1. **Clutter.** Thick rays from several shooters could fill the screen. Each lives 0.18 s and thins as it fades; checked in a capture mid-burst.
+2. **The bloom by the camera.** From behind the shooter, the muzzle is close to the lens and a 2.6-stud flash could cover the target. It lives 0.07 s (four frames), shorter than a blink, and the target stays visible between rounds. Checked from the player's camera.
+3. **Casings under Server Authority.** Client-made parts must simulate on the client; checked in play. If they don't, the casings become spinning sprites.
+4. **Cost.** A round adds three beams, a few emitters and one small part, all short-lived.
+5. **Fan test.** Golden tracers are a genre staple. Our layers and colours are ours: no sphere, no lens flare.
+
+**Built (2026-10-31):** the rays (`RayBand`), the bloom, the casings and the surface bloom as above. Tested: self-test "SMG burst" (a ray and a casing a round, the casings cleared). Reviewed frozen from the player's camera: the rays read thick and gold, the bloom swallows the hand. Not yet owner-accepted.
+
+### Next: the SMG pass (owner, 2026-10-31: "use Duskbloods as reference where he shoots with the SMG, we can make it very accurate, the size, effects etc; no reloading model, just a simple R6 animation"; "shooting should be slower, it's way too fast")
+
+- **Cadence, measured** (`docs/reference/network-test/combat.md`, The SMG): a burst is 8 rounds about 0.086 s apart, bursts at least 0.5 s apart, about 6.4 rounds/s in steady fire. Ours: 4 rounds 0.06 s apart, chained at once, about 9.5 rounds/s.
+- **The gun stays up for the whole burst:** today the burst animation raises the gun for only about 0.10–0.20 s and holsters it by 0.3 s, so a longer burst needs the new hold first (rounds after that come from the hip).
+- **Holds:** a burst hold (C1's). Idle, walk and run holding the SMG and the sabre (the owner: the current ones look wrong) are P2 of `docs/core-feel-plan.md`, and the simple R6 reload (no magazine model) is P9; the owner asked for them next, so the order is the owner's call.
+- **The burst matched to the reference** (the recording at 19:23 and the owner's Albert clip, `C:\Users\gloce\Videos\hqqXe55ZlnZNd6P.mov`): the bloom's size against the body, the ray stream, the casings, then a capture side by side.
+- Damage per round, magazine (theirs 40) and stagger follow the new cadence through the time-to-kill table; numbers stay in `Definitions/Weapons/BurstSMG`.
 
 ## C1.2 · The M1 (saber light chain)
 
@@ -56,6 +94,7 @@ Lock-on aims at the target but keeps the spread. Stagger still builds per landed
 
 These come after C1.1 and C1.2. First a capture of the current effects and a written critique against the brief, then the redo with the rendered sprites. The brief's shapes still hold:
 - **Blood Blade** (shown to players as "Crimson Crescent", owner 2026-10-30): a huge stylized crimson energy crescent thrown from the raised free hand, thinning to a streak; never liquid, no droplets (AGENTS.md rule 4). Ask the owner about its look before building it.
+  - **Built (2026-10-31; owner: "keep it red with some black gradient"):** `Vfx/BloodBlade` draws `CrescentShaded`, a bold band from a red edge to a crimson-black inside, outlined so it reads on a night sky (pure black vanished there and left a thin red line), over a red halo and a faint black aura; its light reaches 4.5 studs, so it never paints the floor red. Tested: self-test "Blood Blade". Reviewed frozen from behind the shoulder on the pad and in a Cathedral Quarter street. Open, for the owner: the blade spans 10 studs (twice the body; the reference's is 3–4 bodies), but its hit is a 1.4-stud radius (`Definitions/Skills/Gustave`), so it already looks far wider than what it hits: widen the hit, or keep the look? Not yet owner-accepted.
 - **Light Beam:** cold white (owner, 2026-10-30): raise the gun overhead, a star flare at the crystal, aim, a white burst, a thin straight white ray with swirl rings at its root; planted while firing.
 - **Every C1 effect is redone to the network-test study** (owner, 2026-10-30): the sabre hit, the SMG, the Blood Blade, the Light Beam, the bite, guard, howl and the movement trails. **No blood effects, ever** (AGENTS.md rule 4; owner, 2026-10-31): a hit is the body's red flash with a white outline. The order and the gaps are in `docs/reference/network-test/takeaways.md` §1.
 

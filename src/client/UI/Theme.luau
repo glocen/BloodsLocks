@@ -194,7 +194,7 @@ return {
 		FireCore = Color3.fromRGB(255, 220, 150),
 		Smoke = Color3.fromRGB(70, 40, 35),
 		SmokeDark = Color3.fromRGB(25, 18, 18),
-		Tracer = Color3.fromRGB(255, 234, 204), -- a round in flight: pale, warm
+		Brass = Color3.fromRGB(214, 150, 48), -- spent casings: warm and saturated, so Metal still reads brass at dusk
 		GunSmoke = Color3.fromRGB(150, 146, 152),
 		Dust = Color3.fromRGB(122, 112, 104), -- stone dust a round kicks up (blended toward the surface's colour)
 		BladeSmear = Color3.fromRGB(236, 232, 226), -- a blade's motion smear: pale; the scene's light tints the rest

@@ -1,9 +1,12 @@
 --!strict
--- BloodBlade: a crimson crescent flying away from the caster, standing upright and facing the camera like a sword
--- wave (it reads from behind). The blade is our drawn crescent (Kit.Textures.CrescentArc) on a thin plane, with a
--- rim halo behind it, both faces, unlit so it reads the same in any lighting. Streaks off the tips and apex, sparks
--- and a dark-red mist. A cast flare on spawn; sparks, a faint shock shell and a light pop on impact. No gore, ever
--- (AGENTS.md rule 4: Roblox ToS): no drips, splatter or droplets. To be rebuilt in C1 (ask the owner about its look).
+-- BloodBlade: the Crimson Crescent (its player-facing name), flying away from the caster, standing upright and facing
+-- the camera like a sword wave (it reads from behind). Red with a black gradient (owner, 2026-10-31): our drawn
+-- blade (Kit.Textures.CrescentShaded), a bold band, burns red along its convex edge and darkens across its thickness
+-- to a crimson-black inner edge, all the way round the curve (never pure black, which vanishes against a night sky),
+-- over a red rim halo and a faint black aura, on both faces of a thin plane, unlit so it reads the same in any
+-- lighting. Streaks off the tips and apex fade from red to black; sparks; a mist going from crimson to black. A cast
+-- flare on spawn; sparks, smoke, a faint shock shell and a light pop on impact. No gore, ever (AGENTS.md rule 4:
+-- Roblox ToS): no drips, splatter or droplets, nothing that spills.
 
 local Kit = require(script.Parent.Kit)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -15,12 +18,16 @@ local SPAN = 10 -- tip to tip, studs
 local ASPECT = 192 / 512 -- the crescent texture's height / width
 local HEIGHT = SPAN * ASPECT
 local ROLL = math.rad(-90) -- convex edge up → upright (tips up and down, a vertical slash)
-local GLOW_SCALE = 1.12
+local GLOW_SCALE = 1.24 -- the plane's size over the crescent's: room for the widest layer
 -- Layers, back to front: {texture, tint, transparency, brightness, scale}.
 local LAYERS = {
-	{ T.CrescentHalo, P.Blood, 0.05, 3, GLOW_SCALE },
-	{ T.CrescentArc, P.BloodCore, 0, 1.15, 1 }, -- our crescent is drawn white: the tint makes it crimson
+	{ T.CrescentHalo, P.SmokeDark, 0.4, 1, 1.22 }, -- a faint black aura: depth against a bright sky
+	{ T.CrescentHalo, P.Blood, 0.05, 3, 1.12 },
+	{ T.CrescentShaded, P.BloodCore, 0, 1.15, 1 }, -- drawn white into black: the tint makes it red into black
 }
+-- The blade lights what it passes: short enough that from chest height it never paints a red patch on the floor (at 7
+-- it did, 2026-10-31).
+local LIGHT = { Brightness = 1.4, Range = 4.5 }
 
 export type Visual = { Root: BasePart, Faces: { SurfaceGui } }
 
@@ -38,11 +45,11 @@ local function streak(root: BasePart, position: Vector3, width: number)
 	local a1 = attachment(root, position + Vector3.xAxis * width / 2)
 	local t = Instance.new("Trail")
 	t.Attachment0, t.Attachment1 = a0, a1
-	t.Color = Kit.Colors(P.BloodCore, P.BloodWet)
+	t.Color = Kit.Colors(P.BloodCore, P.SmokeDark) -- red at the blade, black as it trails off
 	t.Transparency = Kit.Seq({ { 0, 0.1 }, { 1, 1 } })
 	t.WidthScale = Kit.Seq(1, 0)
 	t.Lifetime = 0.2
-	t.LightEmission = 0.7
+	t.LightEmission = 0.2 -- mostly unlit, so its black end shows
 	t.LightInfluence = 0
 	t.FaceCamera = true
 	t.Parent = root
@@ -86,12 +93,12 @@ function BloodBlade.Spawn(cframe: CFrame): Visual
 	streak(root, Vector3.new(SPAN * 0.47, -HEIGHT * 0.22, 0), 0.3)
 	streak(root, Vector3.new(0, HEIGHT * 0.36, 0), 0.5)
 
-	-- Red mist.
+	-- A mist going from crimson to black.
 	Kit.Emitter(root, {
 		Texture = T.SmokePuff,
 		FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
 		FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-		Color = Kit.Colors(P.BloodDeep, P.BloodDark),
+		Color = Kit.Colors(P.BloodDeep, P.SmokeDark),
 		Size = Kit.Seq(1.6, 3.6),
 		Transparency = Kit.Seq({ { 0, 1 }, { 0.15, 0.65 }, { 1, 1 } }),
 		Lifetime = NumberRange.new(0.4, 0.65),
@@ -117,7 +124,7 @@ function BloodBlade.Spawn(cframe: CFrame): Visual
 		LightEmission = 0.5,
 	})
 	local light = Instance.new("PointLight")
-	light.Color, light.Brightness, light.Range, light.Shadows = P.Blood, 2, 12, false
+	light.Color, light.Brightness, light.Range, light.Shadows = P.Blood, LIGHT.Brightness, LIGHT.Range, false
 	light.Parent = root
 
 	local visual = { Root = root, Faces = faces }
@@ -144,7 +151,7 @@ function BloodBlade.Cast(cframe: CFrame)
 			Speed = NumberRange.new(10, 20), SpreadAngle = Vector2.new(45, 45), EmissionDirection = Enum.NormalId.Front,
 			Drag = 5, LightEmission = 0.6 },
 	})
-	Kit.Flash(cframe.Position, P.Blood, 3, 12, 0.18)
+	Kit.Flash(cframe.Position, P.Blood, 2.2, 8, 0.18)
 end
 
 -- Releases the blade where it stopped and bursts.
@@ -166,7 +173,7 @@ function BloodBlade.Impact(visual: Visual, position: Vector3, direction: Vector3
 			Lifetime = NumberRange.new(0.2, 0.4), Speed = NumberRange.new(20, 40), SpreadAngle = Vector2.new(180, 180),
 			Drag = 5, LightEmission = 0.6 },
 		{ Count = 6, Texture = T.SmokePuff, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = Kit.Colors(P.BloodDeep, P.BloodDark), Size = Kit.Seq(3, 7), Transparency = Kit.Seq({ { 0, 0.45 }, { 1, 1 } }),
+			Color = Kit.Colors(P.BloodDeep, P.SmokeDark), Size = Kit.Seq(3, 7), Transparency = Kit.Seq({ { 0, 0.45 }, { 1, 1 } }),
 			Lifetime = NumberRange.new(0.6, 0.9), Speed = NumberRange.new(3, 7), SpreadAngle = Vector2.new(180, 180),
 			Rotation = NumberRange.new(0, 360), Drag = 4, LightEmission = 0.1, ZOffset = -1 },
 	})
@@ -184,7 +191,7 @@ function BloodBlade.Impact(visual: Visual, position: Vector3, direction: Vector3
 	end, function()
 		shell:Destroy()
 	end)
-	Kit.Flash(position, P.Blood, 5, 20, 0.35)
+	Kit.Flash(position, P.Blood, 3, 12, 0.3)
 end
 
 return BloodBlade

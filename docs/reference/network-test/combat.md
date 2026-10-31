@@ -34,6 +34,10 @@ What the player can do and how fights work, from the first full playthrough (pla
   - **A 40-round magazine** ("40/40" at the lower left); the counter drops by 6–8 per burst (40 → 32 → 24 …).
   - **Reload** when empty (0/40); back to 40/40 later.
   - The rounds fan a little (spread), and a burst reads as one golden ray up close.
+  - **Cadence, measured** (OBSERVED, 2026-10-31; the ammo counter cropped at 30 fps over 19:21.4–19:24.0 and at 6 fps over 30:52–31:05, frames in `build/reference/network-test/smg-cadence/`):
+    - **A burst is 8 rounds.** At 19:22.733–19:23.333 the counter falls 8 → 0, a round every 0.067–0.10 s (0.086 s on average, about 11.7 rounds/s inside the burst); a burst lasts about 0.6–0.8 s.
+    - **Bursts come at least 0.5 s apart:** 30:55.0–31:00.0 reads 40 → 32 → 24 → 16 → 8 with pauses of 0.5–1 s, about 6.4 rounds/s over 5 s of steady fire.
+    - The hero fires one-handed at chest height, the arm out toward the target (full frame 19:23.2).
 - **Skill 1, Blood Blade** (MANUAL 4:08; WIKI): fires a blade formed of the wielder's blood; hold to fire a stronger one.
   - **Uses:** 3 to start ("x3", "3/3"); enhancement raises it to 4 (33:03).
   - **Cooldown:** 12, lowered to 8 by enhancement (43:07).

@@ -11,7 +11,7 @@ paths:
 
 # VFX rules
 
-- The bar (owner, 2026-10-29): "as good as Duskbloods, nothing less", rendered in our own style (owner, 2026-10-30): stylized like Type Soul, but more detailed and deeper. Measure every effect against the network-test study (`docs/reference/network-test/vfx.md`). Review every effect from the player's own camera (behind the shooter) before calling it done. Code layout and history: `docs/engineering-plan.md` §11c.
+- The bar (owner, 2026-10-29): "as good as Duskbloods, nothing less", rendered in our own style (owner, 2026-10-30): stylized like Type Soul, but more detailed and deeper. Type Soul 2 is a quality check only (owner, 2026-10-31): its finish, readability and timing, never its giant effects; the Duskbloods study sets our scale (`docs/reference/type-soul/README.md` and its checklist). Measure every effect against the network-test study (`docs/reference/network-test/vfx.md`). Review every effect from the player's own camera (behind the shooter) before calling it done. Code layout and history: `docs/engineering-plan.md` §11c.
 - **NO GORE, EVER: AGENTS.md rule 4, the Roblox Terms of Use, comes before every look** (owner, 2026-10-31, after uploaded blood textures drew a moderation warning on the owner's account).
   - No blood effects at all: no drops, drips, strings, sprays, splatter, stains, smears or pools, and nothing realistic.
   - A hit shows only as the body flashing red with a white outline (`UI/Components/Flash`).

@@ -133,6 +133,9 @@ local function testPad(who: any): string?
 	player:RequestStreamAroundAsync(spot)
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.CFrame = CFrame.lookAt(spot, spot + Vector3.new(0, 0, -1))
+	-- a push still running holds the body to the way it faced before (Simulation/Knock): end it, so this facing stands
+	-- (a reset straight after a hit left the next case's attacker 60-80° aside: 2026-10-31)
+	character:SetAttribute(A.KnockUntil, 0)
 	ProgressionService.Reset(player) -- level 1, so damage checks read the definitions' numbers
 	character:SetAttribute(A.HP, EntityState.Number(character, A.HPMax, 0))
 	local dummy = freshDummy(pad, spot)

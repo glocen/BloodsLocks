@@ -22,6 +22,7 @@ local PlayerState = require(Shared.Simulation.PlayerState)
 local Leveling = require(Shared.Simulation.Leveling)
 local Bite = require(Shared.Simulation.Bite)
 local Parts = require(Shared.Util.Parts)
+local Vector = require(Shared.Util.Vector)
 local Animations = require(Shared.Config.Animations)
 local CameraConfig = require(Shared.Config.Camera)
 local Players = game:GetService("Players")
@@ -65,18 +66,26 @@ local function waitFor(condition: () -> boolean, timeout: number): boolean
 	return true
 end
 
+-- The most `read()` gives during `seconds` after `act` runs, read every frame: one late read can miss a flash that a
+-- slow frame rate shows for only a frame or two.
+local function peakOf(read: () -> number, act: () -> (), seconds: number): number
+	local peak = read()
+	task.spawn(act)
+	local deadline = os.clock() + seconds
+	while os.clock() < deadline do
+		peak = math.max(peak, read())
+		task.wait()
+	end
+	return peak
+end
+
 -- Highest the root rises during `seconds` after `act` runs.
 local function peakRise(t: any, act: () -> (), seconds: number): number
 	local root = t.Root()
 	local start = root.Position.Y
-	local peak = start
-	task.spawn(act)
-	local deadline = os.clock() + seconds
-	while os.clock() < deadline do
-		peak = math.max(peak, root.Position.Y)
-		task.wait()
-	end
-	return peak - start
+	return peakOf(function()
+		return root.Position.Y
+	end, act, seconds) - start
 end
 
 local function jumpHeight(velocity: number): number
@@ -310,11 +319,20 @@ return {
 			local slot = EntityState.SkillSlots[1]
 			local before = t.DummyHp()
 			t.Check("starts with full charges", t.Num(slot.Charges) == skill.Charges, `{t.Num(slot.Charges)}`)
+			-- the Crimson Crescent's look (Vfx/BloodBlade): its blade burns red into black (owner, 2026-10-31)
+			local graded = false
+			local watching = workspace.DescendantAdded:Connect(function(added: Instance)
+				if added:IsA("ImageLabel") and added.Image == Kit.Textures.CrescentShaded then
+					graded = true
+				end
+			end)
 			t.Press("Skill1")
 			t.Wait(0.15)
 			t.Check("spends one charge", t.Num(slot.Charges) == skill.Charges - 1, `{t.Num(slot.Charges)}`)
 			t.Wait(1)
+			watching:Disconnect()
 			t.Near("projectile damage", before - t.DummyHp(), skill.Projectile.Hit.Damage, 0)
+			t.Check("its crescent burns red into black", graded)
 		end,
 	},
 	{
@@ -505,10 +523,30 @@ return {
 			t.Lock()
 			local burst = Registry.Action(gun.Burst)
 			local before = t.DummyHp()
+			local rays, casings = 0, 0
+			local watching = workspace.DescendantAdded:Connect(function(added: Instance)
+				if added:IsA("Beam") and added.Texture == Kit.Textures.RayBand then
+					rays += 1
+				elseif added.Name == "BL_Casing" then
+					casings += 1
+				end
+			end)
 			t.Press("Ranged")
 			t.Wait(burst.Duration + 0.4)
+			watching:Disconnect()
 			t.Check("spends one burst of ammo", t.Num(A.Ammo) == gun.Magazine - #burst.Shots, `ammo {t.Num(A.Ammo)}`)
 			t.Near("up close every round lands", before - t.DummyHp(), #burst.Shots * burst.Hit.Damage, 0)
+			-- the look (Vfx/Gunshot): a ray and a spent casing for every round, the casings gone soon after
+			t.Check("a ray for every round", rays == #burst.Shots, `{rays} rays`)
+			t.Check("a casing for every round", casings == #burst.Shots, `{casings} casings`)
+			t.Wait(1.8)
+			local left = 0
+			for _, child in workspace:GetChildren() do
+				if child.Name == "BL_Casing" then
+					left += 1
+				end
+			end
+			t.Check("and the casings are cleared", left == 0, `{left} left`)
 		end,
 	},
 	{
@@ -667,6 +705,22 @@ return {
 	{
 		Name = "Guard",
 		Run = function(t)
+			-- a guard holds from the front: begin once the body is free and faces its attacker (a reset during the last
+			-- case's push used to be turned back by the push's facing hold, the attacker left 60-80° aside, at the edge
+			-- of the guard's arc: found 2026-10-31, TestPad now ends the push)
+			local function bearing(): number
+				local dummy = t.Dummy()
+				local target = dummy and Parts.Root(dummy)
+				if not target then
+					return 180
+				end
+				local root = t.Root()
+				local dot = Vector.Flat(root.CFrame.LookVector):Dot(Vector.Flat(target.Position - root.Position))
+				return math.deg(math.acos(math.clamp(dot, -1, 1)))
+			end
+			t.Check("it faces its attacker", waitFor(function()
+				return bearing() < 30 and not EntityState.IsStunned(t.Character(), time())
+			end, 2), `{math.floor(bearing())}° away`)
 			local hp, stamina = t.Num(A.HP), t.Num(A.Stamina)
 			t.Server("TestHitAfter", "Guard", Combat.Guard.PerfectWindow + 0.15)
 			t.Hold("Guard", true)
@@ -721,36 +775,36 @@ return {
 			t.Check("lowering the guard takes it away", waitFor(function()
 				return Ward.Shown(me) == nil
 			end, 0.5))
-			-- a parry: a hit landing just after the guard rises flashes the glass white-gold
+			-- a parry: a hit landing just after the guard rises flashes the glass white-gold (its brightest: Studio
+			-- renders a window in the background at 15 fps, so a flash shows for only a frame or two)
 			local parriedBefore = EntityState.Number(fx, A.LastParryAt, -10)
-			t.Server("TestHitAfter", "Guard", Combat.Guard.PerfectWindow / 3)
-			t.Hold("Guard", true)
-			ward = raised()
-			local parried = waitFor(function()
-				return EntityState.Number(fx, A.LastParryAt, -10) ~= parriedBefore
-			end, 2)
-			t.Wait(0.03)
-			t.Check("a parry flashes it white-gold", parried and lens.Color.G > Theme.Vfx.WardGlass.G + 0.3, tostring(lens.Color))
+			local white = peakOf(function()
+				return lens.Color.G
+			end, function()
+				t.Server("TestHitAfter", "Guard", Combat.Guard.PerfectWindow / 3)
+				t.Hold("Guard", true)
+			end, 1.5)
+			local parried = EntityState.Number(fx, A.LastParryAt, -10) ~= parriedBefore
+			t.Check("a parry flashes it white-gold", parried and white > Theme.Vfx.WardGlass.G + 0.3, `parried {parried}, green {white}`)
 			-- a block flashes it hot
 			t.Wait(0.4)
 			local blockedBefore = EntityState.Number(fx, A.LastBlockAt, -10)
-			t.Server("TestHitAfter", "Now", 0)
-			local blocked = waitFor(function()
-				return EntityState.Number(fx, A.LastBlockAt, -10) ~= blockedBefore
-			end, 2)
-			t.Wait(0.03)
-			t.Check("a block flashes it hot", blocked and lens.Color.R > Theme.Vfx.WardGlass.R + 0.2, tostring(lens.Color))
+			local hot = peakOf(function()
+				return lens.Color.R
+			end, function()
+				t.Server("TestHitAfter", "Now", 0)
+			end, 1.5)
+			local blocked = EntityState.Number(fx, A.LastBlockAt, -10) ~= blockedBefore
+			t.Check("a block flashes it hot", blocked and hot > Theme.Vfx.WardGlass.R + 0.2, `blocked {blocked}, red {hot}`)
 			-- cracks with the guard's stamina
 			local cracks = lens:FindFirstChild("CracksBack") :: Decal
 			t.Wait(0.3)
 			t.Check("whole, it shows no cracks", cracks.Transparency > 0.99, cracks.Transparency)
 			local most = t.Num(A.StaminaMax)
 			t.Server("TestGuardHit", t.Num(A.Stamina) - most * 0.2)
-			waitFor(function()
-				return t.Num(A.Stamina) <= most * 0.25
-			end, 2)
-			t.Wait(0.1)
-			t.Check("low on stamina, it cracks", cracks.Transparency < 0.4, cracks.Transparency)
+			t.Check("low on stamina, it cracks", waitFor(function()
+				return cracks.Transparency < 0.4
+			end, 2), cracks.Transparency)
 			-- a guard break shatters it
 			local brokenBefore = EntityState.Number(fx, A.GuardBrokenAt, -10)
 			t.Server("TestGuardHit", most)

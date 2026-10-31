@@ -102,12 +102,17 @@ function Kit.Flash(position: Vector3, color: Color3, brightness: number, range: 
 	end)
 end
 
--- Runs step(alpha) every frame for `duration` seconds (alpha 0 → 1), then done().
+-- Runs step(alpha) every frame for `duration` seconds (alpha 0 → 1), then done(). The first frame always shows alpha
+-- 0, so a flash's brightest frame is seen even at a low frame rate (at 15 fps a 0.16 s flash lasts two frames).
 function Kit.Tween(duration: number, step: (number) -> (), done: (() -> ())?)
 	local elapsed = 0
+	local started = false
 	local connection: RBXScriptConnection
 	connection = RunService.RenderStepped:Connect(function(dt)
-		elapsed += dt * Kit.TimeScale
+		if started then
+			elapsed += dt * Kit.TimeScale
+		end
+		started = true
 		local alpha = math.min(elapsed / duration, 1)
 		step(alpha)
 		if alpha >= 1 then
