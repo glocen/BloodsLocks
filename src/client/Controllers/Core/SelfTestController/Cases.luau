@@ -319,11 +319,14 @@ return {
 			local slot = EntityState.SkillSlots[1]
 			local before = t.DummyHp()
 			t.Check("starts with full charges", t.Num(slot.Charges) == skill.Charges, `{t.Num(slot.Charges)}`)
-			-- the Crimson Crescent's look (Vfx/BloodBlade): its blade burns red into black (owner, 2026-10-31)
-			local graded = false
+			-- the Sable Stroke's look (Vfx/BloodBlade): a stroke of black ink that sheds wisps as it flies (owner,
+			-- 2026-10-31: "black like black ink")
+			local inked, shedding = false, false
 			local watching = workspace.DescendantAdded:Connect(function(added: Instance)
-				if added:IsA("ImageLabel") and added.Image == Kit.Textures.CrescentShaded then
-					graded = true
+				if added:IsA("Beam") and added.Texture == Kit.Textures.InkStroke then
+					inked = true
+				elseif added:IsA("ParticleEmitter") and added.Texture == Kit.Textures.EnergyWisp and added.Rate > 0 then
+					shedding = true
 				end
 			end)
 			t.Press("Skill1")
@@ -332,7 +335,8 @@ return {
 			t.Wait(1)
 			watching:Disconnect()
 			t.Near("projectile damage", before - t.DummyHp(), skill.Projectile.Hit.Damage, 0)
-			t.Check("its crescent burns red into black", graded)
+			t.Check("its stroke is drawn in ink", inked)
+			t.Check("and sheds ink as it flies", shedding)
 		end,
 	},
 	{

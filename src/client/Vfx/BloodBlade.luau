@@ -1,135 +1,166 @@
 --!strict
--- BloodBlade: the Crimson Crescent (its player-facing name), flying away from the caster, standing upright and facing
--- the camera like a sword wave (it reads from behind). Red with a black gradient (owner, 2026-10-31): our drawn
--- blade (Kit.Textures.CrescentShaded), a bold band, burns red along its convex edge and darkens across its thickness
--- to a crimson-black inner edge, all the way round the curve (never pure black, which vanishes against a night sky),
--- over a red rim halo and a faint black aura, on both faces of a thin plane, unlit so it reads the same in any
--- lighting. Streaks off the tips and apex fade from red to black; sparks; a mist going from crimson to black. A cast
--- flare on spawn; sparks, smoke, a faint shock shell and a light pop on impact. No gore, ever (AGENTS.md rule 4:
--- Roblox ToS): no drips, splatter or droplets, nothing that spills.
+-- BloodBlade: the Sable Stroke (its player-facing name; owner, 2026-10-31: "black like black ink"; the red crescent it
+-- replaces is in docs/combat-rework.md, C1.3), a stroke of black ink flung from the hand, flying away from the
+-- caster. A beam, not a picture: one curved Beam along a 120° arc, heavy where the stroke leaves the hand and
+-- tapering to a dry tail, the middle bowed forward, rolled like a thrown diagonal slash (two half-beams showed a kink
+-- where they met). It faces the camera, so from behind it reads as a whole stroke and from the side as a thick line.
+-- Its ink (Kit.Textures.InkStroke) is bristled and glossy with moonlit edges, so it holds on a night sky. In flight it
+-- unfurls, then thins; ink wisps shed from it and dissolve in the air behind, and its tail breaks into dry streaks.
+-- Cast: a twist of ink at the hand and a pale flick. Impact: the stroke splays and fades into curling ink and a cold
+-- ring of light. Ink and smoke only, never liquid: no drops, spatter or pools (AGENTS.md rule 4).
+
+local ContentProvider = game:GetService("ContentProvider")
 
 local Kit = require(script.Parent.Kit)
 local Theme = require(script.Parent.Parent.UI.Theme)
 
 local T = Kit.Textures
-local P = Theme.Vfx
+local V = Theme.Vfx
 
-local SPAN = 10 -- tip to tip, studs
-local ASPECT = 192 / 512 -- the crescent texture's height / width
-local HEIGHT = SPAN * ASPECT
-local ROLL = math.rad(-90) -- convex edge up → upright (tips up and down, a vertical slash)
-local GLOW_SCALE = 1.24 -- the plane's size over the crescent's: room for the widest layer
--- Layers, back to front: {texture, tint, transparency, brightness, scale}.
-local LAYERS = {
-	{ T.CrescentHalo, P.SmokeDark, 0.4, 1, 1.22 }, -- a faint black aura: depth against a bright sky
-	{ T.CrescentHalo, P.Blood, 0.05, 3, 1.12 },
-	{ T.CrescentShaded, P.BloodCore, 0, 1.15, 1 }, -- drawn white into black: the tint makes it red into black
+-- The stroke's arc, in the plane facing the way it flies: 12 studs tip to tip.
+local RADIUS = 6.9
+local HALF_SPAN = math.rad(60) -- the arc runs 60° either side of its middle
+local BOW = 1.2 -- studs the middle leads the tips by
+local ROLL = math.rad(35) -- off upright: a thrown diagonal slash
+local WIDTH = 2.4 -- studs at its heavy start, tapering to a point at the tail
+local SEGMENTS = 40
+local UNFURL = { From = 0.4, Time = 0.08 } -- its width at the cast (a share), and how fast it opens
+local THIN = { By = 0.45, Time = 0.7 } -- the share of its width it loses as it flies, and over how long
+local DISSOLVE = 0.16 -- seconds the stroke takes to splay and fade where it breaks
+local SPLAY = 0.4 -- how much wider it spreads as it does
+local WISP_SPOTS = { -50, -25, 0, 25, 50 } -- degrees along the arc its wisps shed from
+local FLASH = { Brightness = 1.2, Range = 6, Time = 0.18 } -- the cold light where it breaks: short of the floor
+-- Its fade along its length: the heavy start nearly solid, the tail running out.
+local FADE = { { 0, 0.1 }, { 0.15, 0 }, { 0.75, 0 }, { 1, 1 } }
+
+export type Visual = {
+	Root: BasePart,
+	Stroke: Beam,
+	Scale: number, -- the stroke's width now, a share of its full width
+	Broken: boolean,
 }
--- The blade lights what it passes: short enough that from chest height it never paints a red patch on the floor (at 7
--- it did, 2026-10-31).
-local LIGHT = { Brightness = 1.4, Range = 4.5 }
-
-export type Visual = { Root: BasePart, Faces: { SurfaceGui } }
 
 local BloodBlade = {}
 
-local function attachment(parent: Instance, position: Vector3): Attachment
-	local a = Instance.new("Attachment")
-	a.Position = position
-	a.Parent = parent
-	return a
+-- A textured Beam draws as a solid band until its texture loads (VFX rules): load the ink before the first cast.
+task.spawn(function()
+	local probe = Instance.new("Decal")
+	probe.Texture = T.InkStroke
+	ContentProvider:PreloadAsync({ probe })
+	probe:Destroy()
+end)
+
+-- A point on the stroke's arc in its plane (X across, Y up before the roll, -Z the way it flies; the middle at 0).
+local function point(angle: number): Vector3
+	return Vector3.new(RADIUS * math.sin(angle), RADIUS * (math.cos(angle) - 0.75), -BOW * (1 - (angle / HALF_SPAN) ^ 2))
 end
 
-local function streak(root: BasePart, position: Vector3, width: number)
-	local a0 = attachment(root, position - Vector3.xAxis * width / 2)
-	local a1 = attachment(root, position + Vector3.xAxis * width / 2)
-	local t = Instance.new("Trail")
-	t.Attachment0, t.Attachment1 = a0, a1
-	t.Color = Kit.Colors(P.BloodCore, P.SmokeDark) -- red at the blade, black as it trails off
-	t.Transparency = Kit.Seq({ { 0, 0.1 }, { 1, 1 } })
-	t.WidthScale = Kit.Seq(1, 0)
-	t.Lifetime = 0.2
-	t.LightEmission = 0.2 -- mostly unlit, so its black end shows
-	t.LightInfluence = 0
-	t.FaceCamera = true
-	t.Parent = root
+-- An attachment on the arc whose X axis runs along it: a Beam's curve leaves and enters along its attachments' X.
+local function anchorAt(root: BasePart, angle: number): Attachment
+	local at = point(angle)
+	local along = (point(angle + 1e-3) - point(angle - 1e-3)).Unit
+	local anchor = Instance.new("Attachment")
+	anchor.CFrame = CFrame.fromMatrix(at, along, Vector3.zAxis:Cross(along).Unit)
+	anchor.Parent = root
+	return anchor
 end
 
--- One image layer on one face of the plane.
-local function face(root: BasePart, normal: Enum.NormalId, layer: { any }, z: number): SurfaceGui
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = normal
-	gui.LightInfluence = 0
-	gui.Brightness = layer[4]
-	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
-	gui.CanvasSize = Vector2.new(512, 512 * ASPECT * GLOW_SCALE)
-	gui.ClipsDescendants = false
-	gui.ZOffset = z
-	local image = Instance.new("ImageLabel")
-	image.BackgroundTransparency = 1
-	image.Image = layer[1]
-	image.ImageColor3 = layer[2]
-	image.ImageTransparency = layer[3]
-	image.AnchorPoint = Vector2.new(0.5, 0.5)
-	image.Position = UDim2.fromScale(0.5, 0.5)
-	image.Size = UDim2.fromScale(layer[5] / GLOW_SCALE, layer[5] / GLOW_SCALE)
-	image.Parent = gui
-	gui.Parent = root
-	return gui
+-- Its fade, `toward` of the way to gone.
+local function fade(toward: number): NumberSequence
+	local points = {}
+	for _, key in FADE do
+		table.insert(points, NumberSequenceKeypoint.new(key[1], key[2] + (1 - key[2]) * toward))
+	end
+	return NumberSequence.new(points)
+end
+
+-- The stroke: one curved Beam of ink from its start to its tail.
+local function stroke(root: BasePart, from: Attachment, to: Attachment): Beam
+	local beam = Instance.new("Beam")
+	beam.Attachment0, beam.Attachment1 = from, to
+	local handle = 4 / 3 * math.tan(HALF_SPAN / 2) * RADIUS -- a cubic's handles for the whole circular arc
+	beam.CurveSize0, beam.CurveSize1 = handle, handle
+	beam.Segments = SEGMENTS
+	beam.FaceCamera = true
+	beam.Texture = T.InkStroke
+	beam.TextureMode = Enum.TextureMode.Stretch
+	beam.Color = ColorSequence.new(V.InkTint)
+	beam.Transparency = fade(0)
+	beam.LightEmission = 0 -- blended, not added: the black shows
+	beam.LightInfluence = 0 -- unlit: the same at dusk as at night
+	beam.Parent = root
+	return beam
+end
+
+-- Its width for a share of the full width: the heavy start, tapering to a point.
+local function setScale(visual: Visual, scale: number)
+	visual.Scale = scale
+	visual.Stroke.Width0, visual.Stroke.Width1 = WIDTH * scale, 0
+end
+
+-- The dry bristles of its tail: a frayed streak off a point of the stroke.
+local function streak(root: BasePart, at: Vector3, width: number)
+	local a0, a1 = Instance.new("Attachment"), Instance.new("Attachment")
+	a0.Position, a1.Position = at - Vector3.xAxis * width / 2, at + Vector3.xAxis * width / 2
+	a0.Parent, a1.Parent = root, root
+	local trail = Instance.new("Trail")
+	trail.Attachment0, trail.Attachment1 = a0, a1
+	trail.Texture = T.SmokeRibbon
+	trail.Color = ColorSequence.new(V.Ink)
+	trail.Transparency = Kit.Seq({ { 0, 0.2 }, { 1, 1 } })
+	trail.WidthScale = Kit.Seq(1, 0)
+	trail.Lifetime = 0.25
+	trail.LightEmission = 0
+	trail.LightInfluence = 0
+	trail.FaceCamera = true
+	trail.Parent = root
 end
 
 function BloodBlade.Spawn(cframe: CFrame): Visual
-	-- The plane: X across (tip to tip), Y up (convex edge), thin along Z (the travel direction).
-	local root = Kit.Anchor(cframe, Vector3.new(SPAN * GLOW_SCALE, HEIGHT * GLOW_SCALE, 0.05))
-	local faces = {}
-	for index, layer in LAYERS do
-		for _, normal in { Enum.NormalId.Back, Enum.NormalId.Front } do
-			table.insert(faces, face(root, normal, layer, index))
-		end
+	local root = Kit.Anchor(cframe)
+	local visual: Visual = {
+		Root = root,
+		Stroke = stroke(root, anchorAt(root, -HALF_SPAN), anchorAt(root, HALF_SPAN)),
+		Scale = UNFURL.From,
+		Broken = false,
+	}
+	setScale(visual, UNFURL.From)
+	-- ink shedding off it, left hanging in the air behind to dissolve
+	for _, degrees in WISP_SPOTS do
+		local spot = Instance.new("Attachment")
+		spot.Position = point(math.rad(degrees))
+		spot.Parent = root
+		Kit.Emitter(spot, {
+			Texture = T.EnergyWisp,
+			Color = Kit.Colors(V.Ink),
+			Size = Kit.Seq(0.8, 2.2),
+			Transparency = Kit.Seq({ { 0, 1 }, { 0.2, 0.35 }, { 1, 1 } }),
+			Lifetime = NumberRange.new(0.45, 0.75),
+			Rate = 14,
+			Speed = NumberRange.new(0.5, 1.5),
+			SpreadAngle = Vector2.new(180, 180),
+			Acceleration = Vector3.new(0, 2, 0), -- drifting up a little, like ink in water
+			Drag = 2,
+			Rotation = NumberRange.new(-180, 180),
+			RotSpeed = NumberRange.new(-40, 40),
+			LightEmission = 0,
+			ZOffset = -0.5,
+		})
 	end
-
-	-- Texture → plane space: tips near the lower corners, apex at the top centre.
-	streak(root, Vector3.new(-SPAN * 0.47, -HEIGHT * 0.22, 0), 0.3)
-	streak(root, Vector3.new(SPAN * 0.47, -HEIGHT * 0.22, 0), 0.3)
-	streak(root, Vector3.new(0, HEIGHT * 0.36, 0), 0.5)
-
-	-- A mist going from crimson to black.
-	Kit.Emitter(root, {
-		Texture = T.SmokePuff,
-		FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
-		FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-		Color = Kit.Colors(P.BloodDeep, P.SmokeDark),
-		Size = Kit.Seq(1.6, 3.6),
-		Transparency = Kit.Seq({ { 0, 1 }, { 0.15, 0.65 }, { 1, 1 } }),
-		Lifetime = NumberRange.new(0.4, 0.65),
-		Rate = 30,
-		Speed = NumberRange.new(0.5, 1.5),
-		SpreadAngle = Vector2.new(180, 180),
-		Rotation = NumberRange.new(0, 360),
-		RotSpeed = NumberRange.new(-40, 40),
-		Drag = 3,
-		LightEmission = 0.15,
-		ZOffset = -1,
-	})
-	-- Sparks off the edge.
-	Kit.Emitter(root, {
-		Texture = T.SoftGlow,
-		Color = Kit.Colors(P.BloodCore, P.BloodWet),
-		Size = Kit.Seq(0.16, 0),
-		Lifetime = NumberRange.new(0.2, 0.35),
-		Rate = 40,
-		Speed = NumberRange.new(6, 12),
-		SpreadAngle = Vector2.new(180, 180),
-		Drag = 4,
-		LightEmission = 0.5,
-	})
-	local light = Instance.new("PointLight")
-	light.Color, light.Brightness, light.Range, light.Shadows = P.Blood, LIGHT.Brightness, LIGHT.Range, false
-	light.Parent = root
-
-	local visual = { Root = root, Faces = faces }
+	streak(root, point(HALF_SPAN * 0.9), 0.4)
+	streak(root, point(0), 0.6)
 	BloodBlade.Move(visual, cframe)
 	BloodBlade.Cast(cframe)
+	-- it unfurls, then thins as it flies
+	Kit.Tween(THIN.Time, function(alpha)
+		if visual.Broken then
+			return
+		end
+		local t = alpha * THIN.Time
+		setScale(visual, if t < UNFURL.Time
+			then UNFURL.From + (1 - UNFURL.From) * math.sin(t / UNFURL.Time * math.pi / 2)
+			else 1 - THIN.By * (t - UNFURL.Time) / (THIN.Time - UNFURL.Time))
+	end)
 	return visual
 end
 
@@ -137,61 +168,46 @@ function BloodBlade.Move(visual: Visual, cframe: CFrame)
 	visual.Root.CFrame = cframe * CFrame.Angles(0, 0, ROLL)
 end
 
--- The flare of the blade leaving the muzzle.
+-- A twist of ink at the hand and a pale flick, as the stroke leaves it.
 function BloodBlade.Cast(cframe: CFrame)
 	Kit.Burst(cframe, {
-		{ Count = 1, Texture = T.CrescentArc,
-			Color = Kit.Colors(P.BloodDark), Size = Kit.Seq(7.5), Transparency = Kit.Seq(0.05, 1), Lifetime = NumberRange.new(0.22),
-			Rotation = NumberRange.new(-20, 20), ZOffset = -0.5 },
-		{ Count = 1, Texture = T.CrescentArc,
-			Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(6.5), Lifetime = NumberRange.new(0.2),
-			Rotation = NumberRange.new(-20, 20), LightEmission = 0.5 },
-		{ Count = 12, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.4, 0.1), Lifetime = NumberRange.new(0.15, 0.3),
-			Speed = NumberRange.new(10, 20), SpreadAngle = Vector2.new(45, 45), EmissionDirection = Enum.NormalId.Front,
-			Drag = 5, LightEmission = 0.6 },
+		{ Count = 6, Texture = T.EnergyWisp, Color = Kit.Colors(V.Ink), Size = Kit.Seq(0.6, 1.8),
+			Transparency = Kit.Seq({ { 0, 0.3 }, { 1, 1 } }), Lifetime = NumberRange.new(0.25, 0.4),
+			Speed = NumberRange.new(2, 5), SpreadAngle = Vector2.new(35, 35), EmissionDirection = Enum.NormalId.Front,
+			Drag = 4, Rotation = NumberRange.new(-180, 180), RotSpeed = NumberRange.new(-120, 120), LightEmission = 0 },
+		{ Count = 1, Texture = T.WindRing, Color = ColorSequence.new(V.InkMoon),
+			Size = Kit.Seq({ { 0, 0.4 }, { 1, 3 } }), Transparency = Kit.Seq({ { 0, 0.3 }, { 1, 1 } }),
+			Lifetime = NumberRange.new(0.12), Orientation = Enum.ParticleOrientation.VelocityPerpendicular,
+			EmissionDirection = Enum.NormalId.Front, Speed = NumberRange.new(0.01), LightEmission = 1 },
 	})
-	Kit.Flash(cframe.Position, P.Blood, 2.2, 8, 0.18)
 end
 
--- Releases the blade where it stopped and bursts.
+-- Where it breaks: the stroke splays and fades while its ink curls away, a cold ring of light snapping out.
 function BloodBlade.Impact(visual: Visual, position: Vector3, direction: Vector3)
-	local cframe = CFrame.lookAt(position, position - direction)
-	for _, gui in visual.Faces do
-		gui:Destroy()
-	end
-	Kit.Release(visual.Root, 0.9)
-	Kit.Burst(cframe, {
-		{ Count = 1, Texture = T.CrescentArc,
-			Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(8.5), Lifetime = NumberRange.new(0.18), Rotation = NumberRange.new(-30, 30),
-			LightEmission = 0.6 },
-		{ Count = 20, Texture = T.Spark, Orientation = Enum.ParticleOrientation.VelocityParallel,
-			Color = Kit.Colors(P.BloodCore, P.Blood), Size = Kit.Seq(0.5, 0.12), Lifetime = NumberRange.new(0.15, 0.3),
-			Speed = NumberRange.new(16, 32), SpreadAngle = Vector2.new(70, 70), EmissionDirection = Enum.NormalId.Front,
-			Drag = 5, LightEmission = 0.6 },
-		{ Count = 20, Texture = T.SoftGlow, Color = Kit.Colors(P.BloodCore, P.BloodWet), Size = Kit.Seq(0.2, 0),
-			Lifetime = NumberRange.new(0.2, 0.4), Speed = NumberRange.new(20, 40), SpreadAngle = Vector2.new(180, 180),
-			Drag = 5, LightEmission = 0.6 },
-		{ Count = 6, Texture = T.SmokePuff, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4, FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
-			Color = Kit.Colors(P.BloodDeep, P.SmokeDark), Size = Kit.Seq(3, 7), Transparency = Kit.Seq({ { 0, 0.45 }, { 1, 1 } }),
-			Lifetime = NumberRange.new(0.6, 0.9), Speed = NumberRange.new(3, 7), SpreadAngle = Vector2.new(180, 180),
-			Rotation = NumberRange.new(0, 360), Drag = 4, LightEmission = 0.1, ZOffset = -1 },
-	})
-	local shell = Instance.new("Part")
-	shell.Shape = Enum.PartType.Ball
-	shell.Anchored, shell.CanCollide, shell.CanQuery, shell.CanTouch, shell.CastShadow = true, false, false, false, false
-	shell.Material = Enum.Material.ForceField
-	shell.Color = P.Blood
-	shell.Size = Vector3.one
-	shell.Position = position
-	shell.Parent = workspace
-	Kit.Tween(0.28, function(alpha)
-		shell.Size = Vector3.one * (1 + 10 * (1 - (1 - alpha) ^ 3))
-		shell.Transparency = 0.3 + 0.7 * alpha
+	visual.Broken = true
+	local from = visual.Scale
+	Kit.Tween(DISSOLVE, function(alpha)
+		setScale(visual, from * (1 + SPLAY * alpha))
+		visual.Stroke.Transparency = fade(alpha)
 	end, function()
-		shell:Destroy()
+		Kit.Release(visual.Root, 0.9) -- the wisps and streaks left in the air finish
 	end)
-	Kit.Flash(position, P.Blood, 3, 12, 0.3)
+	Kit.Burst(CFrame.lookAt(position, position - direction), {
+		{ Count = 14, Texture = T.EnergyWisp, Color = Kit.Colors(V.Ink), Size = Kit.Seq(1, 3),
+			Transparency = Kit.Seq({ { 0, 0.2 }, { 1, 1 } }), Lifetime = NumberRange.new(0.6, 0.9),
+			Speed = NumberRange.new(4, 10), SpreadAngle = Vector2.new(70, 70), EmissionDirection = Enum.NormalId.Front,
+			Acceleration = Vector3.new(0, 4, 0), Drag = 4, Rotation = NumberRange.new(-180, 180),
+			RotSpeed = NumberRange.new(-90, 90), LightEmission = 0 },
+		{ Count = 5, Texture = T.SmokePuff, FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
+			FlipbookMode = Enum.ParticleFlipbookMode.OneShot, Color = Kit.Colors(V.Ink), Size = Kit.Seq(2, 5),
+			Transparency = Kit.Seq({ { 0, 0.35 }, { 1, 1 } }), Lifetime = NumberRange.new(0.6, 0.9),
+			Speed = NumberRange.new(2, 5), SpreadAngle = Vector2.new(180, 180), Drag = 4,
+			Rotation = NumberRange.new(0, 360), LightEmission = 0, ZOffset = -1 },
+		{ Count = 1, Texture = T.WindRing, Color = ColorSequence.new(V.InkMoon), Size = Kit.Seq({ { 0, 0.6 }, { 1, 6 } }),
+			Transparency = Kit.Seq({ { 0, 0.1 }, { 1, 1 } }), Lifetime = NumberRange.new(0.14), LightEmission = 1,
+			ZOffset = 1 },
+	})
+	Kit.Flash(position, V.InkMoon, FLASH.Brightness, FLASH.Range, FLASH.Time)
 end
 
 return BloodBlade

@@ -41,7 +41,8 @@ ThemeBase.Families = {
 -- Our own drawn UI images (tools/vfx_textures.py, tools/ui_textures.py).
 ThemeBase.Images = {
 	Ring = "rbxassetid://126930541164453", -- white ring, swept into radial gauges
-	BloodCrescent = "rbxassetid://114481905428903", -- Blood Blade emblem
+	BloodCrescent = "rbxassetid://114481905428903", -- the vitals medallion's crest
+	SableStroke = "rbxassetid://127088261584329", -- the Sable Stroke's emblem: a brush stroke of black ink
 	Glint = "rbxassetid://101126423932013", -- Light Beam emblem, lock-on glint
 	Medallion = "rbxassetid://130555865843448", -- engraved bezel (light grey, tint it)
 	Bullet = "rbxassetid://103235686741303", -- cartridge icon

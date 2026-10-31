@@ -173,6 +173,39 @@ def glint(x, y, n=256):
     return (1, 1, 1, clamp(rays + diag + core))
 
 
+def sable_emblem(x, y, n=256):
+    """The Sable Stroke's HUD emblem: one brush stroke of black ink sweeping up a crescent, heavy where it starts and
+    running dry to a point, its outer edge lit pale like wet ink under the moon and a faint aura behind, so it reads on
+    the dark skill slot. Grey only, never red (AGENTS.md rule 4)."""
+    u = (x + 0.5) / n * 2 - 1
+    v = (y + 0.5) / n * 2 - 1
+    roll = math.radians(35)  # rolled like the thrown stroke
+    u, v = u * math.cos(roll) - v * math.sin(roll), u * math.sin(roll) + v * math.cos(roll)
+    radius, half_span, thick = 0.9, math.radians(68), 0.17
+    dx, dy = u, v - 0.62
+    across = math.hypot(dx, dy) - radius  # past the arc: outward is the stroke's lit side
+    along = math.atan2(dx, -dy) / half_span  # -1 its start .. 1 its tail
+    start = (math.sin(-half_span) * radius, 0.62 - math.cos(-half_span) * radius)
+    if along < -1:  # the heavy start's round cap
+        edge = math.hypot(u - start[0], v - start[1]) / (0.8 * thick)
+        along = -1.0
+    else:
+        width = thick * (0.8 + 0.2 * (min(along, 0) + 1)) if along <= 0 else thick * (1 - min(along, 1)) ** 0.8
+        edge = abs(across) / max(width, 1e-4) if along <= 1 else 9.0
+    dry = smoothstep(0.1, 1.0, along) * 0.9  # the ink runs out toward the tail, splitting it into strands
+    lane = across / thick  # which bristle, across the stroke
+    bristles = 0.5 + 0.3 * math.sin(math.pi * 17 * lane + 4 * along) + 0.2 * math.sin(math.pi * 29 * lane + 1.3)
+    ink = (1 - smoothstep(0.85, 1.0, edge)) * smoothstep(-0.08, 0.08, bristles - dry)
+    lit = 0.85 * gauss(edge - 0.82, 0.07) if across > 0 else 0.3 * gauss(edge - 0.82, 0.07)
+    streaks = 0.5 + 0.5 * math.sin(math.pi * 23 * lane + 2.1)  # striations along the bristles
+    dashes = smoothstep(0.5, 0.9, 0.5 + 0.5 * math.sin(math.pi * 13 * along + 9 * lane))
+    gloss = 0.35 * gauss(edge - 0.45, 0.12) * dashes * streaks + 0.06 * streaks
+    aura = 0.22 * gauss(edge - 1.15, 0.3) * (1 - smoothstep(0.7, 1.0, along)) if edge > 1 else 0.0
+    value = clamp(0.06 + lit + gloss) if ink > 0.02 else 0.78
+    alpha = clamp(max(ink, aura))
+    return (value, value, clamp(value * 1.04), alpha)
+
+
 def soft_glow(x, y, n=128):
     u = (x + 0.5) / n * 2 - 1
     v = (y + 0.5) / n * 2 - 1
@@ -193,6 +226,7 @@ def main():
         ("ring", 256, 256, ring),
         ("medallion", 512, 512, medallion),
         ("bullet", 64, 64, bullet),
+        ("sable_emblem", 256, 256, sable_emblem),
     ]
     for name, w, h, pixels in textures:
         write_png(os.path.join(out, name + ".png"), w, h, pixels)

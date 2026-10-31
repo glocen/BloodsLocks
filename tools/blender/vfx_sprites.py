@@ -12,13 +12,12 @@
   wind_ring     512x512: a gust ring seen from above, streaked around, for a flat expanding particle (white)
   wind_streak   256x64: a gust's soft bent streak, velocity-aligned (white)
   crescent_arc  512x192: an energy crescent, convex edge up: a hard bright edge, a streaked body fading inward (white)
-  crescent_halo 512x192: the soft glow around that crescent (white, additive)
-  crescent_shaded 512x192: the Crimson Crescent's blade, white along its convex edge, darkening to near black inside
   energy_wisp   128x256: a soft wavering column of energy, tapered at both ends (white)
   ward_tracery  512x512: the ward's rose-window tracery, face on, every line with a soft glow (white, for a Decal)
   ward_cracks   512x512: cracks spreading through the ward's glass from three strikes (white, for a Decal)
   glass_shard   2x2 sheet of 128 px cells: four crimson-glass shards, a bright edge and a glint each (white: tint it)
   ray_band      64x256: a gunshot ray's body for a Beam: bright nearly edge to edge, soft edges, fine lines along it
+  ink_stroke   128x512: the Sable Stroke's ink for a Beam: bristles, dry edges, gloss (near black with white gloss)
 No gore, ever (AGENTS.md rule 4: Roblox ToS): nothing here draws blood (no drops, sprays, splatter or stains), and
 nothing that could read as gore is ever uploaded (it went to the owner's account and drew a moderation warning).
 Velocity-aligned art is drawn moving toward the top, then turned (lead_left) so it moves toward the LEFT: a particle
@@ -424,6 +423,40 @@ def ray_band(width=64, height=256, seed=97):
     alpha = np.clip(body * lines * pulse, 0, 1)
     return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
 
+
+def ink_stroke(width=128, height=512, seed=101):
+    """The Sable Stroke's ink for a Beam (owner, 2026-10-31: "black like black ink"; drawn tall, tileable top to
+    bottom): a dense body of brush bristles running along the stroke, its edges breaking into dry bristle streaks, and
+    glossy highlights where light catches the wet ink. Near black with white gloss: the game tints it a cool pale grey,
+    so the body stays ink-black and the gloss reads at night. A brush stroke, never liquid: no drops or spatter
+    (AGENTS.md rule 4)."""
+    rng = np.random.default_rng(seed)
+    u = np.linspace(-1, 1, width)[None, :]
+    v = np.linspace(0, 1, height, endpoint=False)[:, None]
+    edge = np.abs(u)  # 0 along the middle, 1 at either edge
+    bristles = 44
+    index = np.minimum(((u + 1) / 2 * bristles).astype(int), bristles - 1)
+    load = rng.uniform(0.55, 1.0, bristles)[index]  # each bristle's ink
+    phase = rng.uniform(0, 2 * math.pi, (bristles, 3))
+    flow = sum(np.sin(2 * math.pi * f * v + phase[index, k]) / (k + 1) for k, f in enumerate((1, 2, 5))) / 1.84
+    carried = (0.5 + 0.5 * flow) * load  # ink a bristle carries at each point, in whole periods along (it tiles)
+    dry = smoothstep(0.5, 0.95, edge)  # the edges run dry
+    bristled = smoothstep(-0.05, 0.05, carried - 0.95 * dry)
+    solid = 1 - smoothstep(0.45, 0.75, edge)  # solid ink most of the way out
+    outline = 1 - smoothstep(0.88, 1.0, edge)
+    # moonlight on both edges: a thin pale line among the bristle tips at the outline keeps the stroke's shape on a
+    # night sky. Drawn in, not as beams beside it: a camera-facing beam always lays the texture's edges along its outline.
+    rim = np.exp(-((edge - 0.8) / 0.06) ** 2)
+    alpha = np.clip(np.maximum(outline * (solid + (1 - solid) * bristled), 0.85 * rim), 0, 1)
+    # gloss: short dashes of light on single bristles, coming and going along the stroke (continuous rails read as a tube)
+    shine = rng.uniform(0.0, 1.0, bristles)[index] ** 2
+    often = rng.integers(2, 5, bristles)[index]
+    dashes = smoothstep(0.55, 0.9, 0.5 + 0.5 * np.sin(2 * math.pi * (often * v + phase[index, 1] / (2 * math.pi))))
+    gloss = 0.8 * np.exp(-((edge - 0.38) / 0.2) ** 2) * shine * dashes
+    value = np.clip(0.05 + 0.06 * (1 - edge) + gloss + rim, 0, 1)
+    return np.concatenate([np.repeat(value[..., None], 3, axis=-1), alpha[..., None]], axis=-1)
+
+
 # --- volumetric flipbooks (Cycles) ------------------------------------------------------------------------------
 
 def volume_stage(cell):
@@ -544,24 +577,17 @@ def smoke_puff(cell=256, frames=16):
     return render_frames(scene, frames, update, "smoke")
 
 
-def inner_arc(peak):
-    """A crescent's inner edge: the circle (centre height, radius) through both tips (+-0.95, 0) that rises to `peak`
-    in the middle. Lower peaks make a thicker band; the default edge peaks at 0.37."""
-    radius = (0.95 ** 2 + peak ** 2) / (2 * peak)
-    return peak - radius, radius
-
-
-def crescent_masks(width, height, inner=(-1.035, 1.405)):
+def crescent_masks(width, height):
     """The crescent's geometry on a (height, width) grid, convex edge up: how deep inside the outer edge (d_out) and
     how far beyond the inner edge (d_in) each pixel is, in the grid's units (x across -1..1), and its angle round the
-    outer arc's centre. `inner`: the inner edge's circle (see `inner_arc`)."""
+    outer arc's centre."""
     aspect = height / width
     x = np.linspace(-1, 1, width)[None, :]
     y = np.linspace(aspect * 1.6, -aspect * 0.4, height)[:, None]  # row 0 is the top
-    # both arcs pass through the tips at (+-0.95, 0): the outer one peaks at 0.55, the default inner one (larger,
-    # lower) at 0.37, so the band is thickest in the middle and comes to a point at each tip
+    # both arcs pass through the tips at (+-0.95, 0): the outer one peaks at 0.55, the inner (larger, lower) at 0.37, so
+    # the band is thickest in the middle and comes to a point at each tip
     outer_c, outer_r = -0.545, 1.095
-    inner_c, inner_r = inner
+    inner_c, inner_r = -1.035, 1.405
     d_out = outer_r - np.hypot(x, y - outer_c)
     d_in = np.hypot(x, y - inner_c) - inner_r
     angle = np.arctan2(x, y - outer_c)
@@ -569,7 +595,7 @@ def crescent_masks(width, height, inner=(-1.035, 1.405)):
 
 
 def crescent_arc(width=512, height=192, seed=71):
-    """An energy crescent like a sword wave (the Crimson Crescent): a hard bright edge along the convex side, a body of
+    """An energy crescent like a sword wave (the ward's whirling arcs, the charge's flare): a hard bright edge along the convex side, a body of
     streaks running along the arc that fades toward the inner edge. Clean energy, never liquid: no drips, no
     droplets (AGENTS.md rule 4). White; the game tints it."""
     rng = np.random.default_rng(seed)
@@ -584,41 +610,6 @@ def crescent_arc(width=512, height=192, seed=71):
     alpha = np.clip((edge * 1.2 + body * 0.85 * streaks + inner_glow) * inside * (0.3 + 0.7 * taper), 0, 1)
     white = np.ones((height, width, 3)) * np.clip(0.8 + 0.2 * edge, 0, 1)[..., None]
     return np.concatenate([white, alpha[..., None]], axis=-1)
-
-
-def crescent_shaded(width=512, height=192, seed=73):
-    """The Crimson Crescent's blade (owner, 2026-10-31: "keep it red with some black gradient"): our crescent shaded
-    across its thickness, white along the convex edge and darkening through grey to near black along the inner edge,
-    all the way round the curve, so a crimson tint reads red into black wherever the blade turns. A bold band (thicker
-    than crescent_arc's), its dark side outlined by a faint line so the whole blade reads against a night sky. The
-    body stays fairly opaque so its dark side shows; streaks run along the arc and the tips thin out. Energy, never
-    liquid: no drips or droplets (AGENTS.md rule 4). White to black: the game tints it."""
-    rng = np.random.default_rng(seed)
-    d_out, d_in, angle = crescent_masks(width, height, inner=inner_arc(0.25))  # a bold stroke: half again as thick
-    inside = smoothstep(0.0, 0.012, d_out) * smoothstep(0.0, 0.012, d_in)
-    depth = np.clip(d_out / np.maximum(d_out + d_in, 1e-6), 0, 1)  # 0 at the convex edge, 1 at the inner edge
-    # never quite black: a black inside vanishes against a night sky and the blade reads as a thin red line
-    value = 1 - 0.8 * smoothstep(0.08, 0.9, depth)
-    edge = np.exp(-(d_out / 0.014) ** 2)  # the hot hairline along the convex edge
-    inner = 0.3 * np.exp(-(d_in / 0.012) ** 2)  # a faint line along the inner edge: the dark side keeps its outline
-    streaks = 0.5 + 0.5 * streak_noise(width, height, 110, 5, rng).T  # long along the arc
-    along = np.clip(np.abs(angle) / 1.05, 0, 1)
-    taper = 1 - smoothstep(0.6, 1.0, along)  # the tips thin out
-    alpha = np.clip((0.78 + 0.22 * edge) * (0.82 + 0.18 * streaks) * inside * (0.3 + 0.7 * taper), 0, 1)
-    rgb = np.clip(value * (0.85 + 0.15 * streaks) + 0.35 * edge + inner, 0, 1)
-    return np.concatenate([np.repeat(rgb[..., None], 3, axis=-1), alpha[..., None]], axis=-1)
-
-
-def crescent_halo(width=512, height=192):
-    """The soft glow round the crescent: brightest along its outer edge, spreading a little past both edges."""
-    d_out, d_in, angle = crescent_masks(width, height)
-    outside = np.clip(-d_out, 0, None) + np.clip(-d_in, 0, None)
-    near = np.exp(-(outside / 0.07) ** 2)
-    rim = np.exp(-(d_out / 0.08) ** 2)
-    along = np.clip(np.abs(angle) / 1.1, 0, 1)
-    taper = 1 - smoothstep(0.55, 1.0, along)
-    alpha = np.clip((0.5 * near + 0.55 * rim) * taper, 0, 1)
-    return np.concatenate([np.ones((height, width, 3)), alpha[..., None]], axis=-1)
 
 
 def energy_wisp(width=128, height=256, seed=79):
@@ -703,13 +694,12 @@ DRAWN = {
     "wind_ring": wind_ring,
     "wind_streak": wind_streak,
     "crescent_arc": crescent_arc,
-    "crescent_halo": crescent_halo,
-    "crescent_shaded": crescent_shaded,
     "energy_wisp": energy_wisp,
     "ward_tracery": ward_tracery,
     "ward_cracks": ward_cracks,
     "glass_shard": glass_shard,
     "ray_band": ray_band,
+    "ink_stroke": ink_stroke,
 }
 RENDERED = {"smoke_puff": smoke_puff, "fire_burst": fire_burst}
 

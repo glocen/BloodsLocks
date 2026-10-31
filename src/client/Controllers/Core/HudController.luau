@@ -34,7 +34,7 @@ local num = EntityState.Number
 
 -- Emblem tint per icon name (skill definitions name their Icon from Theme.Images).
 local ICON_TINT: { [string]: Color3 } = {
-	BloodCrescent = Color3.new(1, 1, 1),
+	SableStroke = Color3.new(1, 1, 1),
 	Glint = Theme.Colors.Radiance,
 }
 

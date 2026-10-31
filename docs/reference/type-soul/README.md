@@ -37,7 +37,7 @@ Every effect, before it's called done, from the player's own camera:
 ## The check on 2026-10-31
 
 - **The ward (C1.6):** passes. Its parry whirl, ring and starburst show around the buckler from the player's camera; a block flashes gold; a break shatters it.
-- **The Crimson Crescent:** failed, then fixed. Its black inside vanished against the night sky, leaving a thin red line; now a bold band, crimson-black inside with an outline, its light shortened (`docs/combat-rework.md`, C1.3).
+- **The Crimson Crescent:** failed (its black inside vanished against the night sky, leaving a thin red line). A bolder band followed, then the owner rejected the look; it's now the **Sable Stroke**, a black-ink brush stroke (`docs/combat-rework.md`, C1.3).
 - **The SMG burst:** its layers pass (rays, bloom, casings). It fires about 1.5 times too fast against the measured reference, and the gun is up only ~0.2 s a burst; both go to the SMG pass (`docs/combat-rework.md`, "Next: the SMG pass").
 
 Images looked at, so nobody repeats them: survey sheets A 1–5, B 1–4, C 1–2; bursts B 6.4, B 26.6, B 30.4, A 35.4, C 3.6.

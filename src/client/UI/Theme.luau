@@ -203,6 +203,11 @@ return {
 		WindSmokeDeep = Color3.fromRGB(14, 12, 20),
 		Wind = Color3.fromRGB(196, 202, 218), -- its wind lines: pale, cool
 		Drain = Color3.fromRGB(226, 234, 255), -- the life a bite drinks: cold white motes (magic's colour role)
+		-- the Sable Stroke (Vfx/BloodBlade): black ink with moonlit edges. Its texture holds the black; this tint lights
+		-- the gloss and the edges a cool pale grey.
+		InkTint = Color3.fromRGB(190, 196, 214),
+		Ink = Color3.fromRGB(8, 8, 12), -- its wisps, dissolving
+		InkMoon = Color3.fromRGB(176, 170, 222), -- the cold light where it breaks
 		-- the ward (Vfx/Ward): dark crimson glass, a hot rim, gold-red leading; blocks and parries flash gold (rites)
 		WardGlass = Color3.fromRGB(70, 5, 16),
 		WardHot = Color3.fromRGB(230, 70, 54), -- the glass flashing on a block

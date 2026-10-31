@@ -77,6 +77,13 @@ Item 5 is the combat framework rework. Sound, effects and animations are made in
 
 ## Entries
 
+### 2026-10-31 · Claude · The Sable Stroke replaces the Crimson Crescent; the SMG pass specified
+- **Sable Stroke** (the owner's name and pick: "black like black ink"; the red crescent looked bad, and a black-and-red crescent is Bleach's signature move). One curved beam of black ink with moonlit edges and drying wisps, a new ink emblem in the HUD. Spec: `docs/combat-rework.md`, C1.3. Built, tested, reviewed in a street; not yet owner-accepted.
+- **Retired:** the `CrescentShaded` and `CrescentHalo` textures. The vitals crest still shows the old red crescent image: the owner's call.
+- **SMG pass** (b0c84f4): 8-round bursts 0.085 s apart, a 0.35 s refire gap, magazine 40, reload 1.4 s, same total damage. It switches in with the burst-hold clip (`docs/asset-requests.md`, SMGBurstHold).
+- **Tests:** self-test 135/135 (Manor) and 136/136 (Victorian), logic 63/63 in both. A bite physics flake shows now and then ("Bite hold": pull distance, staying put).
+- **Waiting on the owner:** Claude (assets)' pose sheet (WeaponHolds); the stroke's look; its 10-stud look against its 1.4-stud hit.
+
 ### 2026-10-31 · Claude · A quality check against Type Soul 2; the crescent bolder; two test flakes fixed
 - **Type Soul 2 is a quality check only** (owner; Duskbloods stays the inspiration): the owner's 3 clips extracted to `build/reference/type-soul/`, findings and checklist in `docs/reference/type-soul/README.md`, the bar line in `.claude/rules/vfx.md`.
 - **Checked:** the ward passes. The crescent failed (its black inside vanished on a night sky) and is rebuilt: a bold band, crimson-black inside with an outline, its light short of the floor. The SMG burst's layers pass, but it fires ~1.5× too fast (measured: 8 rounds ~0.086 s apart, bursts ≥0.5 s apart) and the gun is up only ~0.2 s a burst.

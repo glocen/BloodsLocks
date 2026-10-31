@@ -17,7 +17,8 @@ Receipts for everything that ships (owner's IP Safety List): who made each asset
 | The ward: the guard's crimson glass buckler (lens and rim meshes, the template) | `src/shared/Assets/Vfx/Ward.rbxm` (meshes 80536993531212 and 133062466600477) | Claude | Blender script `tools/blender/ward.py`, assembled by `tools/studio/Models/Ward.luau` | Original |
 | Ward textures: rose-window tracery, cracks, glass shards | `Client.Vfx.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy), tracked by `tools/vfx/textures.py` | Original |
 | Gunfire ray band: the burst's thick orange-gold ray body (`RayBand`) | `Client.Vfx.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy), tracked by `tools/vfx/textures.py` | Original |
-| The Crimson Crescent's blade: a bold band shaded from its edge to near black inside (`CrescentShaded`; the same day's thinner first upload replaced) | `Client.Vfx.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy), tracked by `tools/vfx/textures.py` | Original |
+| The Sable Stroke's ink: black bristles with gloss, dry edges and moonlit edge lines, for a Beam (`InkStroke`). It replaces the red crescent's `CrescentShaded` and `CrescentHalo`, retired 2026-10-31 | `Client.Vfx.Textures` | Claude | `tools/blender/vfx_sprites.py` (numpy), tracked by `tools/vfx/textures.py` | Original |
+| The Sable Stroke's HUD emblem: one brush stroke of black ink with a moonlit edge (`Theme.Images.SableStroke`) | `src/first/ThemeBase.luau` | Claude | `tools/vfx_textures.py` (`sable_emblem`) | Original |
 | Guard-break sound (provisional, until the owner's sounds) | cue `GuardBreak` in `Definitions/Sounds` (9114855870, "Ice Block Drop To Concrete Shatter 1") | Roblox's audio library: ProSoundEffects | Sliced and levelled by `tools/studio/Audio` | Licensed library |
 
 <!-- To backfill: every .rbxm in src/shared/Assets, the Gustave animations, the Manor and Victorian art kits, uploaded texture maps. -->

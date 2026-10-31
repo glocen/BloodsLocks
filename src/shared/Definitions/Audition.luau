@@ -211,8 +211,8 @@ return {
 	},
 	BloodBladeCast = {
 		Order = 10,
-		Label = "Crimson Crescent: cast",
-		Brief = "The Crimson Crescent leaving the blade: a powerful magic slash, whoosh with an energy edge.",
+		Label = "Sable Stroke: cast",
+		Brief = "The Sable Stroke leaving the hand: a swift ink slash, a whoosh with a soft, dark edge.",
 		Candidates = {
 			{ Id = "rbxassetid://9114446852", From = 0, To = 0.78, Peak = 0.23, Level = -20.1, Licensed = true,
 				Creator = "ProSoundEffects", Title = "Fire Whoosh 15 (SFX)" },
@@ -230,8 +230,8 @@ return {
 	},
 	BloodBladeImpact = {
 		Order = 11,
-		Label = "Crimson Crescent: impact",
-		Brief = "The Crimson Crescent striking: a heavy magic burst with weight and a short roar.",
+		Label = "Sable Stroke: impact",
+		Brief = "The Sable Stroke breaking: a heavy, soft burst with weight, ink scattering.",
 		Candidates = {
 			{ Id = "rbxassetid://9125640290", From = 0, To = 0.83, Peak = 0.07, Level = -19.1, Licensed = true,
 				Creator = "ProSoundEffects", Title = "Magic Poofs Short Breathy Bursts Wheezy Punc (SFX)" },

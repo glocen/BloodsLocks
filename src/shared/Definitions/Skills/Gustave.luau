@@ -6,10 +6,10 @@
 
 return {
 	Actions = {
-		-- Blood Blade: a crescent of the Gustave's blood, thrown between normal attacks. Builds stagger hard.
+		-- Blood Blade (internal id): a stroke of black ink flung from the hand between normal attacks. Builds stagger hard.
 		["Gustave.BloodBlade"] = {
-			Icon = "BloodCrescent", -- HUD emblem (Theme.Images)
-			DisplayName = "Crimson Crescent", -- the owner's pick (2026-10-30): never the reference's skill name
+			Icon = "SableStroke", -- HUD emblem (Theme.Images)
+			DisplayName = "Sable Stroke", -- the owner's pick (2026-10-31, after Crimson Crescent): never the reference's name
 			Anim = "BloodBlade",
 			Duration = 0.5,
 			TrackUntil = 0.16,
